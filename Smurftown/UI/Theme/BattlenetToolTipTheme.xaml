@@ -1,0 +1,113 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Tooltips, and the small info sign that opens them.
+
+         WHY THIS FILE EXISTS: the settings tab used to carry its explanations as
+         paragraphs above the controls - 209 words for four settings, which made the tab
+         scroll and made four selection boxes look like a wall of text. The explanations
+         are unchanged and now live behind these signs; what stays on screen is what
+         changes with the human's own choice.
+
+         That only works if the tooltip can carry a paragraph, and the WPF default cannot:
+         it is drawn as a system window - light ground, black text - which in an
+         application that stands on #15171E everywhere looks like a foreign object, and it
+         disappears after five seconds, which is about half of a sixty-word text. -->
+
+    <!-- IMPLICIT, i.e. without x:Key: every tooltip in the application gets it, including
+         the two that existed before this file (the scan button and the version chip).
+         Two appearances for the same thing is exactly the duplication that drifts apart. -->
+    <Style TargetType="ToolTip">
+        <Setter Property="Foreground" Value="#C3C8D4" />
+        <Setter Property="FontSize" Value="12" />
+        <!-- The measure the wrapping depends on. It sits HERE and not on the TextBlock in
+             the template: the tooltip sizes itself to its content, so the constraint has to
+             reach the measure pass from the outside. A MaxWidth in both places would leave
+             the inner one deciding, minus the padding, which is a different number than the
+             one written here. -->
+        <Setter Property="MaxWidth" Value="400" />
+        <!-- The drop shadow is drawn in the template, on the border. HasDropShadow would
+             ask the system for one on the popup WINDOW, and that one ignores the rounded
+             corners - a rectangular shadow around a rounded panel. -->
+        <Setter Property="HasDropShadow" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <!-- Colors, radius and shadow are those of BattlenetMenuSurfaceTheme.
+                         A tooltip and an opened menu are the same thing to the eye: a
+                         surface floating above the window. The margin is the room for the
+                         shadow - without it the popup window clips it. -->
+                    <Border Background="#1E2027" BorderBrush="#2E3038" BorderThickness="1"
+                            CornerRadius="8" Padding="13,10" Margin="8">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black" Direction="270" ShadowDepth="3"
+                                              BlurRadius="14" Opacity="0.55" />
+                        </Border.Effect>
+                        <!-- ContentPresenter with a template for strings, and not
+                             TextBlock Text="{TemplateBinding Content}": every tooltip in
+                             this application carries a string today, but the one that
+                             carries a panel some day would otherwise render as
+                             "System.Windows.Controls.StackPanel". -->
+                        <ContentPresenter>
+                            <ContentPresenter.Resources>
+                                <DataTemplate DataType="{x:Type sys:String}">
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap"
+                                               Foreground="#C3C8D4" FontSize="12"
+                                               LineHeight="17" />
+                                </DataTemplate>
+                            </ContentPresenter.Resources>
+                        </ContentPresenter>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The sign itself: a circle with an i, 15 points, on the grey of the label beside it.
+
+         A ContentControl and not a Button: it does nothing on a click, and a button that
+         does nothing on a click is a promise that is not kept. It is not focusable for the
+         same reason - tabbing through the settings should reach the selection boxes, not
+         six signs in between.
+
+         The letter is a TextBlock and not the glyph E946 from Segoe MDL2 Assets. The glyph
+         would stand at 15 points beside text of the same size and read as a typo; a drawn
+         circle takes the grey of the label and stays a sign. -->
+    <Style x:Key="BattlenetInfoIconTheme" TargetType="ContentControl">
+        <Setter Property="Width" Value="15" />
+        <Setter Property="Height" Value="15" />
+        <Setter Property="Cursor" Value="Help" />
+        <Setter Property="Focusable" Value="False" />
+        <!-- These three belong on the OWNER of the tooltip and not in the style above:
+             WPF reads them from the element that was pointed at, not from the tooltip. -->
+        <Setter Property="ToolTipService.InitialShowDelay" Value="150" />
+        <!-- Two minutes. The default is five seconds - enough for "Scan all drives",
+             not enough for sixty words, and a text that breaks off mid-sentence is worse
+             than one that was never shown. -->
+        <Setter Property="ToolTipService.ShowDuration" Value="120000" />
+        <Setter Property="ToolTipService.Placement" Value="Bottom" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <!-- The transparent background is load-bearing: without it only the
+                         1.2-point ring itself takes the pointer, and the human has to hit a
+                         hairline to see the text. -->
+                    <Grid Background="Transparent">
+                        <Ellipse x:Name="ring" Stroke="#565C6E" StrokeThickness="1.2" />
+                        <TextBlock x:Name="glyph" Text="i" FontSize="10" FontWeight="Bold"
+                                   Foreground="#8F93A0" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" Margin="0,-1,0,0" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ring" Property="Stroke" Value="#62A6FF" />
+                            <Setter TargetName="glyph" Property="Foreground" Value="#62A6FF" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

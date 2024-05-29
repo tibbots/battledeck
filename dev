@@ -1,0 +1,210 @@
+#!/bin/bash
+set -euo pipefail
+
+# Front door for build and release. DEVIATION from the global rule "build only via
+# devcontainer": WPF needs Windows MSBuild, a Linux container cannot build
+# net8.0-windows10.0.19041.0. So there is no container path here for this script to
+# hide behind - it builds natively and only runs on Windows.
+# Call from PowerShell/cmd via dev.cmd, from Git Bash directly: ./dev <command>
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+
+PROJECT="Smurftown/Smurftown.csproj"
+VDPROJ="Setup/Setup.vdproj"
+MANIFEST="Smurftown/app.manifest"
+RID="win-x64"
+DIST="dist"
+
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*) ;;
+    *) echo "ERROR: Windows only - WPF and net8.0-windows10.0.19041.0 do not build elsewhere." >&2
+       exit 1 ;;
+esac
+
+# --- Helfer -----------------------------------------------------------------
+
+# PowerShell instead of Unix tools, because Git Bash ships neither zip nor uuidgen.
+# -NoProfile: the user profile must not influence the build.
+ps() { powershell -NoProfile -NonInteractive -Command "$1"; }
+
+# Windows path for everything that goes to PowerShell - .NET does not understand /c/...
+winpath() { cygpath -w "$1"; }
+
+# The version sits in the csproj and is the source for everything else:
+# the ZIP name, the release title, and the check against the tag in the workflow.
+read_version() {
+    local v
+    v="$(grep -oE '<Version>[^<]+</Version>' "$PROJECT" | head -1 | sed -E 's|</?Version>||g')"
+    if [ -z "$v" ]; then
+        echo "ERROR: no <Version> in $PROJECT" >&2
+        exit 1
+    fi
+    echo "$v"
+}
+
+# Replaces exactly one occurrence and aborts otherwise. A silent "no match" would be
+# expensive here: the version number would then read differently in three places.
+replace_once() {
+    local file="$1" pattern="$2" replacement="$3" label="$4"
+    local count
+    count="$(grep -cE "$pattern" "$file" || true)"
+    if [ "$count" != "1" ]; then
+        echo "ERROR: $label matched $count times in $file, expected exactly 1" >&2
+        exit 1
+    fi
+    sed -i -E "s|$pattern|$replacement|" "$file"
+}
+
+new_guid() { ps '[guid]::NewGuid().ToString().ToUpper()' | tr -d '\r'; }
+
+# --- Befehle ----------------------------------------------------------------
+
+cmd_build() {
+    echo "==> Building (Debug)..."
+    dotnet build "$PROJECT" -c Debug
+    echo "==> Done"
+}
+
+cmd_publish() {
+    local out="$DIST/publish"
+    echo "==> Publishing single-file $RID (Release)..."
+    rm -rf "$out"
+    # Framework-dependent, not self-contained: that is how the .exe has been shipped
+    # since 2.0.0 (34 MB instead of over 150). The price is that the .NET 8 desktop
+    # runtime has to be on the target machine - without an MSI nobody installs it
+    # afterward any more, that is what the README says.
+    dotnet publish "$PROJECT" \
+        -c Release \
+        -r "$RID" \
+        --self-contained false \
+        -p:PublishSingleFile=true \
+        -p:IncludeNativeLibrariesForSelfExtract=true \
+        -o "$out"
+    echo "==> Done: $out/Smurftown.exe"
+}
+
+cmd_release() {
+    local version stage zip
+    version="$(read_version)"
+    stage="$DIST/stage"
+    zip="$DIST/Smurftown_${version}_${RID}.zip"
+
+    cmd_publish
+
+    echo "==> Staging $version..."
+    rm -rf "$stage"
+    mkdir -p "$stage"
+    # Copy deliberately instead of zipping the publish folder: the .pdb sits there
+    # too, and it does not belong in a release.
+    cp "$DIST/publish/Smurftown.exe" "$stage/"
+    cp README.md "$stage/"
+
+    echo "==> Zipping..."
+    rm -f "$zip"
+    ps "Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::CreateFromDirectory('$(winpath "$stage")', '$(winpath "$PWD/$zip")', [System.IO.Compression.CompressionLevel]::Optimal, \$false)"
+    rm -rf "$stage"
+
+    echo "==> Checksums..."
+    ( cd "$DIST" && sha256sum "$(basename "$zip")" > checksums.txt && cat checksums.txt )
+
+    echo "==> Done:"
+    ls -lh "$DIST"/*.zip "$DIST"/checksums.txt
+}
+
+cmd_version() {
+    if [ $# -eq 0 ]; then
+        read_version
+        return
+    fi
+
+    local version="$1"
+    if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "ERROR: expected x.y.z, got '$version'" >&2
+        exit 1
+    fi
+
+    echo "==> Setting version $version"
+
+    replace_once "$PROJECT" \
+        '<Version>[^<]+</Version>' \
+        "<Version>${version}</Version>" \
+        "csproj <Version>"
+    echo "    $PROJECT           <Version>$version</Version>"
+
+    replace_once "$MANIFEST" \
+        '(assemblyIdentity version=")[^"]+(")' \
+        "\\1${version}.0\\2" \
+        "manifest assemblyIdentity"
+    echo "    $MANIFEST      version=\"${version}.0\""
+
+    replace_once "$VDPROJ" \
+        '("ProductVersion" = "8:)[^"]*"' \
+        "\\1${version}\"" \
+        "vdproj ProductVersion"
+    echo "    $VDPROJ         ProductVersion $version"
+
+    # ProductCode and PackageCode need to be regenerated on every version change,
+    # otherwise RemovePreviousVersions and DetectNewerInstalledVersion do not kick
+    # in. The UpgradeCode stays untouched - it is what the installer uses to
+    # recognize the previous version.
+    local pc kc
+    pc="$(new_guid)"
+    kc="$(new_guid)"
+    replace_once "$VDPROJ" \
+        '("ProductCode" = "8:)\{[^}]*\}"' \
+        "\\1{${pc}}\"" \
+        "vdproj ProductCode"
+    replace_once "$VDPROJ" \
+        '("PackageCode" = "8:)\{[^}]*\}"' \
+        "\\1{${kc}}\"" \
+        "vdproj PackageCode"
+    echo "    $VDPROJ         ProductCode {$pc}"
+    echo "    $VDPROJ         PackageCode {$kc}"
+    echo "    $VDPROJ         UpgradeCode unchanged"
+
+    echo "==> Done. Commit the change, then tag '$version' and push the tag to release."
+}
+
+cmd_clean() {
+    echo "==> Cleaning..."
+    rm -rf "$DIST"
+    dotnet clean "$PROJECT" -c Debug   >/dev/null 2>&1 || true
+    dotnet clean "$PROJECT" -c Release >/dev/null 2>&1 || true
+    echo "==> Done"
+}
+
+cmd_help() {
+    cat <<'HELP'
+Usage: ./dev <command> [args...]      (from PowerShell/cmd: .\dev.cmd <command>)
+
+Commands:
+  build              dotnet build -c Debug
+  publish            Single-file Release publish for win-x64 into dist/publish/
+  release            publish + dist/Smurftown_<version>_win-x64.zip + checksums.txt
+  version            Print the version from Smurftown.csproj
+  version <x.y.z>    Set it in csproj, app.manifest and Setup.vdproj
+                     (fresh ProductCode + PackageCode, UpgradeCode untouched)
+  clean              Remove dist/ and the dotnet build outputs
+  help               This text
+
+Releasing:
+  ./dev version 2.0.1        bump the three files
+  commit, then tag 2.0.1 and push the tag
+                             the tag starts .github/workflows/release.yml, which runs
+                             './dev release' on windows-latest and attaches the assets
+
+Windows only - there is no container path for WPF, so this script builds natively.
+Starting the app is not a command here: that stays a user step.
+HELP
+}
+
+case "${1:-help}" in
+    build)   cmd_build ;;
+    publish) cmd_publish ;;
+    release) cmd_release ;;
+    version) shift; cmd_version "$@" ;;
+    clean)   cmd_clean ;;
+    help)    cmd_help ;;
+    *)       echo "Unknown command: $1" >&2; cmd_help; exit 1 ;;
+esac

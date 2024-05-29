@@ -1,0 +1,120 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        The menus of the account row. Three styles that only make sense together: the button,
+        the opened-up surface and an entry inside it. Since 21.08.2026 they carry TWO
+        menus - the start menu and the three-dot menu with copy, edit, archive.
+    -->
+
+    <!--
+        The round button of the two menus in the account row.
+
+        ROUND LIKE THE PLUS BUTTON of the filter bar, and for the same reason: what opens
+        a menu needs no word, but a symbol. Until 21.08.2026 a rectangular button with the
+        label "Start" and a triangle next to it stood here; the triangle
+        fell along with it, because two round buttons side by side are read as a pair
+        anyway, and a triangle on a circle looks like a mistake.
+
+        WHY ITS OWN STYLE and not BattlenetButtonPrimaryTheme: the button has to hold its
+        state (menu open / closed) and is therefore a ToggleButton. A style can't
+        be shared across two control types, so the colors stand here
+        a second time. Whoever changes one of them changes both files.
+
+        THE COLOR COMES FROM OUTSIDE. The start button is blue, because it carries the one
+        action one wants often; the three-dot menu stays gray. Both states
+        (hovered, opened) therefore don't rely on a fixed color, but
+        lay a light ring over it - that sits correctly on any background.
+    -->
+    <Style x:Key="BattlenetRoundMenuButtonTheme" TargetType="ToggleButton">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Background" Value="#454545" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid>
+                        <Ellipse x:Name="disc" Fill="{TemplateBinding Background}" />
+                        <!-- The ring lies ON the disc instead of tinting it: that way
+                             the same state applies for blue and gray. -->
+                        <Ellipse x:Name="ring" Stroke="White" StrokeThickness="1.5" Opacity="0" />
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ring" Property="Opacity" Value="0.35" />
+                        </Trigger>
+                        <!-- Opened up, the button stays marked: otherwise you can't tell
+                             from it that the menu below belongs to it. -->
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="ring" Property="Opacity" Value="0.7" />
+                            <Setter TargetName="disc" Property="Opacity" Value="0.8" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="disc" Property="Opacity" Value="0.8" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The surface of the opened-up menu. Colors like the card itself, so it belongs
+         with it and doesn't look like a system menu. The outer margin is the room for
+         the shadow - without it the popup window would clip it. -->
+    <Style x:Key="BattlenetMenuSurfaceTheme" TargetType="Border">
+        <Setter Property="Background" Value="#1E2027" />
+        <Setter Property="BorderBrush" Value="#2E3038" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="Margin" Value="10" />
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="Black" Direction="270" ShadowDepth="3"
+                                  BlurRadius="14" Opacity="0.55" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- An entry. A button and not a MenuItem: MenuItem needs a Menu as a parent,
+         brings its own appearance including a keyboard-shortcut column, and would have to be
+         completely overridden. A button in the ItemsControl is less, not more. -->
+    <Style x:Key="BattlenetMenuItemTheme" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="surface"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="5"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="surface" Property="Background" Value="#2B2D33" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="surface" Property="Background" Value="#33363E" />
+                        </Trigger>
+                        <!-- Dimmed instead of hidden: a missing entry looks like a
+                             forgotten feature, a gray one says "coming soon". -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="surface" Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

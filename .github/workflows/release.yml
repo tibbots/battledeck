@@ -1,0 +1,48 @@
+name: release
+
+# Tag-driven (Flavor D of the personal workflow standard, see vault note
+# github-workflow-standard). This repo's tags carry no v prefix: 1.0.0, 2.0.0.
+on:
+  push:
+    tags: ['*.*.*']
+
+permissions:
+  contents: write   # for creating the release and its assets
+
+jobs:
+  release:
+    # DEVIATION from the runner policy "ubuntu-latest only": WPF and
+    # net8.0-windows10.0.19041.0 only build on Windows. The policy targets self-hosted
+    # runners (metered minutes); GitHub-hosted Windows is free on public repos.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # Without this step, an .exe carrying the previous version's number could end
+      # up in a release named something else. Abort before any building and
+      # uploading.
+      - name: Verify tag matches project version
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          version="$(bash ./dev version)"
+          echo "tag=$tag  csproj=$version"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::tag '$tag' does not match <Version> '$version' in Smurftown.csproj - run './dev version $tag' first"
+            exit 1
+          fi
+
+      - name: Build release assets
+        shell: bash
+        run: bash ./dev release
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            dist/checksums.txt

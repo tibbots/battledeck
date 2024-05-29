@@ -1,0 +1,255 @@
+# Calibration of the game interface: what sits where, and how to tell which screen is showing.
+#
+# This file is the only place where coordinates stand. If Blizzard changes the
+# interface, this file changes - not the code. It ships with the app, but can be replaced
+# without a rebuild: if a file ~/.smurftown/screen-map.yaml exists, it takes precedence.
+#
+# ---------------------------------------------------------------------------------------
+# ANCHORS INSTEAD OF ABSOLUTE POINTS
+#
+# Every entry names an anchor and a distance from it, measured in points of the
+# reference size below. At runtime the distance is scaled with (window height / referenceHeight)
+# and placed relative to the anchor.
+#
+# This is measured, not assumed. Captures at 3440x1440, 2560x1080 and 1920x1080:
+#
+#                              3440x1440   2560x1080   1920x1080
+#   Button spacing bottom right     66          49          49
+#   Width of the region selector    308         231         231
+#
+# At the same HEIGHT nothing changes, no matter how wide the window is. So the interface
+# scales solely with height; horizontally every element sticks to an edge or to
+# the center. Which anchor applies is measured per element - the top bar hangs on the left,
+# the collection's content on the center, the currencies on the right.
+#
+#   anchor: topLeft | topCenter | topRight | center | bottomLeft | bottomCenter | bottomRight
+#   x, y:   distance from the anchor, in reference points (negative to the left/up)
+#   width:  0 means "up to the window edge", i.e. full width
+#
+# The LOGIN FORM is deliberately not here. It does scale with height too,
+# but additionally shifts with width: at 2560x1080 it sits 73 points lower
+# than at 1920x1080, even though both are the same height. An anchor couldn't represent that.
+# It is instead found in the image - see LoginLocator and the login section.
+# ---------------------------------------------------------------------------------------
+
+# The path to Heroes of the Storm stood here as gamePath until 21.08.2026. It has moved into
+# the settings (SETTINGS tab, saved in ~/.smurftown/settings.yaml): this
+# file describes how the game LOOKS - anchors, distances, thresholds - and not where it
+# lives. An old entry here doesn't hurt, it just isn't read anymore.
+#
+# Incidentally, what still gets started is the switcher (Support64\HeroesSwitcher_x64.exe) and not
+# "Heroes of the Storm.exe" in the root - according to the manifest that one is a setup bootstrapper. The
+# switcher chooses 32/64 bit and survives a patch, while Versions\BaseNNNNN\ moves around.
+
+# Reference size for all numbers below. Not the resolution the app has to run at.
+referenceWidth: 3440
+referenceHeight: 1440
+
+# How to tell the screen apart: average brightness of the topmost strip. The
+# navigation bar of the main menu is clearly brighter than the starry sky of the
+# login screen, and the hero select has no bar at all. Values from real captures:
+# login 0.109, main menu 0.216, collection 0.226, rank 0.217, hero select 0.064.
+detect:
+  strip: { anchor: topLeft, x: 0, y: 0, width: 0, height: 78 }
+  menuAbove: 0.160
+  heroSelectBelow: 0.085
+  # From which average deviation (color levels 0..255) between two captures taken shortly
+  # after one another a screen counts as fully built. Generous, because the
+  # starry sky of the login screen is slightly in motion.
+  stableBelow: 3.0
+
+# The login form is searched for, not calibrated by measurement. Only the features by which
+# it can be recognized stand here.
+login:
+  # Color of the field border. Doesn't occur in the starry sky behind it and doesn't change
+  # with resolution - unlike any coordinate.
+  borderColor: [70, 57, 148]
+  borderTolerance: 26
+  # From which length (fraction of window width) a horizontal stretch in border color counts
+  # as a field edge and not as text. Measured: the fields are about 16% wide.
+  minFieldWidth: 0.12
+  # How tall an input field may be, as a fraction of window height. Measured 0.034 to 0.040.
+  minFieldHeight: 0.025
+  maxFieldHeight: 0.060
+  # The "Log In" button sits below the fields, at 2.19 times their spacing. It's rarely
+  # needed - submission happens with the Enter key, which works just as well in the form.
+  submitPitchFactor: 2.19
+  # The region selector at the bottom left: bright glowing edge, no field border. Searched
+  # for in the bottom-left crop of the window.
+  regionArea: { anchor: bottomLeft, x: 0, y: -320, width: 560, height: 320 }
+  # The three entries of the expanded list, measured above the closed field.
+  # Measured on 21.08.2026 at TWO resolutions (3440x1440 and 3251x1361 in windowed mode):
+  # measured 129 / 93 / 57.5 against predicted 129.5 / 93.6 / 57.7.
+  #
+  # The row spacing is 38. The individual measurements gave 136 / 97.5 / 61 - entered
+  # is the set with constant spacing, because a list has a fixed row spacing and
+  # the individual measurement only estimates the text center.
+  #
+  # There are exactly three; a China entry doesn't exist on this client.
+  americasAbove: 137
+  europeAbove: 99
+  asiaAbove: 61
+
+# The deserter status: a red-outlined warning triangle to the right below the profile picture, and
+# on hover a hint window to the left of it. Measured on 21.08.2026 at TWO resolutions
+# (3440x1440 and 3251x1361): symbol center measured (3222 / 197.5) against predicted
+# (3222.6 / 197.5), hint window from x 2731 against 2732.2 and y 182 against 181.5.
+#
+# The symbol only says THAT a penalty is running - the count stands exclusively in the
+# hint text. The box is taller in German than in English (265 against about 205);
+# 270 carries both.
+# The PLAY screen. The tab in the top left sits at the same spot in every language -
+# it is the first in the bar and thus hangs on the left edge. Clicked near its
+# BEGINNING, not its center: "PLAY" is shorter than "SPIELEN".
+#
+# The tab row below it is an AREA for text recognition. An anchor would be wrong
+# here: the tabs sit side by side by text width, and at the English
+# ARAM spot (579), a German client shows "Heldenchaos" - ARAM sits there at
+# 709. Both values scale cleanly with height; the language is the problem, not the
+# resolution.
+play:
+  tab: { anchor: topLeft, x: 150, y: 45 }
+  modeBar: { anchor: topLeft, x: 0, y: 105, width: 1100, height: 40 }
+
+penalty:
+  icon: { anchor: topRight, x: -49, y: 191, width: 38, height: 37 }
+  tooltip: { anchor: topRight, x: -549, y: 192, width: 545, height: 270 }
+
+menu:
+  # The gear at the bottom right and the "Log Out" entry in its menu. Measured on 21.08.2026 at
+  # TWO resolutions (3440x1440 and 3251x1361): Log Out measured (3078.5 / 1139)
+  # against predicted (3080.9 / 1138.9), menu spacing 66 against measured 62.
+  #
+  # The entries from bottom to top: Leave Game, Log Out, Hotkeys, Options,
+  # Credits, Tests. "Leave Game" sits 66 points BELOW "Log Out" - whoever
+  # misclicks here ends the game instead of switching accounts.
+  gear: { anchor: bottomRight, x: -170, y: -48 }
+  logout: { anchor: bottomRight, x: -180, y: -235 }
+  # Gold, shards and gems stand side by side in the header bar. Cut generously,
+  # because the crop goes to text recognition - too tight a crop clips the
+  # last digit, and "30" instead of "305" wouldn't be noticed by anyone.
+  #
+  # The ACCOUNT LEVEL once stood here next to it, as a number in the portrait frame at the
+  # far right edge. It's out: the crop cut the leading digit right through the middle, turning
+  # 145 into 45 and sometimes nothing at all. It now comes from the profile overlay, where it
+  # stands spelled out - see the profile section.
+  headerCurrencies: { anchor: topRight, x: -750, y: 25, width: 400, height: 50 }
+
+# Rank and account level come from the profile overlay: right-click on the profile picture in
+# the top right, then "View Profile". There, below "Storm League" stands the rank as flowing text -
+# "Silver 3", tier and division on one line - and above it the account level as a number.
+#
+# Before, this ran via the rank screen (PLAY -> Ranked) and a self-learning set of
+# comparison images. Three reasons why that is gone, all measured on 20.08.2026:
+#   1. The medal disc carries a moving facet pattern. The distance to the same rank
+#      fluctuated between 0.019 and over 0.3 - at a threshold of 0.075.
+#   2. A rank that didn't yet stand in data.yaml was fundamentally unreadable: the
+#      set learns from what's entered, and without an entry there's nothing to learn.
+#   3. Nobody checked whether the screen photographed was actually the rank screen. Once a
+#      hero select was compared against a medal.
+#
+# All points here are re-measured at 3440x1440 AND 1920x1080. The overlay hangs on the
+# center, the profile picture and its context menu on the right edge.
+profile:
+  # Right-clicking here opens the context menu with "View Profile".
+  portrait: { anchor: topRight, x: -69, y: 74 }
+  viewProfile: { anchor: topRight, x: -207, y: 190 }
+  # The battletag in the header of the overlay, as two lines side by side
+  # ("Questqueen", "#2790"). Cross-check: if a different name stands there, the overlay
+  # doesn't belong to this account and nothing is taken over.
+  battletag: { anchor: topCenter, x: -646, y: 205, width: 400, height: 55 }
+  # The whole PROGRESS block instead of two narrow crops. Two reasons: the lines
+  # carry their own labels ("Storm League", "Account Level"), which lets the value
+  # be found via them instead of via a coordinate - and the block shifts
+  # down by a good dozen points depending on content, which a narrow crop doesn't
+  # keep up with. It's still readable large, without magnification, at both resolutions.
+  progress: { anchor: topCenter, x: 300, y: 380, width: 600, height: 320 }
+  # The cross at the top right of the overlay. Not the Esc key: whether that works here is not
+  # measured.
+  close: { anchor: topCenter, x: 845, y: 186 }
+
+# The heroes come from the COLLECTION, not from the hero select. The reason stands briefly
+# here, because the other way looks more obvious: the hero select shows all 90 on one screen,
+# but only as tiles - owned means "brighter" there. Whoever reads the tiles has to know
+# which tile is which hero, and this order couldn't be reliably derived
+# (cross-check on an account with 24 heroes: 12 hits). The collection writes the name
+# as text below the card and ownership as the word "OWNED" into it - both readable, nothing
+# to guess. The price is scrolling; the sidebar names the expected count for that.
+# The loot page. The whole flow hangs on ONE key - the space bar three times per chest:
+#
+#   LOOT  ->  carousel, center = next chest type with stock
+#     |
+#     |  Space  ->  chest opens, four hidden hexagons
+#     |  Space  ->  all four revealed at once
+#     |  Space  ->  "Accept", back, counter one less
+#     v
+#   next chest - the carousel advances on its own
+#
+# Until 20.08.2026, five coordinates for six clicks stood here: the open button,
+# four hexagons and "Accept". They are GONE WITHOUT REPLACEMENT, and that's the point: 22 points
+# to the right of "Accept" sits "Try Again: 250 Gold". As long as that was clicked,
+# a shifted anchor was a way to burn the account's gold. With the
+# space bar there's nothing left to hit there - it selects "Accept" on its own, cross-checked
+# across two runs with unchanged gold balance.
+#
+# Whoever enters coordinates here again brings this danger back.
+loot:
+  # The tab itself no longer stands here. Until 22.08.2026 it was a fixed point
+  # (x=630), measured on a German client - and the top bar lays out its
+  # tabs side by side by text width. It's now clicked via its WORD
+  # (TabFinder + GameVocabulary.LootTab), exactly as it was already searched for here to
+  # COUNT - that both stood side by side was the actual bug.
+  # The whole bar strip, not a box around the badge: the bar FLOWS AROUND.
+  # If COLLECTION gets its own badge - and that's exactly what happens once a chest has
+  # been opened -, LOOT shifts to the right. Observed twice in the same run: 584,
+  # then 595, while the COLLECTION badge grew from 9 to 14. That's why the word and
+  # the number next to it are searched for.
+  navBar: { anchor: topLeft, x: 0, y: 0, width: 1300, height: 80 }
+  # How far to the right of the word start the number still belongs to it. Measured: LOOT is about 108
+  # wide, the badge sits 10 to 40 points behind the word's end.
+  badgeReach: 120
+
+collection:
+  # The two tabs no longer stand here. Until 22.08.2026 they were fixed points
+  # (tab at x=399, heroesTab at x=497), both measured on a German client - and
+  # a tab row lays out its entries side by side by text width. In English
+  # PLAY is shorter than SPIELEN, so COLLECTION sits elsewhere than SAMMLUNG; a click on
+  # the 399 opens something else there, without aborting. It's now searched for via the WORD
+  # (TabFinder + GameVocabulary.CollectionTab/HeroesTab) - the same way HeaderReader searches
+  # for the LOOT tab and PlayScreen for the ARAM tab.
+  #
+  # The search area for the topmost tab is loot.navBar: the same strip, just under
+  # the name under which it was introduced for the chest counter. A second entry
+  # with the same numbers would be one more spot where they could drift apart.
+  #
+  # The sub-tab row, on the other hand, doesn't have one yet: heroesTab sat at y=125, the
+  # strip covers 105..150 and thus the row including ascender and descender.
+  heroesBar: { anchor: topLeft, x: 0, y: 105, width: 1300, height: 45 }
+  ownedFilter: { anchor: topCenter, x: 170, y: 253 }
+  sortFilter: { anchor: topCenter, x: 481, y: 253 }
+  allRoles: { anchor: topCenter, x: -920, y: 443 } # sidebar "All"
+  # On hovering "All", a hint window names "32/89 owned". That is the
+  # expected count for scrolling - without it there would be no way to tell whether a page
+  # was skipped or the account really has fewer heroes.
+  roleTooltip: { anchor: topCenter, x: -770, y: 415, width: 320, height: 60 }
+  # The entries of an expanded list: first entry and spacing.
+  dropdownFirst: 313
+  dropdownPitch: 38
+  ownedItem: 1                                     # "Owned Heroes"
+  alphabeticalItem: 3                              # "Alphabetical"
+  # The name strip of the first card, plus the grid spacings. Read per card
+  # individually and not the whole area at once: text recognition returns nothing
+  # for large crops, but works error-free for small ones.
+  cardName: { anchor: topCenter, x: -685, y: 660, width: 320, height: 50 }
+  columnPitch: 336
+  rowPitch: 450
+  columns: 5
+  rows: 2
+  # How far one scroll pushes the grid: ONE notch is ONE row - measured, not
+  # estimated. This used to be 3, with the reasoning that three notches were roughly one
+  # page. But only two rows are visible, so every scroll skipped exactly one.
+  # For an account with 29 heroes, this meant the five from row 3 were missing, without
+  # any error message - the gap only stands out because the expected count is displayed next to it.
+  # With 1, two consecutive pages overlap by one row: a slot that text
+  # recognition misses once gets a second chance on the neighboring page.
+  scrollNotches: 1

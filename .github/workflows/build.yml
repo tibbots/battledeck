@@ -1,0 +1,31 @@
+name: build
+
+# push-only, no pull_request trigger: having both would build every branch with an
+# open PR twice. The PR inherits the run via the head commit SHA.
+# branches: ['**'] includes main and excludes tags - tags go to release.yml.
+on:
+  push:
+    branches: ['**']
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Same deviation as in release.yml: WPF only builds on Windows.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # publish instead of build: the same thing a release builds, just without the
+      # zip. A debug build would only let a broken single-file publish surface at
+      # the tag push.
+      - name: Publish
+        shell: bash
+        run: bash ./dev publish

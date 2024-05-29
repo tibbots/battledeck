@@ -1,0 +1,1617 @@
+﻿using System.Globalization;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Serilog;
+using Smurftown.Backend.Automation;
+using Smurftown.Backend.Entity;
+using Smurftown.Backend.Gateway;
+using Smurftown.UI.MVVM.View;
+using ToastNotifications.Messages;
+using Smurftown.Backend.Texts;
+
+namespace Smurftown.UI.MVVM.ViewModel
+{
+    /// <summary>
+    ///     An entry in the card's start menu: one use case of a game.
+    ///     <para>
+    ///         The command sits in the entry itself and is not looked up via <c>RelativeSource</c>
+    ///         from the menu. A popup lies outside the layout tree of the
+    ///         card - exactly the fragility that is also why the rank picker is an overlay and
+    ///         not a popup. A field in the record cannot bind into nothing.
+    ///     </para>
+    /// </summary>
+    sealed record StartOption(
+        string Icon, string Label, string Hint, string Mode, bool Enabled, ICommand Command);
+
+    /// <summary>
+    ///     What a start should do. Three switches, but only four valid combinations - they
+    ///     stand as named cases below. The rest make no sense: not reading and
+    ///     still closing would be a start that ends itself, and opening chests
+    ///     without reading afterwards would mean throwing away the gain.
+    /// </summary>
+    sealed record SessionPlan(bool OpenChests, bool Read, bool CloseAfterwards)
+    {
+        /// <summary>Just start and sign in - the game belongs to the human immediately afterwards.</summary>
+        public static readonly SessionPlan JustPlay = new(false, false, false);
+
+        /// <summary>Start, sign in, read; the game stays open.</summary>
+        public static readonly SessionPlan PlayAndRead = new(false, true, false);
+
+        /// <summary>Start, sign in, read, close.</summary>
+        public static readonly SessionPlan RefreshOnly = new(false, true, true);
+
+        /// <summary>
+        ///     Start, sign in, <b>open the chests first</b>, then read, then close.
+        ///     The order is the point: a chest drops shards, gold and occasionally
+        ///     a hero. Read beforehand, data.yaml would hold the state from before -
+        ///     and that is wrong from the first opening onward.
+        /// </summary>
+        public static readonly SessionPlan Chests = new(true, true, true);
+    }
+
+    class AccountCardViewModel : ObservableObject
+    {
+        private static readonly BattlenetAccountGateway _battlenetAccountGateway = BattlenetAccountGateway.Instance;
+
+        /// <summary>
+        ///     How many hero portraits the strip shows before it switches to "+n".
+        ///     Eleven circles of 47 points with 13 points of overlap take up 387 of the roughly 508
+        ///     points that are free for it in the panel.
+        ///     <para>
+        ///         <b>The upper bound is the width, the number itself is chosen.</b>
+        ///         Fourteen would fit (489) - eleven leave 121 points of air between
+        ///         strip and currencies, and that is intentional: a row that is full from left to
+        ///         right reads harder than one with a pause in it.
+        ///     </para>
+        ///     <para>
+        ///         It jumped twice on 21.08.2026: from eleven to eight, when medal and
+        ///         circles grew by 30 percent - and back to eleven, when on the same day the
+        ///         penalty triangle disappeared from the panel (47 points), four buttons became one
+        ///         menu (167), and the accent strip fell away (3). The budget stands in
+        ///         <c>AccountCardView.xaml</c>.
+        ///     </para>
+        ///     <para>
+        ///         Which eleven is deliberately not sorted: it is the order in which the
+        ///         read-out found them, so alphabetical. The strip is a
+        ///         <b>sample</b> - the actual statement stands as a number next to it. Sorted by role
+        ///         you would never see a healer on an account with eleven tanks.
+        ///     </para>
+        /// </summary>
+        private const int HeroChipLimit = 11;
+
+        /// <summary>
+        ///     The use cases the start menu offers. Not an enum, because the value runs as
+        ///     CommandParameter through the XAML and is text there anyway.
+        /// </summary>
+        private const string ModeStart = "start";
+
+        private const string ModePlay = "play";
+        private const string ModeRefresh = "refresh";
+        private const string ModeChests = "chests";
+
+        private const string HotsIcon = "pack://application:,,,/UI/Images/hots.png";
+
+        private AccountRegion? _row;
+        private RelayCommand? _archiveCommand;
+        private RelayCommand? _copyPasswordCommand;
+        private RelayCommand? _copyUsernameCommand;
+        private string _currencyHint = "";
+        private Visibility _diablo;
+        private string _gemsText = "";
+        private string _goldText = "";
+        private string _shardsText = "";
+        private bool _hasStartOptions;
+        private string _hotsHint = "";
+        private Visibility _hots;
+
+        private string _imageSource;
+
+
+        private RelayCommand<string>? _runStartOptionCommand;
+        private RelayCommand _openSettingsCommand;
+
+        private bool _startMenuOpen;
+        private bool _actionsMenuOpen;
+        private IReadOnlyList<StartOption> _startOptions = [];
+
+        private Visibility _overwatch;
+
+        private string _penaltyName = "";
+        private string _regionLabel = "";
+        private string _regionHint = "";
+        private Visibility _penaltyVisibility = Visibility.Collapsed;
+
+        private string? _rankImageSource;
+        private string _rankName = "";
+        private double _rankOpacity = 1.0;
+        private Visibility _rankVisibility = Visibility.Collapsed;
+        private Visibility _wow;
+
+
+        private Visibility _hotsPanelVisibility = Visibility.Collapsed;
+        private Visibility _noDataVisibility = Visibility.Collapsed;
+        private string _noDataTitle = "";
+        private string _noDataHint = "";
+        private Brush _panelTint = GameVisuals.TintFor(null);
+        private Brush _panelHoverBorder = GameVisuals.HoverBorderFor(null);
+        private Brush _stripSeparator = GameVisuals.StripSeparatorFor(null);
+
+        private IReadOnlyList<HeroChip> _heroChips = [];
+        private Visibility _heroChipsVisibility = Visibility.Collapsed;
+        private Visibility _heroEmptyVisibility = Visibility.Collapsed;
+        private string _heroOverflow = "";
+        private Visibility _heroOverflowVisibility = Visibility.Collapsed;
+        private string _heroCountText = "";
+
+        private string _chestsText = "";
+        private string _readAtText = "";
+
+        /// <summary>
+        ///     Since 21.08.2026 the name column has had two states, because the battletag is no
+        ///     longer typed but read: there is none until the first read, and until then
+        ///     the email carries the row. Without this case a lone <c>#</c> would stand there.
+        /// </summary>
+        private Visibility _battletagVisibility = Visibility.Visible;
+
+        private Visibility _nameFallbackVisibility = Visibility.Collapsed;
+        private string _nameFallback = "";
+
+        public AccountCardViewModel(AccountRegion row)
+        {
+            Row = row;
+            var account = row.Account;
+
+            // The symbols of THIS region, not of the account. Since 22.08.2026 the regions
+            // hang on the game, so an account played in Europe and America can well be a
+            // Heroes of the Storm one over there and a World of Warcraft one over here.
+            Overwatch = Shown(account.PlaysIn(Games.Overwatch, row.Region));
+            Hots = Shown(account.PlaysIn(Games.Hots, row.Region));
+            Diablo = Shown(account.PlaysIn(Games.Diablo, row.Region));
+            Wow = Shown(account.PlaysIn(Games.Wow, row.Region));
+        }
+
+        public AccountCardViewModel()
+        {
+        }
+
+        private static Visibility Shown(bool yes)
+        {
+            return yes ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        public Visibility Overwatch
+        {
+            get { return _overwatch; }
+            set { SetProperty(ref _overwatch, value); }
+        }
+
+        public Visibility Hots
+        {
+            get { return _hots; }
+            set { SetProperty(ref _hots, value); }
+        }
+
+        public Visibility Wow
+        {
+            get { return _wow; }
+            set { SetProperty(ref _wow, value); }
+        }
+
+        public Visibility Diablo
+        {
+            get { return _diablo; }
+            set { SetProperty(ref _diablo, value); }
+        }
+
+        /// <summary>
+        ///     The row: an account in ONE of its regions. Since 21.08.2026 this is the
+        ///     unit of the overview - whoever plays in Europe and Americas has two rows with
+        ///     two ranks, two hero lists and two gold balances.
+        ///     <para>
+        ///         Everything set here comes either from the account (email, password,
+        ///         game checkboxes, archive) or from the <b>game state of this one region</b>. The
+        ///         boundary between the two is the actual point of this setter.
+        ///     </para>
+        /// </summary>
+        public AccountRegion? Row
+        {
+            get { return _row; }
+            set
+            {
+                _row = value;
+                var account = value!.Account;
+
+                // The game state of THIS region - null if it was never read here. Every
+                // number below then falls back to the dash, and that is the
+                // difference to "has nothing": a 0 would be a statement we don't have.
+                var data = value.Hots;
+
+                // Is Heroes of the Storm played IN THIS REGION? Since 22.08.2026 that is the
+                // question everything below hangs on, and it is a different one from "does
+                // this account play HotS at all": the regions belong to the game. An American
+                // row of a European-only HotS account has no rank, no heroes and no penalty
+                // games - and must not show the ones from Europe.
+                var hots = account.PlaysIn(Games.Hots, value.Region);
+                var overwatch = account.PlaysIn(Games.Overwatch, value.Region);
+
+                if (overwatch && hots)
+                {
+                    ImageSource = "pack://application:,,,/UI/Images/overwatchhots_full.png";
+                }
+                else
+                {
+                    ImageSource = overwatch
+                        ? "pack://application:,,,/UI/Images/overwatch_full.png"
+                        : "pack://application:,,,/UI/Images/hots_full.png";
+                }
+
+                // The region abbreviation names the row. It is ALWAYS there, even for an
+                // account with only one region: a column that sometimes says something and sometimes
+                // not leaves it open, when skimming, whether the value is missing or does not apply.
+                RegionLabel = value.Region.ShortName();
+                RegionHint = Strings.Format("row.regionHint", value.Region.DisplayName());
+
+                // Only show rank if HotS is played at all and a tier is set.
+                //
+                // OPEN PLACEMENT MATCHES DIM THE MEDAL (0,4), they do not replace it.
+                // On 21.08.2026 a separate icon briefly stood here - the same magenta-colored
+                // circle that the game shows in the profile in place of the rank circle. It is
+                // gone again: the dimmed medal shows the rank of the previous season TOO, the
+                // separate icon threw it away and left only the tooltip. The circle is
+                // not lost in the process - it is now the icon for "no rank", see
+                // HotsRankImages.NoRank.
+                //
+                // WITHOUT A RANK AND WITH AN OPEN PLACEMENT the NoRank disc stands there, likewise
+                // dimmed: otherwise this state would be invisible in the row. Without a rank and
+                // without a placement, the spot stays empty - the rank is then simply nothing
+                // for the row to say.
+                var placements = hots && data is { PlacementsPending: true };
+                var rank = hots && data != null
+                    ? HotsRankImages.PathFor(data.Tier, data.Division)
+                    : null;
+                RankImageSource = rank ?? (placements ? HotsRankImages.NoRank : null);
+                RankVisibility = RankImageSource == null ? Visibility.Collapsed : Visibility.Visible;
+                RankName = RankLabel(hots, data, placements, rank != null);
+                RankOpacity = placements ? 0.4 : 1.0;
+
+                // Name column: the battletag, as soon as one has been read, otherwise the email.
+                // It is the account's identity anyway and the only value that
+                // exists for every one - an empty name plus "#" would look like an error by contrast.
+                BattletagVisibility = account.HasBattletag ? Visibility.Visible : Visibility.Collapsed;
+                NameFallbackVisibility = account.HasBattletag ? Visibility.Collapsed : Visibility.Visible;
+                NameFallback = account.Email;
+
+                // Penalty games: the row only shows the WARNING TRIANGLE, without a number, 18 points
+                // large in the top left corner - and only when > 0. The count is in the tooltip
+                // (PenaltyName); a dedicated property for it is deliberately gone, it
+                // would have no consumer. The icon sits OUTSIDE the panel and thereby survives
+                // a change of the game filter - the corner is free because the
+                // name column sits vertically centered.
+                var penalties = hots ? data?.PenaltyGames ?? 0 : 0;
+                PenaltyVisibility = penalties > 0 ? Visibility.Visible : Visibility.Collapsed;
+                PenaltyName = penalties == 1
+                    ? Strings.Current["row.penaltyOne"]
+                    : Strings.Format("row.penaltyMany", penalties);
+
+                // Heroes as a portrait strip instead of a bare number. At 380 points of card width
+                // there is room for this for the first time - in the old 280-wide card the game row
+                // had 7 of 246 points free, only a badge on the symbol fit there.
+                IReadOnlyList<HotsHero> heroes =
+                    hots ? HotsHeroCatalog.Resolve(data?.Heroes) : [];
+                HeroChips = BuildHeroChips(heroes);
+                HeroChipsVisibility = heroes.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                HeroEmptyVisibility = heroes.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+                HeroOverflow = heroes.Count > HeroChipLimit ? $"+{heroes.Count - HeroChipLimit}" : "";
+                HeroOverflowVisibility =
+                    heroes.Count > HeroChipLimit ? Visibility.Visible : Visibility.Collapsed;
+                // A dash and no 0, when it was never read AND nothing is entered:
+                // "0 of 90" claims the account owns not a single hero - a
+                // statement that does not exist without reading. Same rule as for the four
+                // stats. If heroes are entered, the number is valid even without a read timestamp:
+                // then they are hand-maintained.
+                HeroCountText = heroes.Count == 0 && data?.ReadAt == null
+                    ? $"– / {HotsHeroCatalog.Count}"
+                    : $"{heroes.Count} / {HotsHeroCatalog.Count}";
+                HeroStripHint = HeroLabel(heroes);
+
+                // The stats that were read. They now sit IN the HotS panel and therefore need
+                // no dedicated visibility anymore: the panel is only visible when HotS is chosen,
+                // and choosable only if the account has the game at all.
+                // Chests were added as a fourth column - at 380 points of width there is room,
+                // and a number with a call to action does not belong in a tooltip.
+                GoldText = Amount(data?.Gold);
+                ShardsText = Amount(data?.Shards);
+                GemsText = Amount(data?.Gems);
+                ChestsText = Amount(data?.LootChests);
+                CurrencyHint = CurrencyLabel(hots, data);
+                ReadAtText = data?.ReadAt == null
+                    ? Strings.Current["row.neverRead"]
+                    : Strings.Format("row.readAt", $"{data.ReadAt:yyyy-MM-dd HH:mm}");
+
+                // The start menu hangs on the same checkboxes as the strip and is therefore
+                // built along here - not as a computed property, otherwise every change would
+                // have to trigger the notification by hand.
+                StartOptions = BuildStartOptions(hots);
+                HasStartOptions = StartOptions.Count > 0;
+
+                // The strip, then the preselection. Heroes of the Storm first, because only there
+                // is any data at all; if the account doesn't have it, the choice falls back to the
+                // first game it does have.
+                SelectGame(PreferredGame(AvailableGames(account, value.Region)));
+
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        ///     The account of this row. Shorthand for <c>Row.Account</c> - and deliberately a
+        ///     computed property instead of a second field: two fields side by side would be
+        ///     two truths, one of which could go stale.
+        /// </summary>
+        public BattlenetAccount? Account => _row?.Account;
+
+        /// <summary>The account's gold, formatted. A dash means "never read yet".</summary>
+        public string GoldText
+        {
+            get { return _goldText; }
+            set { SetProperty(ref _goldText, value); }
+        }
+
+        public string ShardsText
+        {
+            get { return _shardsText; }
+            set { SetProperty(ref _shardsText, value); }
+        }
+
+        public string GemsText
+        {
+            get { return _gemsText; }
+            set { SetProperty(ref _gemsText, value); }
+        }
+
+        /// <summary>
+        ///     Unopened loot chests as the fourth column. Until the rebuild they only stood in the
+        ///     tooltip, and that was the wrong place: 24 chests mean "there is something to
+        ///     get here", and a number with a call to action belongs on the card.
+        /// </summary>
+        public string ChestsText
+        {
+            get { return _chestsText; }
+            set { SetProperty(ref _chestsText, value); }
+        }
+
+        /// <summary>
+        ///     When it was last read, in plain text under the stats. Without the timestamp
+        ///     none of the numbers can be placed in context - 1.800 gold from today and 1.800 gold from
+        ///     three months ago look the same.
+        /// </summary>
+        public string ReadAtText
+        {
+            get { return _readAtText; }
+            set { SetProperty(ref _readAtText, value); }
+        }
+
+        /// <summary>
+        ///     The tooltip of the stats row. It carries what has no room on the card:
+        ///     the account level and once more the read timestamp in full format.
+        ///     <para>
+        ///         Chests and read timestamp have stood <b>on</b> the card since the rebuild - the
+        ///         tooltip was the wrong place for a number that means "there is something to
+        ///         get here".
+        ///     </para>
+        ///     <para>
+        ///         The row no longer needs its own visibility: it sits in the
+        ///         HotS panel, and that is only visible when HotS is chosen - choosable
+        ///         in turn only if the account has the game. A second condition with
+        ///         the same meaning would be exactly the place where two truths
+        ///         drift apart.
+        ///     </para>
+        /// </summary>
+        public string CurrencyHint
+        {
+            get { return _currencyHint; }
+            set { SetProperty(ref _currencyHint, value); }
+        }
+
+        public string? RankImageSource
+        {
+            get { return _rankImageSource; }
+            set { SetProperty(ref _rankImageSource, value); }
+        }
+
+        public Visibility RankVisibility
+        {
+            get { return _rankVisibility; }
+            set { SetProperty(ref _rankVisibility, value); }
+        }
+
+        /// <summary>Name and discriminator of the name column - visible as soon as a battletag has been read.</summary>
+        public Visibility BattletagVisibility
+        {
+            get { return _battletagVisibility; }
+            set { SetProperty(ref _battletagVisibility, value); }
+        }
+
+        /// <summary>The opposite state: the email carries the row as long as there is no battletag yet.</summary>
+        public Visibility NameFallbackVisibility
+        {
+            get { return _nameFallbackVisibility; }
+            set { SetProperty(ref _nameFallbackVisibility, value); }
+        }
+
+        public string NameFallback
+        {
+            get { return _nameFallback; }
+            set { SetProperty(ref _nameFallback, value); }
+        }
+
+        /// <summary>Plain text for the tooltip, e.g. "Gold 3" or "Gold 3 - placements pending".</summary>
+        public string RankName
+        {
+            get { return _rankName; }
+            set { SetProperty(ref _rankName, value); }
+        }
+
+        /// <summary>Dimmed as long as placement matches are outstanding - the rank does not count yet then.</summary>
+        public double RankOpacity
+        {
+            get { return _rankOpacity; }
+            set { SetProperty(ref _rankOpacity, value); }
+        }
+
+        /// <summary>
+        ///     The rank in plain text - <b>only still</b> as a tooltip on the medal.
+        ///     <para>
+        ///         Until 20.08.2026 there was additionally a short form next to the medal
+        ///         ("Gold 3", "Placements pending", "Unranked"). It is gone because it
+        ///         cost 112 points and said little that the image next to it doesn't already show:
+        ///         the 28 medals carry tier AND division, and with open
+        ///         placement matches the medal is dimmed. What the image cannot say
+        ///         stands here - which is why this text must cover all three cases. With an
+        ///         open placement it is the only place that NAMES the state: the
+        ///         medal shows the rank of the previous season, that it does not count yet is said only by the
+        ///         opacity.
+        ///     </para>
+        /// </summary>
+        private static string RankLabel(bool hots, HotsRegionData? data,
+            bool placements, bool hasRank)
+        {
+            if (!hots) return "";
+
+            var name = data?.RankName() ?? "";
+            if (!placements) return name;
+            return hasRank
+                ? Strings.Format("row.rankPlacements", name)
+                : Strings.Current["row.placementsPending"];
+        }
+
+        /// <summary>
+        ///     Two letters for the region of this row - EU, AM or AS. No image: the
+        ///     game has no region symbols, and three invented ones would be three symbols that
+        ///     nobody knows.
+        /// </summary>
+        public string RegionLabel
+        {
+            get { return _regionLabel; }
+            private set { SetProperty(ref _regionLabel, value); }
+        }
+
+        /// <summary>The full name plus the sentence saying what the values next to it refer to.</summary>
+        public string RegionHint
+        {
+            get { return _regionHint; }
+            private set { SetProperty(ref _regionHint, value); }
+        }
+
+        public Visibility PenaltyVisibility
+        {
+            get { return _penaltyVisibility; }
+            set { SetProperty(ref _penaltyVisibility, value); }
+        }
+
+        /// <summary>Plain text for the tooltip, e.g. "3 penalty games".</summary>
+        public string PenaltyName
+        {
+            get { return _penaltyName; }
+            set { SetProperty(ref _penaltyName, value); }
+        }
+
+        /// <summary>
+        ///     The first <see cref="HeroChipLimit" /> portraits of the strip. How many there
+        ///     really are stands as a number next to it - the strip is the sample, not
+        ///     the actual statement.
+        /// </summary>
+        public IReadOnlyList<HeroChip> HeroChips
+        {
+            get { return _heroChips; }
+            private set { SetProperty(ref _heroChips, value); }
+        }
+
+        public Visibility HeroChipsVisibility
+        {
+            get { return _heroChipsVisibility; }
+            private set { SetProperty(ref _heroChipsVisibility, value); }
+        }
+
+        /// <summary>
+        ///     Visible when no hero is entered. An empty strip would be a hole in the
+        ///     layout and would leave open whether it was never read or there is nothing there - the sentence
+        ///     in its place says it.
+        /// </summary>
+        public Visibility HeroEmptyVisibility
+        {
+            get { return _heroEmptyVisibility; }
+            private set { SetProperty(ref _heroEmptyVisibility, value); }
+        }
+
+        /// <summary>"+19", when there are more heroes than the strip shows.</summary>
+        public string HeroOverflow
+        {
+            get { return _heroOverflow; }
+            private set { SetProperty(ref _heroOverflow, value); }
+        }
+
+        public Visibility HeroOverflowVisibility
+        {
+            get { return _heroOverflowVisibility; }
+            private set { SetProperty(ref _heroOverflowVisibility, value); }
+        }
+
+        /// <summary>"29 / 90" - the statement, for which the strip is only the sample.</summary>
+        public string HeroCountText
+        {
+            get { return _heroCountText; }
+            private set { SetProperty(ref _heroCountText, value); }
+        }
+
+        /// <summary>
+        ///     Tooltip of the hero strip: count and breakdown by role. Now hangs on the
+        ///     strip and no longer on the game symbol - that, since the strip, is no longer a
+        ///     start button but a toggle.
+        /// </summary>
+        public string HeroStripHint
+        {
+            get { return _hotsHint; }
+            private set { SetProperty(ref _hotsHint, value); }
+        }
+
+        /// <summary>
+        ///     The entries of the start menu, one per game and use case. Only for
+        ///     games the account has at all - a menu with entries for
+        ///     titles not played would be noise.
+        /// </summary>
+        public IReadOnlyList<StartOption> StartOptions
+        {
+            get { return _startOptions; }
+            private set { SetProperty(ref _startOptions, value); }
+        }
+
+        /// <summary>
+        ///     Whether the menu has anything to offer at all.
+        ///     <para>
+        ///         Since "Open Battle.net" is gone, <c>false</c> really occurs: for Overwatch,
+        ///         WoW and Diablo there is still no path stored, so an account without the
+        ///         HotS checkbox has not a single way to start. This is a transition and not a
+        ///         final state - with the three missing EXE paths, one entry each will return.
+        ///     </para>
+        /// </summary>
+        public bool HasStartOptions
+        {
+            get { return _hasStartOptions; }
+            private set
+            {
+                if (!SetProperty(ref _hasStartOptions, value)) return;
+                OnPropertyChanged(nameof(StartVisibility));
+            }
+        }
+
+        /// <summary>
+        ///     The start button is hidden instead of dimmed when there is nothing to start.
+        ///     <para>
+        ///         A permanently dead button is noise - it says "something could work here" and
+        ///         never reveals what's missing. The column alignment does not suffer from this: the button
+        ///         column is <c>Auto</c> wide and sits on the right, so the three small buttons
+        ///         do not move, instead the panel on the left gets wider.
+        ///     </para>
+        /// </summary>
+        public Visibility StartVisibility => _hasStartOptions ? Visibility.Visible : Visibility.Collapsed;
+
+        /// <summary>
+        ///     Whether the start menu is expanded. Sits in the ViewModel and not in the XAML, because
+        ///     the menu must close when something is selected: <c>StaysOpen="False"</c> reacts
+        ///     only to clicks <b>outside</b> the popup. Every command therefore resets the value
+        ///     first thing.
+        /// </summary>
+        public bool StartMenuOpen
+        {
+            get { return _startMenuOpen; }
+            set { SetProperty(ref _startMenuOpen, value); }
+        }
+
+        /// <summary>
+        ///     Whether the actions menu is expanded - copy email, copy password,
+        ///     edit, archive.
+        ///     <para>
+        ///         Until 21.08.2026 the four stood as individual buttons in the row and
+        ///         took up 148 points. They collapsed into one because three of them are rarely
+        ///         needed and all four side by side looked like a toolbar;
+        ///         the width gained now sits in the hero strip.
+        ///     </para>
+        ///     <para>
+        ///         Same mechanism as <see cref="StartMenuOpen" />: <c>StaysOpen="False"</c>
+        ///         reacts only to clicks <b>outside</b>, so each of the four
+        ///         commands resets the value first thing.
+        ///     </para>
+        /// </summary>
+        public bool ActionsMenuOpen
+        {
+            get { return _actionsMenuOpen; }
+            set { SetProperty(ref _actionsMenuOpen, value); }
+        }
+
+        /// <summary>
+        ///     "42 of 90 heroes" plus one line per role that is represented. Roles without heroes
+        ///     stay off - a list with six zeros says less than three real lines.
+        /// </summary>
+        /// <summary>
+        ///     A read number for the card. <c>null</c> becomes a dash and
+        ///     not a 0: "never read yet" and "has nothing" are two statements, and only
+        ///     the second one should stand there as a digit.
+        /// </summary>
+        private static string Amount(int? value)
+        {
+            return value == null ? "–" : value.Value.ToString("N0", CultureInfo.InvariantCulture);
+        }
+
+        private static string CurrencyLabel(bool hots, HotsRegionData? data)
+        {
+            if (!hots) return "";
+
+            var lines = new List<string>
+            {
+                $"{Strings.Current["currency.gold"]} {Amount(data?.Gold)}",
+                $"{Strings.Current["currency.shards"]} {Amount(data?.Shards)}",
+                $"{Strings.Current["currency.gems"]} {Amount(data?.Gems)}",
+                $"{Strings.Current["currency.level"]} {Amount(data?.AccountLevel)}",
+                $"{Strings.Current["currency.chests"]} {Amount(data?.LootChests)}"
+            };
+
+            lines.Add(data?.ReadAt == null
+                ? Strings.Current["row.neverRead"]
+                : Strings.Format("row.readAt", $"{data.ReadAt:yyyy-MM-dd HH:mm}"));
+
+            return string.Join("\n", lines);
+        }
+
+        private static string HeroLabel(IReadOnlyList<HotsHero> heroes)
+        {
+            if (heroes.Count == 0) return "";
+
+            var lines = HotsHeroRoles.InDisplayOrder
+                .Select(role => new { Role = role, Count = heroes.Count(hero => hero.Role == role) })
+                .Where(entry => entry.Count > 0)
+                .Select(entry => $"{entry.Role.DisplayName()}: {entry.Count}");
+
+            return Strings.Format("row.heroCount", heroes.Count, HotsHeroCatalog.Count)
+                   + "\n" + string.Join("\n", lines);
+        }
+
+        /// <summary>
+        ///     Builds the entries of the start menu. All share the same command instance
+        ///     and differ only in the parameter.
+        ///     <para>
+        ///         All four HotS entries have been usable since 20.08.2026; "Open loot chests"
+        ///         previously stood there dimmed, because the loot page was calibrated, but the
+        ///         flow behind it was still missing.
+        ///     </para>
+        /// </summary>
+        private IReadOnlyList<StartOption> BuildStartOptions(bool hots)
+        {
+            var command = RunStartOptionCommand;
+            var options = new List<StartOption>();
+
+            if (hots)
+            {
+                // The order is not just taste: a click on the game symbol takes
+                // the FIRST entry. That's why the case you want most often stands on top.
+                options.Add(new StartOption(HotsIcon, Strings.Current["start.play"],
+                    Strings.Current["start.playHint"], ModeStart, true, command));
+
+                options.Add(new StartOption(HotsIcon, Strings.Current["start.playRead"],
+                    Strings.Current["start.playReadHint"], ModePlay, true, command));
+                options.Add(new StartOption(HotsIcon, Strings.Current["start.refresh"],
+                    Strings.Current["start.refreshHint"], ModeRefresh, true, command));
+                options.Add(new StartOption(HotsIcon, Strings.Current["start.chests"],
+                    Strings.Current["start.chestsHint"], ModeChests, true, command));
+            }
+
+            return options;
+        }
+
+        /// <summary>
+        ///     The same accent once more, as a gradient across the whole row width. It
+        ///     does not repeat the strip, it carries it further: the row gets the
+        ///     mood of the game, without a second symbol standing anywhere.
+        ///     <para>
+        ///         It lies BEHIND the content and not on top of it - a layer on top would
+        ///         also tint portraits and medal.
+        ///     </para>
+        /// </summary>
+        public Brush PanelTint
+        {
+            get { return _panelTint; }
+            private set { SetProperty(ref _panelTint, value); }
+        }
+
+        /// <summary>The border of the row under the pointer, in the game's accent.</summary>
+        public Brush PanelHoverBorder
+        {
+            get { return _panelHoverBorder; }
+            private set { SetProperty(ref _panelHoverBorder, value); }
+        }
+
+        /// <summary>
+        ///     The separator ring between the overlapping hero portraits. It is a hole and
+        ///     therefore carries the color that lies behind it at its spot - since the
+        ///     tint this is no longer simply the row's base color, but a value
+        ///     that <see cref="GameVisuals" /> derives from the same gradient.
+        /// </summary>
+        public Brush StripSeparator
+        {
+            get { return _stripSeparator; }
+            private set { SetProperty(ref _stripSeparator, value); }
+        }
+
+        public Visibility HotsPanelVisibility
+        {
+            get { return _hotsPanelVisibility; }
+            private set { SetProperty(ref _hotsPanelVisibility, value); }
+        }
+
+        /// <summary>
+        ///     Visible for Overwatch, WoW and Diablo. For these three there is
+        ///     one <c>bool</c> each in <see cref="BattlenetAccount" /> and nothing else - the panel
+        ///     says exactly that, instead of showing an empty area that looks like an error.
+        /// </summary>
+        public Visibility NoDataVisibility
+        {
+            get { return _noDataVisibility; }
+            private set { SetProperty(ref _noDataVisibility, value); }
+        }
+
+        public string NoDataTitle
+        {
+            get { return _noDataTitle; }
+            private set { SetProperty(ref _noDataTitle, value); }
+        }
+
+        /// <summary>What will stand there one day - named, so that the gap is an intention.</summary>
+        public string NoDataHint
+        {
+            get { return _noDataHint; }
+            private set { SetProperty(ref _noDataHint, value); }
+        }
+
+        /// <summary>
+        ///     Which game the row shows when built.
+        ///     <para>
+        ///         First choice is the game filter of the filter bar (<see cref="GameFocus.Current" />):
+        ///         whoever filters on Overwatch wants to see Overwatch numbers and not switch again
+        ///         in every row. If this account doesn't have the game, it falls back to HotS
+        ///         and then to the first one it does have - exactly as before the exclusive
+        ///         filter. With a filter set, the fallback doesn't occur at all, because then only
+        ///         accounts with this game get through; without a filter it is the normal case.
+        ///     </para>
+        ///     <para>
+        ///         It is the ONLY place that decides this. Until 20.08.2026 every
+        ///         row carried four clickable tabs and was allowed to deviate from the filter; they
+        ///         fell away because they offered a second way to the same choice and for that
+        ///         cost 146 points of width. That now sits in the rank medal and the
+        ///         hero circles.
+        ///     </para>
+        /// </summary>
+        private static string? PreferredGame(IReadOnlyList<string> games)
+        {
+            if (GameFocus.Current != null && games.Contains(GameFocus.Current))
+                return GameFocus.Current;
+
+            return games.Contains(GameVisuals.Hots) ? GameVisuals.Hots : games.FirstOrDefault();
+        }
+
+        /// <summary>Switches the panel to a game - or to none at all.</summary>
+        private void SelectGame(string? game)
+        {
+            var hots = game == GameVisuals.Hots;
+            HotsPanelVisibility = hots ? Visibility.Visible : Visibility.Collapsed;
+            NoDataVisibility = hots || game == null ? Visibility.Collapsed : Visibility.Visible;
+            PanelTint = GameVisuals.TintFor(game);
+            PanelHoverBorder = GameVisuals.HoverBorderFor(game);
+            StripSeparator = GameVisuals.StripSeparatorFor(game);
+            NoDataTitle = game == null
+                ? ""
+                : Strings.Format("row.noData", GameVisuals.LabelFor(game));
+            NoDataHint = game switch
+            {
+                GameVisuals.Overwatch => Strings.Current["row.noDataOverwatch"],
+                GameVisuals.Wow => Strings.Current["row.noDataWow"],
+                GameVisuals.Diablo => Strings.Current["row.noDataDiablo"],
+                _ => ""
+            };
+        }
+
+        /// <summary>
+        ///     Which games this account has at all, in the order from
+        ///     <see cref="GameVisuals.InDisplayOrder" />. The list is only still needed by
+        ///     <see cref="PreferredGame" /> - exactly one of it is shown.
+        /// </summary>
+        private static IReadOnlyList<string> AvailableGames(BattlenetAccount account,
+            BattlenetRegion region)
+        {
+            // The games of THIS region, not of the account. Otherwise the panel of a game
+            // could be preselected that is not played here at all - the row would then show
+            // an American rank the account has never had.
+            return GameVisuals.InDisplayOrder.Where(game => account.PlaysIn(game, region)).ToList();
+        }
+
+        /// <summary>
+        ///     The portraits of the strip. <see cref="HeroChip" /> comes from the hero picker
+        ///     and is used the same way by the filter bar and the account dialog - ONE
+        ///     record for all three stacks. A dedicated version for the card stood here
+        ///     briefly and shadowed the existing one; the compiler reported it, otherwise it
+        ///     would have become exactly the duplication that the derivation rules in this repo
+        ///     warn against.
+        /// </summary>
+        private static IReadOnlyList<HeroChip> BuildHeroChips(IReadOnlyList<HotsHero> heroes)
+        {
+            return heroes.Take(HeroChipLimit).Select(HeroChip.For).ToList();
+        }
+
+        public string ImageSource
+        {
+            get { return _imageSource; }
+            set
+            {
+                _imageSource = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        ///     Hangs on every entry of the start menu; the parameter says which
+        ///     use case is meant. Replaces the former right-click on the HotS symbol:
+        ///     that did the same thing as "Refresh data", but was written down nowhere.
+        /// </summary>
+        public ICommand RunStartOptionCommand
+        {
+            get { return _runStartOptionCommand ??= new RelayCommand<string>(RunStartOption); }
+        }
+
+        /// <summary>Puts the email on the clipboard.</summary>
+        public ICommand CopyUsernameCommand
+        {
+            get { return _copyUsernameCommand ??= new RelayCommand(CopyUsername); }
+        }
+
+        /// <summary>
+        ///     Puts the password on the clipboard. The app does type it in itself for Heroes of the
+        ///     Storm, but for every other game and for the Battle.net website
+        ///     there is otherwise no way to get at the stored password.
+        /// </summary>
+        public ICommand CopyPasswordCommand
+        {
+            get { return _copyPasswordCommand ??= new RelayCommand(CopyPassword); }
+        }
+
+        /// <summary>
+        ///     Archives this account or brings it back - the fourth button of the row.
+        ///     <para>
+        ///         It is deliberately not called "delete" and doesn't delete anything either. The credentials
+        ///         are the actual value of this app; a mis-click in a list with 27
+        ///         identical-looking rows must not be the last step. Whoever really
+        ///         wants to delete finds the entry again in the archive and can clean up
+        ///         <c>data.yaml</c> by hand.
+        ///     </para>
+        /// </summary>
+        public ICommand ArchiveCommand
+        {
+            get { return _archiveCommand ??= new RelayCommand(ToggleArchive); }
+        }
+
+        /// <summary>
+        ///     Label of the archive entry in the actions menu. Two words, because next to it
+        ///     stand three other entries that also only have two; the reasoning is carried by
+        ///     <see cref="ArchiveHint" /> as a tooltip.
+        /// </summary>
+        public string ArchiveLabel =>
+            Strings.Current[Account is { Inactive: true } ? "row.restore" : "row.archive"];
+
+        /// <summary>Tooltip of the archive entry - it alone carries the direction of the gesture.</summary>
+        public string ArchiveHint => Strings.Current[Account is { Inactive: true }
+            ? "row.restoreHint"
+            : "row.archiveHint"];
+
+        /// <summary>Arrow into the box: archive.</summary>
+        public Visibility ArchiveDownVisibility =>
+            Account is { Inactive: true } ? Visibility.Collapsed : Visibility.Visible;
+
+        /// <summary>Arrow out of the box: bring back. Only visible in the archive.</summary>
+        public Visibility ArchiveUpVisibility =>
+            Account is { Inactive: true } ? Visibility.Visible : Visibility.Collapsed;
+
+        public ICommand OpenSettingsCommand
+        {
+            get
+            {
+                if (_openSettingsCommand == null)
+                {
+                    _openSettingsCommand = new RelayCommand(
+                        OpenSettings,
+                        CanOpenSettings
+                    );
+                }
+
+                return _openSettingsCommand;
+            }
+        }
+
+        /// <summary>
+        ///     An entry from the start menu. Closes the menu first thing - after that the
+        ///     flow can run for minutes, and an expanded menu over the card would be in the
+        ///     way the whole time.
+        /// </summary>
+        private async void RunStartOption(string? mode)
+        {
+            StartMenuOpen = false;
+
+            var account = Account;
+            if (account == null) return;
+
+            switch (mode)
+            {
+                case ModeStart:
+                    await StartHots(account, SessionPlan.JustPlay);
+                    break;
+                case ModePlay:
+                    await StartHots(account, SessionPlan.PlayAndRead);
+                    break;
+                case ModeRefresh:
+                    await StartHots(account, SessionPlan.RefreshOnly);
+                    break;
+                case ModeChests:
+                    await StartHots(account, SessionPlan.Chests);
+                    break;
+            }
+        }
+
+        /// <summary>
+        ///     Starts Heroes of the Storm and signs the account in - without Battle.net and without
+        ///     a dedicated Windows user. What happens afterwards stands in <see cref="SessionPlan" />.
+        ///     <para>
+        ///         If the game stays open, the session is deliberately NOT disposed:
+        ///         <see cref="GameSession.Dispose" /> ends the game.
+        ///     </para>
+        ///     <para>
+        ///         The flow runs over <c>Task.Run</c>: it waits for windows and screens and
+        ///         types with pauses between keystrokes. On the UI thread the
+        ///         application would stand still for minutes in the meantime.
+        ///     </para>
+        /// </summary>
+        private async Task StartHots(BattlenetAccount account, SessionPlan plan)
+        {
+            Dialogs.Toast.ShowInformation(plan switch
+            {
+                { OpenChests: true } => $"Opening chests for {account.Battletag()}",
+                { Read: false } => $"Starting Heroes of the Storm for {account.Battletag()}",
+                { CloseAfterwards: false } =>
+                    $"Starting Heroes of the Storm for {account.Battletag()} and refreshing data",
+                _ => $"Refreshing data for {account.Battletag()}"
+            });
+
+            try
+            {
+                await RunSession(account, plan);
+            }
+            catch (Exception e)
+            {
+                // The messages from GameSession are written for humans (wrong
+                // window size, screen didn't come up, game not found) - therefore show them
+                // directly instead of wrapping them in a generic phrase.
+                Log.Error(e, "{Battletag}: start failed", account.Battletag());
+                Dialogs.Toast.ShowError(e.Message);
+            }
+        }
+
+        /// <summary>
+        ///     Toggles the archive flag. The row disappears from the view afterwards -
+        ///     that is the feedback, and that's why there is no toast for it.
+        /// </summary>
+        private void ToggleArchive()
+        {
+            ActionsMenuOpen = false;
+            if (Account is not { } account) return;
+            _battlenetAccountGateway.SetArchived(account, !account.Inactive);
+        }
+
+        private void CopyUsername()
+        {
+            ActionsMenuOpen = false;
+            CopyToClipboard(Account?.Email, "E-mail");
+        }
+
+        private void CopyPassword()
+        {
+            ActionsMenuOpen = false;
+            CopyToClipboard(Account?.Password, "Password");
+        }
+
+        /// <summary>
+        ///     Puts a value on the clipboard.
+        ///     <para>
+        ///         Two cases that the earlier version was missing, and both are not an exception
+        ///         but a piece of information: an empty value - <c>Clipboard.SetText</c> throws
+        ///         then - and a clipboard currently held by another process. Without
+        ///         catching, both end up as raw exception text in the error toast.
+        ///     </para>
+        /// </summary>
+        private void CopyToClipboard(string? value, string label)
+        {
+            var account = Account;
+            if (account == null) return;
+
+            if (string.IsNullOrEmpty(value))
+            {
+                Dialogs.Toast.ShowWarning(Strings.Format("toast.copyEmpty", label));
+                return;
+            }
+
+            try
+            {
+                Clipboard.SetText(value);
+                _battlenetAccountGateway.UpdateInteraction(account);
+                Dialogs.Toast.ShowInformation(Strings.Format("toast.copied", label));
+            }
+            catch (Exception e)
+            {
+                // Deliberately without the value in the log - this is also the password path.
+                Log.Error(e, "{Battletag}: clipboard not reachable", account.Battletag());
+                Dialogs.Toast.ShowError(Strings.Current["toast.clipboardBusy"]);
+            }
+        }
+
+        private bool CanOpenSettings()
+        {
+            return true;
+        }
+
+        private void OpenSettings()
+        {
+            ActionsMenuOpen = false;
+            ShowDialog(viewModel => Dialogs.DialogService.ShowDialog(this, viewModel));
+        }
+
+        /// <summary>
+        ///     Starts, signs in and reads - the shared flow behind all four gestures.
+        ///     <para>
+        ///         Without <see cref="SessionPlan.Read" /> it's over after signing in. Nothing is
+        ///         saved either then and <c>HotsReadAt</c> is not set: it wasn't
+        ///         read after all, and a timestamp without a measurement would be worse than none - it
+        ///         would report an empty hero list as "read, owns nothing".
+        ///     </para>
+        ///     <para>
+        ///         Signing in and reading are handled separately: if reading fails,
+        ///         the start still succeeded and the game is running. A shared
+        ///         error message would make you believe you couldn't play.
+        ///     </para>
+        ///     <para>
+        ///         The three read steps are likewise secured individually. They don't depend
+        ///         on one another: the rank stands on a different screen than the heroes, and the
+        ///         header on every one. If the collection balks, the rank should still
+        ///         arrive.
+        ///     </para>
+        ///     <para>
+        ///         All reading runs in the background. Capturing and clicking are blocking
+        ///         calls, and the collection needs over a minute - on the UI thread
+        ///         the app would stand still that long. That's why the read steps only collect
+        ///         their messages; they are shown here, after returning.
+        ///     </para>
+        /// </summary>
+        private async Task RunSession(BattlenetAccount account, SessionPlan plan)
+        {
+            var progress = new Progress<string>(step =>
+                Log.Information("{Battletag}: {Step}", account.Battletag(), step));
+
+            // The UI fetches the path AND the region and hands them in: Backend/Automation doesn't
+            // know the gateways, and that direction is meant to stay that way.
+            //
+            // THE REGION IS THAT OF THE ROW, no longer a preselection on the account. This way
+            // the same battletag signs in via the Europe row in Europe and via the
+            // Americas row in Americas - and whatever is read afterwards ends up in the game state of
+            // exactly this region.
+            var region = _row!.Region;
+            var gamePath = SettingsGateway.Instance.HotsPath;
+            var session = await Task.Run(() =>
+                GameSession.StartAndLogin(account, gamePath, region, progress));
+            _battlenetAccountGateway.UpdateInteraction(account);
+            Dialogs.Toast.ShowInformation(Strings.Format("toast.signedIn", account.Battletag()));
+
+            // Pure playing ends here. The session is deliberately not disposed - that
+            // would end the game, and the human wants to get into it right now.
+            if (!plan.Read) return;
+
+            var changes = new List<string>();
+            var problems = new List<string>();
+
+            // HotsFor and not HotsIn: this is a write, so the record must
+            // come into being if it doesn't exist yet. It stays justified even if
+            // every single read step fails - ReadAt below stamps the attempt.
+            var data = account.HotsFor(region);
+
+            try
+            {
+                await Task.Run(async () =>
+                {
+                    // Chests FIRST: they change shards, gold and occasionally the hero list.
+                    // Read afterwards the stored state is correct, read before it would be stale immediately.
+                    if (plan.OpenChests) await OpenChests(session, account, progress, changes, problems);
+
+                    await ReadProfile(session, account, data, changes, problems);
+                    await ReadPenalty(session, account, data, changes, problems);
+                    await ReadHeader(session, account, data, changes, problems);
+                    await ReadHeroes(session, account, data, progress, changes, problems);
+                });
+
+                data.ReadAt = DateTime.Now;
+                _battlenetAccountGateway.AddOrUpdate(account);
+
+
+                // Resets the row state - medal, tooltip, hero count and opacity
+                // depend on it. Must happen on the UI thread, hence here.
+                // Setting the same pair once more is enough: the setter recalculates everything,
+                // and the values underneath have just changed.
+                Row = _row;
+
+                foreach (var problem in problems) Dialogs.Toast.ShowWarning(problem);
+                Dialogs.Toast.ShowInformation(changes.Count == 0
+                    ? Strings.Format("toast.nothingChanged", account.Battletag())
+                    : $"{account.Battletag()}: {string.Join(", ", changes)}");
+
+                // DONE MARKER: if the game stays open, the client would otherwise stand on some
+                // screen of the collection, and whoever comes back to the machine can't tell whether the
+                // app is done or still paging through. On ARAM it is done - and you can
+                // press "Ready" right away.
+                //
+                // The condition is DERIVED and not a fifth switch on SessionPlan: what is meant
+                // is exactly the case "read and left open", i.e. PlayAndRead. Where it is
+                // closed afterwards, nobody would see the marker anyway.
+                if (!plan.CloseAfterwards) await Task.Run(() => PlayScreen.ShowAramAsync(session));
+            }
+            finally
+            {
+                if (plan.CloseAfterwards) session.Dispose();
+            }
+        }
+
+        /// <summary>
+        ///     Opens all unopened loot chests. Runs before the read-out, not after.
+        ///     <para>
+        ///         Own error branch just like the read steps: if the opening gets stranded, rank,
+        ///         stats and heroes should still arrive. The counter in the header is
+        ///         re-read right afterwards anyway and then carries the real state.
+        ///     </para>
+        /// </summary>
+        private static async Task OpenChests(GameSession session, BattlenetAccount account,
+            IProgress<string> progress, List<string> changes, List<string> problems)
+        {
+            try
+            {
+                var result = await LootOpener.OpenAllAsync(session, progress);
+                Log.Information("{Battletag}: {Note}", account.Battletag(), result.Note);
+
+                if (result.Opened > 0)
+                    changes.Add(result.Opened == 1
+                        ? Strings.Current["change.chestOne"]
+                        : Strings.Format("change.chestMany", result.Opened));
+
+                // Everything except "none left at the end" is a problem - including the case that the
+                // counter was no longer readable (null). That there was no chest at all is not one.
+                if (result.Remaining != 0) problems.Add(result.Note);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "{Battletag}: opening chests failed", account.Battletag());
+                problems.Add(Strings.Format("problem.chestsFailed", e.Message));
+            }
+        }
+
+        /// <summary>
+        ///     Reads rank, placement status and account level from the profile overlay and
+        ///     adopts what was really there.
+        ///     <para>
+        ///         Without confirmation, and that is a deliberate reversal: as long as reading
+        ///         was its own button, the edit dialog opened afterwards. Now it hangs
+        ///         on the start, and whoever wants to start in order to play shouldn't first switch
+        ///         back to the app. This is only bearable because every value is secured
+        ///         individually - "no idea" is a valid answer and writes nothing - and
+        ///         because the toast names every change in plain text.
+        ///     </para>
+        ///     <para>
+        ///         <b>With open placement matches the rank stays as is.</b> The overlay then
+        ///         shows the word "Placement" instead of a tier; the stored rank is
+        ///         that of the previous season and not an invalid value. It is not cleared, only the
+        ///         display changes.
+        ///     </para>
+        ///     <para>
+        ///         <b>Identity comes before everything else.</b> If the overlay shows a different
+        ///         battletag than the stored one, nothing is written here - then
+        ///         <see cref="AdoptRenamedBattletag" /> decides whether that was a rename
+        ///         or a foreign screen. Only what comes back from there goes on to
+        ///         <see cref="ApplyProfile" />.
+        ///     </para>
+        /// </summary>
+        private static async Task ReadProfile(GameSession session, BattlenetAccount account,
+            HotsRegionData data, List<string> changes, List<string> problems)
+        {
+            try
+            {
+                var reading = await ProfileReader.ReadAsync(session, account);
+                Log.Information("{Battletag}: {Note}", account.Battletag(), reading.Note);
+
+                // If the battletag doesn't match, the identity is open and the values might
+                // belong to a foreign account. Clarify first, then write - and if it
+                // can't be clarified, don't write at all.
+                if (!reading.Matches)
+                {
+                    var confirmed = await AdoptRenamedBattletag(session, account, reading, changes, problems);
+                    if (confirmed == null) return;
+                    reading = confirmed;
+                }
+
+                ApplyProfile(reading, data, changes, problems);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "{Battletag}: reading the profile failed", account.Battletag());
+                problems.Add(Strings.Format("problem.profileFailed", e.Message));
+            }
+        }
+
+        /// <summary>
+        ///     The profile shows a different battletag than the stored one. Two explanations
+        ///     are possible, and they lead to opposite behavior:
+        ///     <list type="bullet">
+        ///         <item>
+        ///             The human has <b>renamed</b> the account at Blizzard. Then the
+        ///             read tag is the truth and the stored one is stale.
+        ///         </item>
+        ///         <item>
+        ///             We are photographing the screen of a <b>foreign</b> account. Then everything
+        ///             about this reading is worthless and must not touch anything.
+        ///         </item>
+        ///     </list>
+        ///     <para>
+        ///         Three conditions must come together, otherwise nothing is adopted:
+        ///     </para>
+        ///     <list type="number">
+        ///         <item>
+        ///             The read text must have the <b>form</b> of a battletag at all
+        ///             (<see cref="BattlenetAccount.TrySplitBattletag" />). Catches gross
+        ///             reading errors that don't even look like a battletag in the first place.
+        ///         </item>
+        ///         <item>
+        ///             The tag must not belong to <b>any other account</b>
+        ///             (<see cref="BattlenetAccountGateway.OwnerOf" />). This is the safeguard
+        ///             against the dangerous case: on a machine with many accounts,
+        ///             a foreign screen is the more likely explanation, and then the
+        ///             read tag stands in our own list.
+        ///         </item>
+        ///         <item>
+        ///             A <b>second capture</b> must show the same tag. Without it a
+        ///             reading error would rename the account: <c>PITAPAN#2523</c> becomes
+        ///             <c>PlTAPAN#2523</c>, form valid, no collision - and the name would be
+        ///             broken. A real rename reads the same thing twice, a reading error
+        ///             almost never.
+        ///         </item>
+        ///     </list>
+        ///     <para>
+        ///         The second capture costs around eight seconds and only occurs when something
+        ///         really diverges - the normal case stays at one.
+        ///     </para>
+        ///     <para>
+        ///         What comes back is the <b>second</b> reading, with <c>Matches</c> set: from here
+        ///         on the identity is clarified, and <see cref="ApplyProfile" /> is allowed to write. On
+        ///         every abort <c>null</c> - then the account stays untouched.
+        ///     </para>
+        /// </summary>
+        private static async Task<ProfileReading?> AdoptRenamedBattletag(GameSession session,
+            BattlenetAccount account, ProfileReading first, List<string> changes,
+            List<string> problems)
+        {
+            // Two occasions lead here, and they deserve different words. Since
+            // 21.08.2026 the battletag is read instead of typed, so a freshly created account
+            // has none at all - that is the normal case and not a suspicion. The three safeguards
+            // below still apply unchanged though: a reading error would otherwise set a permanently
+            // wrong name, and a foreign screen would name the wrong account.
+            var firstRead = !account.HasBattletag;
+            var label = account.DisplayName;
+            var seen = first.SeenBattletag;
+
+            if (!BattlenetAccount.TrySplitBattletag(seen, out var name, out var discriminator))
+            {
+                problems.Add(firstRead
+                    ? Strings.Format("problem.tagNotATagFirst", seen, label)
+                    : Strings.Format("problem.tagNotATag", seen, label));
+                return null;
+            }
+
+            var owner = _battlenetAccountGateway.OwnerOf(seen!, account);
+            if (owner != null)
+            {
+                Log.Warning("Foreign profile: {Seen} belongs to {Email}, read for {Expected}",
+                    seen, owner.Email, label);
+                problems.Add(Strings.Format("problem.tagForeign", seen, owner.Email, label));
+                return null;
+            }
+
+            Log.Information(firstRead
+                    ? "{Expected}: no battletag stored yet, profile shows '{Seen}' - verifying with a second capture"
+                    : "{Expected}: profile shows '{Seen}' - verifying with a second capture",
+                label, seen);
+            var second = await ProfileReader.ReadAsync(session, account);
+
+            // second.Matches stays false on a first read, because the stored tag is still
+            // empty - the condition therefore doesn't wrongly kick in there.
+            if (second.Matches || !string.Equals(second.SeenBattletag, seen, StringComparison.OrdinalIgnoreCase))
+            {
+                problems.Add(Strings.Format("problem.tagAmbiguous", seen,
+                    second.SeenBattletag ?? label, label));
+                return null;
+            }
+
+            account.Name = name;
+            account.Discriminator = discriminator;
+
+            if (firstRead)
+            {
+                changes.Add(Strings.Format("change.battletagFirst", account.Battletag()));
+                Log.Information("Battletag read for the first time: {Email} is {After}",
+                    account.Email, account.Battletag());
+            }
+            else
+            {
+                changes.Add(Strings.Format("change.battletagRenamed", label, account.Battletag()));
+                Log.Warning("Rename adopted: {Before} -> {After}", label, account.Battletag());
+            }
+
+            return second with { Matches = true };
+        }
+
+        /// <summary>
+        ///     Adopts what stood in the profile. Every value individually - what was not read
+        ///     stays as it was.
+        /// </summary>
+        private static void ApplyProfile(ProfileReading reading, HotsRegionData data,
+            List<string> changes, List<string> problems)
+        {
+            // Double safety net. Only what has cleared identity may come here; whoever
+            // calls this method from elsewhere in the future would rather fall through here than into data.yaml.
+            if (!reading.Matches) return;
+
+            if (reading.AccountLevel != null && reading.AccountLevel != data.AccountLevel)
+            {
+                var before = data.AccountLevel;
+                data.AccountLevel = reading.AccountLevel;
+                changes.Add(before == null
+                    ? Strings.Format("change.levelFirst", reading.AccountLevel)
+                    : Strings.Format("change.level", before, reading.AccountLevel));
+            }
+
+            if (reading.PlacementsPending is { } pending && pending != data.PlacementsPending)
+            {
+                data.PlacementsPending = pending;
+                changes.Add(Strings.Current[pending
+                    ? "change.placementsPending"
+                    : "change.placementsDone"]);
+            }
+
+            if (reading.Tier is { } tier)
+            {
+                if (data.Tier == tier && data.Division == reading.Division) return;
+
+                var before = data.RankName();
+                data.Tier = tier;
+                data.Division = reading.Division;
+                var now = data.RankName();
+                changes.Add(before.Length == 0
+                    ? Strings.Format("change.rankFirst", now)
+                    : Strings.Format("change.rank", before, now));
+            }
+            else if (reading.PlacementsPending != true)
+            {
+                problems.Add(reading.Note);
+            }
+        }
+
+        /// <summary>
+        ///     Reads gold, shards and gems. Every value individually: what was not read
+        ///     stays as it was instead of falling to null - a number that existed yesterday is better
+        ///     than a gap because of a blurred capture. The account level comes from the
+        ///     profile overlay, see <see cref="ReadProfile" />.
+        /// </summary>
+        /// <summary>
+        ///     Reads the leaver-penalty status and writes <see cref="HotsRegionData.PenaltyGames" />
+        ///     of the region currently signed in to.
+        ///     <para>
+        ///         <b>Until 21.08.2026 the field was pure hand maintenance</b>, and the
+        ///         hand-entered value was off: for MUGGLE#21197 it said 1 there, the game said 3.
+        ///     </para>
+        ///     <para>
+        ///         <b>A 0 is written, a <c>null</c> is not.</b> If the warning icon is missing on
+        ///         a menu screen, that is proof that no penalty is running anymore - otherwise
+        ///         an expired entry would stand forever. If on the other hand it wasn't possible to look at all
+        ///         (wrong screen, no OCR, unreadable hint), the
+        ///         stored value stays untouched. Same rule as for the four stats.
+        ///     </para>
+        /// </summary>
+        private static async Task ReadPenalty(GameSession session, BattlenetAccount account,
+            HotsRegionData data, List<string> changes, List<string> problems)
+        {
+            try
+            {
+                var reading = await PenaltyReader.ReadAsync(session);
+                Log.Information("{Battletag}: {Note}", account.Battletag(), reading.Note);
+
+                if (reading.Games == null)
+                {
+                    problems.Add(reading.Note);
+                    return;
+                }
+
+                var before = data.PenaltyGames;
+                if (reading.Games == before) return;
+
+                data.PenaltyGames = reading.Games.Value;
+                changes.Add(Strings.Format("change.penalty", before, reading.Games));
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "{Battletag}: reading the leaver penalty failed", account.Battletag());
+                problems.Add(Strings.Format("problem.penaltyFailed", e.Message));
+            }
+        }
+
+        private static async Task ReadHeader(GameSession session, BattlenetAccount account,
+            HotsRegionData data, List<string> changes, List<string> problems)
+        {
+            try
+            {
+                var reading = await HeaderReader.ReadAsync(session);
+                Note(Strings.Current["currency.gold"], data.Gold, reading.Gold,
+                    v => data.Gold = v);
+                Note(Strings.Current["currency.shards"], data.Shards, reading.Shards,
+                    v => data.Shards = v);
+                Note(Strings.Current["currency.gems"], data.Gems, reading.Gems,
+                    v => data.Gems = v);
+                Note(Strings.Current["currency.chests"], data.LootChests, reading.LootChests,
+                    v => data.LootChests = v);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "{Battletag}: reading the header failed", account.Battletag());
+                problems.Add(Strings.Format("problem.statsFailed", e.Message));
+            }
+
+            void Note(string label, int? before, int? now, Action<int?> assign)
+            {
+                if (now == null || now == before) return;
+                assign(now);
+                changes.Add(before == null
+                    ? Strings.Format("change.valueFirst", label, now)
+                    : Strings.Format("change.value", label, before, now));
+            }
+        }
+
+        /// <summary>
+        ///     Reads the acquired heroes from the collection.
+        ///     <para>
+        ///         <b>The target count from the sidebar no longer decides whether, but how</b>
+        ///         it is written:
+        ///     </para>
+        ///     <list type="table">
+        ///         <item>
+        ///             <term>complete</term>
+        ///             <description>
+        ///                 replace. Only a complete reading may take something away - this way
+        ///                 it also corrects a wrong hand entry.
+        ///             </description>
+        ///         </item>
+        ///         <item>
+        ///             <term>incomplete</term>
+        ///             <description>
+        ///                 merge. What was read is added; nothing is deleted.
+        ///             </description>
+        ///         </item>
+        ///     </list>
+        ///     <para>
+        ///         Until 21.08.2026, in this case <b>nothing at all</b> was adopted, because
+        ///         writing replaces the list and a half-read list would thereby unnoticed have
+        ///         deleted entries. The rule was stricter than necessary: in Heroes of the
+        ///         Storm heroes <b>cannot be lost</b>, ownership only grows.
+        ///         Merging can therefore never cost data - and throwing away 31 of 32 read cards
+        ///         because one tile wasn't readable cost some.
+        ///     </para>
+        ///     <para>
+        ///         The price stands nonetheless: a wrong hand entry survives an incomplete
+        ///         reading and only disappears on the next complete run. That's why
+        ///         the incomplete reading is still worth a <c>problems</c> message, even if it
+        ///         contributed something.
+        ///     </para>
+        /// </summary>
+        private static async Task ReadHeroes(GameSession session, BattlenetAccount account,
+            HotsRegionData data, IProgress<string> progress, List<string> changes,
+            List<string> problems)
+        {
+            try
+            {
+                var reading = await CollectionReader.ReadAsync(session, progress);
+                Log.Information("{Battletag}: {Note}", account.Battletag(), reading.Note);
+
+                var before = new HashSet<string>(data.Heroes, StringComparer.OrdinalIgnoreCase);
+                var read = new HashSet<string>(reading.HeroIds, StringComparer.OrdinalIgnoreCase);
+
+                // Complete replaces, incomplete merges. The difference depends solely
+                // on the target count from the sidebar.
+                var now = reading.Complete
+                    ? read
+                    : new HashSet<string>(before.Concat(read), StringComparer.OrdinalIgnoreCase);
+
+                if (!reading.Complete)
+                    problems.Add(Strings.Format("problem.heroesMerged", reading.Note));
+
+                if (before.SetEquals(now)) return;
+
+                data.Heroes = Ordered(now);
+                var added = now.Except(before).Count();
+                var removed = before.Except(now).Count();
+                changes.Add(removed == 0
+                    ? Strings.Format("change.heroesAdded", added, now.Count)
+                    : Strings.Format("change.heroes", before.Count, now.Count, added, removed));
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "{Battletag}: reading heroes failed", account.Battletag());
+                problems.Add(Strings.Format("problem.heroesFailed", e.Message));
+            }
+        }
+
+        /// <summary>
+        ///     Identifiers in display order and without duplicates - the same form in which
+        ///     the edit dialog and the rotation also save.
+        ///     <para>
+        ///         <b>Unknown identifiers survive.</b> A <c>data.yaml</c> from a newer
+        ///         app version can contain heroes that this version doesn't know;
+        ///         <see cref="HotsHeroCatalog.Resolve" /> leaves them out, and that would be exactly
+        ///         a deletion here. They are therefore appended again at the end. Without this, the
+        ///         merge would have broken its promise before it ran for the first time.
+        ///     </para>
+        /// </summary>
+        private static List<string> Ordered(IReadOnlyCollection<string> heroIds)
+        {
+            var known = HotsHeroCatalog.Resolve(heroIds).Select(hero => hero.Id).ToList();
+            known.AddRange(heroIds.Where(id => HotsHeroCatalog.Find(id) == null));
+            return known;
+        }
+
+        private void ShowDialog(Func<AddOrEditAccountViewModel, bool?> showDialog)
+        {
+            Application.Current.MainWindow!.Opacity = 0.4;
+            var dialogViewModel = new AddOrEditAccountViewModel(Account!);
+
+            var success = showDialog(dialogViewModel);
+            Application.Current.MainWindow!.Opacity = 100;
+            dialogViewModel.Execute(success);
+        }
+    }
+}

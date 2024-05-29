@@ -1,0 +1,609 @@
+﻿<Window x:Class="Smurftown.UI.MVVM.View.AddOrEditAccount"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:Smurftown.UI.MVVM.View"
+        xmlns:loc="clr-namespace:Smurftown.UI.MVVM"
+        xmlns:md="https://github.com/fantasticfiasco/mvvm-dialogs"
+        mc:Ignorable="d"
+        md:DialogServiceViews.IsRegistered="True"
+        UseLayoutRounding="True"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        WindowStartupLocation="CenterOwner"
+        BorderBrush="#313339"
+        BorderThickness="1"
+        Title="{loc:Str dialog.title}" Width="1000" Height="752"
+        DataContextChanged="Window_DataContextChanged"
+        d:DataContext="{d:DesignInstance {x:Type local:AddOrEditAccountViewModel}}">
+
+    <!-- FIXED SIZE, no more SizeToContent.
+
+         Until 21.08.2026 SizeToContent="Height" stood here, and two decisions hung on it:
+         the rank selection had to be an overlay, and the hero selection its own
+         window (90 circles tore the dialog open when opening). With tabs and a fixed
+         height, both fall away - what doesn't fit scrolls in the tab.
+
+         HEIGHT 752, AND IT IS NOT CHOSEN, BUT CALCULATED: the main window measures
+         1340x800, a modal must not exceed it, and DialogBounds.Padding leaves 24 points
+         per side. 800 - 2*24 = 752. The value stands here only so that the designer shows
+         the same thing as the runtime; it is enforced by DialogBounds.FitToMainWindow in
+         the constructor. Whoever raises it here gains nothing - the constructor pulls it back.
+
+         For the content, 560 points remain of that:
+
+             752 - 60 (title) - 52 (tab bar) - 80 (footer) = 560
+
+         WHAT DOESN'T FIT SCROLLS - and since 22.08.2026 in BOTH tabs it is the
+         whole tab and not just a part of it. The ACCOUNT tab always did it that way, the
+         HotS tab caught up on that day; the reasoning stands where it happens.
+
+         WITH THAT, THE HEIGHT IS NO LONGER A CHAIN OF CALCULATIONS. Until 22.08.2026 there
+         was one here, because in the HotS tab only the hero grid ran and everything above it
+         stood fixed: of 560, after the region bar, rank block and its own header, 158 points
+         remained for it, and thus two rows of circles. Whoever adds something today doesn't
+         recalculate anything - they just check whether the tab still looks sensible
+         without scrolling.
+
+         md:DialogServiceViews.IsRegistered is MANDATORY and not decoration: MvvmDialogs looks
+         for the owner window among the registered views. On 20.08.2026 the attribute dropped
+         out while a view was rewritten, and the associated button was dead - without
+         a compile error, without a binding warning, without a log line. -->
+
+    <Window.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#23252B" Offset="0.0" />
+            <GradientStop Color="#23252B" Offset="1.0" />
+        </LinearGradientBrush>
+    </Window.Background>
+
+    <Window.Resources>
+        <!-- Tabs like in the main window, except for the width: the same style with which the
+             game symbols of the filter bar are drawn, plus font color and size. Without
+             the color WPF draws the text black on dark gray, because the style is made
+             for images.
+
+             Fixed width for the same reason as there: the blue bar measures the BUTTON width,
+             not the text width - without it, it would be twice as long under ACCOUNT as under DIA.
+             92 instead of 100, because here five tabs stand side by side instead of two. That's
+             exactly why the games also carry their short names (GameVisuals.ShortLabelFor): "HEROES OF THE
+             STORM" alone would need more room than the other four combined. -->
+        <Style x:Key="DialogTabStyle" TargetType="ToggleButton"
+               BasedOn="{StaticResource BattlenetIconButtonTheme}">
+            <Setter Property="Foreground" Value="#8F93A0" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="DemiBold" />
+            <Setter Property="Height" Value="48" />
+            <Setter Property="Width" Value="92" />
+        </Style>
+
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#8F8F92" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+
+        <!-- The empty tab of the three games without their own fields. An empty box would
+             look like an error, a named one is a deliberate choice - the same reasoning as with
+             the "without data" box of the account row. -->
+        <ControlTemplate x:Key="EmptyTabTemplate">
+            <Grid Margin="20">
+                <Rectangle Stroke="#3A3D46" StrokeThickness="1.5" StrokeDashArray="3 2"
+                           RadiusX="6" RadiusY="6" />
+                <TextBlock Text="{loc:Str dialog.nothingToConfigure}" Foreground="#8F93A0" FontSize="13"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+        </ControlTemplate>
+    </Window.Resources>
+
+    <DockPanel LastChildFill="True">
+
+        <Border DockPanel.Dock="Top" Height="60" Background="#15171E">
+            <TextBlock Text="{loc:Str dialog.title}" Foreground="White" FontSize="24" FontWeight="DemiBold"
+                       HorizontalAlignment="Left" VerticalAlignment="Center" Margin="20,0,0,0" />
+        </Border>
+
+        <!-- Tab bar. ACCOUNT always exists, plus one for each checked game - the three
+             game tabs hang on *TabHeaderVisibility and disappear along with their checkbox. -->
+        <Border DockPanel.Dock="Top" Height="52" Background="#1B1D24"
+                BorderBrush="#313339" BorderThickness="0,1,0,1">
+            <StackPanel Orientation="Horizontal" Margin="12,0,0,0">
+                <ToggleButton Content="{loc:Str dialog.tabAccount}" Style="{StaticResource DialogTabStyle}"
+                              IsChecked="{Binding AccountTabActive}" />
+                <ToggleButton Content="{Binding HotsTabLabel}" Style="{StaticResource DialogTabStyle}"
+                              Visibility="{Binding HotsTabHeaderVisibility}"
+                              IsChecked="{Binding HotsTabActive}" />
+                <ToggleButton Content="{Binding OverwatchTabLabel}" Style="{StaticResource DialogTabStyle}"
+                              Visibility="{Binding OverwatchTabHeaderVisibility}"
+                              IsChecked="{Binding OverwatchTabActive}" />
+                <ToggleButton Content="{Binding WowTabLabel}" Style="{StaticResource DialogTabStyle}"
+                              Visibility="{Binding WowTabHeaderVisibility}"
+                              IsChecked="{Binding WowTabActive}" />
+                <ToggleButton Content="{Binding DiabloTabLabel}" Style="{StaticResource DialogTabStyle}"
+                              Visibility="{Binding DiabloTabHeaderVisibility}"
+                              IsChecked="{Binding DiabloTabActive}" />
+            </StackPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Height="80" Background="#15171E"
+                BorderBrush="#313339" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" Margin="20,0,20,0" VerticalAlignment="Center">
+                <Button Style="{StaticResource BattlenetButtonPrimaryTheme}" Content="{loc:Str dialog.save}" Width="120"
+                        Height="30" Command="{Binding OkCommand}" IsDefault="True"
+                        IsEnabled="{Binding SaveButtonEnabled}" />
+                <Button Command="{Binding CancelCommand}" Style="{StaticResource BattlenetButtonSecondaryTheme}"
+                        Width="120" Content="{loc:Str dialog.cancel}" Height="30"
+                        Margin="10,0,0,0" IsCancel="True" />
+                <!-- Says which required field is still missing. Without it one has to guess -
+                     especially with the game checkbox, which doesn't look like a required field. -->
+                <TextBlock Text="{Binding SaveHint}" Foreground="#C8813A" FontSize="12"
+                           FontWeight="DemiBold" VerticalAlignment="Center" Margin="15,0,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- All tabs sit on top of each other, exactly one is visible. Deliberately no
+             ContentControl with DataTemplates: the contents are static and share the same
+             DataContext, a detour via templates would only bring another spot where a
+             missing line shows the class name. -->
+        <Grid>
+
+            <!-- ================= ACCOUNT ================= -->
+            <ScrollViewer Visibility="{Binding AccountTabVisibility}"
+                          Style="{StaticResource BattlenetScrollViewerTheme}"
+                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Vertical" Margin="20,18,20,18">
+
+                    <TextBlock Text="{loc:Str dialog.battletag}" Style="{StaticResource FieldLabelStyle}" />
+                    <!-- Display, not an input field: since 21.08.2026 the battletag is
+                         taken over from the profile overlay when reading. A grayed-out field
+                         could also stand here, but would invite clicking and then do nothing. -->
+                    <TextBlock Text="{Binding BattletagLabel}" Foreground="White" FontSize="16"
+                               FontWeight="DemiBold" Opacity="{Binding BattletagOpacity}"
+                               HorizontalAlignment="Left" Margin="0,0,0,20">
+                        <TextBlock.ToolTip>
+                            <ToolTip>
+                                <TextBlock
+                                    Text="{loc:Str dialog.battletagHint}" />
+                            </ToolTip>
+                        </TextBlock.ToolTip>
+                    </TextBlock>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="{loc:Str dialog.email}" Style="{StaticResource FieldLabelStyle}" />
+                            <!-- UpdateSourceTrigger: without it WPF only writes to the source
+                                 when leaving the field, and the save button would therefore only
+                                 wake up when clicking out. -->
+                            <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
+                                     HorizontalAlignment="Left" FontSize="14"
+                                     Style="{StaticResource BattlenetTextBoxTheme}"
+                                     Width="300" Height="30" />
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical" Margin="20,0,0,0">
+                            <TextBlock Text="{loc:Str dialog.password}" Style="{StaticResource FieldLabelStyle}" />
+                            <PasswordBox PasswordChanged="PasswordChanged"
+                                         local:PasswordBoxHelper.BoundPassword="{Binding Password}"
+                                         HorizontalAlignment="Left" FontSize="14"
+                                         Style="{StaticResource BattlenetPasswordBoxTheme}"
+                                         Width="260" Height="30" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ================= GAMES AND REGIONS =================
+
+                         ONE MATRIX INSTEAD OF TWO ROWS OF TOGGLES, since 22.08.2026. Four game
+                         checkmarks used to stand here and three region ones beside the password.
+                         The pair could say something the account cannot hold: the game state hangs
+                         on the region, so "plays in Americas" plus "plays World of Warcraft"
+                         claimed an American WoW account that may never have existed - and gave it
+                         a row of its own in the overview.
+
+                         A cell is therefore the actual question: is THIS game played in THIS
+                         region. Whoever ticks nothing in a row does not play that game; whoever
+                         ticks nothing at all cannot save - the account would be invisible, because
+                         its row is exactly the pair of game and region.
+
+                         The colour has to sit on the TextBlock: BattlenetIconButtonTheme is made
+                         for images and sets none, WPF would otherwise draw the text black on dark
+                         grey. -->
+                    <TextBlock Text="{loc:Str dialog.gamesAndRegions}" Style="{StaticResource FieldLabelStyle}" />
+                    <Grid HorizontalAlignment="Left" Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="86" />
+                            <ColumnDefinition Width="88" />
+                            <ColumnDefinition Width="88" />
+                            <ColumnDefinition Width="88" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="22" />
+                            <RowDefinition Height="46" />
+                            <RowDefinition Height="46" />
+                            <RowDefinition Height="46" />
+                            <RowDefinition Height="46" />
+                        </Grid.RowDefinitions>
+
+                        <!-- The column heads carry the region name once, instead of twelve
+                             tooltips saying the same thing per cell. -->
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{loc:Str dialog.regionEurope}"
+                                   Foreground="#8A8D9B" FontSize="11" FontWeight="DemiBold"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{loc:Str dialog.regionAmericas}"
+                                   Foreground="#8A8D9B" FontSize="11" FontWeight="DemiBold"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Grid.Row="0" Grid.Column="3" Text="{loc:Str dialog.regionAsia}"
+                                   Foreground="#8A8D9B" FontSize="11" FontWeight="DemiBold"
+                                   HorizontalAlignment="Center" />
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Image Source="pack://application:,,,/UI/Images/hots.png"
+                                   RenderOptions.BitmapScalingMode="HighQuality" Height="28" Width="28" />
+                            <TextBlock Text="{Binding HotsRowLabel}" Foreground="#C6C8D0" FontSize="11"
+                                       FontWeight="DemiBold" VerticalAlignment="Center" Margin="6,0,0,0" />
+                        </StackPanel>
+                        <ToggleButton Grid.Row="1" Grid.Column="1" IsChecked="{Binding HotsEurope}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="EU" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+                        <ToggleButton Grid.Row="1" Grid.Column="2" IsChecked="{Binding HotsAmericas}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="AM" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+                        <ToggleButton Grid.Row="1" Grid.Column="3" IsChecked="{Binding HotsAsia}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="AS" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Image Source="pack://application:,,,/UI/Images/overwatch.png"
+                                   RenderOptions.BitmapScalingMode="HighQuality" Height="28" Width="28" />
+                            <TextBlock Text="{Binding OverwatchRowLabel}" Foreground="#C6C8D0" FontSize="11"
+                                       FontWeight="DemiBold" VerticalAlignment="Center" Margin="6,0,0,0" />
+                        </StackPanel>
+                        <ToggleButton Grid.Row="2" Grid.Column="1" IsChecked="{Binding OverwatchEurope}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="EU" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+                        <ToggleButton Grid.Row="2" Grid.Column="2" IsChecked="{Binding OverwatchAmericas}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="AM" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+                        <ToggleButton Grid.Row="2" Grid.Column="3" IsChecked="{Binding OverwatchAsia}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="AS" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+
+                        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Image Source="pack://application:,,,/UI/Images/wow.png"
+                                   RenderOptions.BitmapScalingMode="HighQuality" Height="32" Width="32" />
+                            <TextBlock Text="{Binding WowRowLabel}" Foreground="#C6C8D0" FontSize="11"
+                                       FontWeight="DemiBold" VerticalAlignment="Center" Margin="6,0,0,0" />
+                        </StackPanel>
+                        <ToggleButton Grid.Row="3" Grid.Column="1" IsChecked="{Binding WowEurope}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="EU" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+                        <ToggleButton Grid.Row="3" Grid.Column="2" IsChecked="{Binding WowAmericas}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="AM" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+                        <ToggleButton Grid.Row="3" Grid.Column="3" IsChecked="{Binding WowAsia}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="AS" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+
+                        <StackPanel Grid.Row="4" Grid.Column="0" Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Image Source="pack://application:,,,/UI/Images/diablo4.png"
+                                   RenderOptions.BitmapScalingMode="HighQuality" Height="32" Width="32" />
+                            <TextBlock Text="{Binding DiabloRowLabel}" Foreground="#C6C8D0" FontSize="11"
+                                       FontWeight="DemiBold" VerticalAlignment="Center" Margin="6,0,0,0" />
+                        </StackPanel>
+                        <ToggleButton Grid.Row="4" Grid.Column="1" IsChecked="{Binding DiabloEurope}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="EU" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+                        <ToggleButton Grid.Row="4" Grid.Column="2" IsChecked="{Binding DiabloAmericas}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="AM" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+                        <ToggleButton Grid.Row="4" Grid.Column="3" IsChecked="{Binding DiabloAsia}"
+                                      Style="{StaticResource BattlenetIconButtonTheme}" Width="60" Height="34">
+                            <TextBlock Text="AS" Foreground="#C6C8D0" FontSize="12" FontWeight="DemiBold" />
+                        </ToggleButton>
+                    </Grid>
+                    <TextBlock Text="{loc:Str dialog.gamesRegionsHint}" Foreground="#63677A" FontSize="11"
+                               TextWrapping="Wrap" Margin="0,8,0,0" MaxWidth="440" HorizontalAlignment="Left" />
+
+                    <TextBlock Text="{loc:Str dialog.notes}" Style="{StaticResource FieldLabelStyle}" Margin="0,20,0,6" />
+                    <RichTextBox x:Name="NotesTextBox" TextChanged="RichTextBox_TextChanged"
+                                 Style="{StaticResource BattlenetRichTextBoxTheme}" Height="180" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ================= HEROES OF THE STORM =================
+
+                 THE WHOLE TAB SCROLLS, not the hero grid inside it. Until 22.08.2026 it was
+                 the other way around: region bar and rank block stood fixed, and only the grid ran.
+                 That cost two things. First, the grid was clamped to the rest of the tab height -
+                 since the dialog has been clamped to 752 (see DialogBounds), 158 points remained
+                 for it, and thus two rows of circles. Second, there were two scroll areas stacked
+                 on top of each other, and the mouse wheel hit one or the other depending on
+                 pointer position.
+
+                 The inner ScrollViewer of HeroPickerView is therefore not removed, but
+                 switched off: in the HeroPicker.xaml window it is still the right one. Which
+                 one applies is decided by HeroPickerViewModel.GridScrollBarVisibility on the
+                 Embedded axis - the same one that ChromeVisibility already hangs on.
+
+                 WITH THAT, THE TAB'S HEIGHT IS NO LONGER A LIMIT. Whoever adds something here
+                 doesn't recalculate any chain - what doesn't fit scrolls. The price for this
+                 stands in the header of the hero selection: search field and role chips scroll
+                 away along with it, they belong to the surface and the surface scrolls.
+
+                 Row 2 stands on Auto and no longer on "*": under a ScrollViewer, a star
+                 would be ineffective anyway (star rows resolve to their desired height under
+                 unbounded measurement), and Auto states that explicitly instead of implying it. -->
+            <ScrollViewer Visibility="{Binding HotsTabVisibility}"
+                          Style="{StaticResource BattlenetScrollViewerTheme}"
+                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- ============================ Region of this tab ============================
+                         EVERYTHING BELOW BELONGS TO ONE REGION - rank, penalty games, placement and
+                         the hero selection. Whoever plays in two regions maintains them here one after
+                         the other.
+
+                         The toggles only stand there when there is something to toggle; with a
+                         single region they would be a switch with exactly one position. The line
+                         with the hint text remains nonetheless - it says what the values refer
+                         to, and that is information even with one region.
+
+                         Border plus InputBindings instead of its own ControlTemplate: the same
+                         construction as with the rotation button of the filter bar, and it has no
+                         template traps.
+
+                         HEIGHT: the bar costs around 40 points, and by exactly that the dialog grew
+                         from 880 to 920 - otherwise the hero grid below it would have lost a row.
+                         With a single region it collapses to height 0
+                         (RowDefinition Auto), so the grid gets the room back. -->
+                    <StackPanel Grid.Row="0" Margin="20,12,20,0">
+                        <ItemsControl ItemsSource="{Binding RegionTabs}"
+                                      Visibility="{Binding RegionTabsVisibility}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="Transparent" Cursor="Hand" Margin="0,0,6,0"
+                                            ToolTip="{loc:Str dialog.regionTabHint}">
+                                        <Border.InputBindings>
+                                            <MouseBinding MouseAction="LeftClick" Command="{Binding Command}"
+                                                          CommandParameter="{Binding}" />
+                                        </Border.InputBindings>
+                                        <Grid>
+                                            <TextBlock Text="{Binding Label}" Foreground="#C6C8D0"
+                                                       FontSize="13" FontWeight="DemiBold"
+                                                       Opacity="{Binding Opacity}" Margin="10,4,10,7" />
+                                            <Border Height="2" Background="#1A73E8" VerticalAlignment="Bottom"
+                                                    Visibility="{Binding UnderlineVisibility}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{Binding RegionScopeHint}" Foreground="#63677A" FontSize="11"
+                                   Margin="0,2,0,0" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Orientation="Vertical" Margin="20,14,20,10">
+
+                        <!-- Penalty games and placement stand ABOVE the rank grid, not beside it.
+
+                             Both are one-line answers - a counter and a checkbox -, while the rank
+                             is a block of 28 medals. Standing next to that block, the two labels
+                             floated at the top edge of a surface four times their height, and the
+                             eye had to climb back up to find out what the widgets below them meant.
+                             Above it they read as one line, and the rank grid gets the full width
+                             of the tab to itself.
+
+                             They stay side by side WITH EACH OTHER: both belong to the rank - they
+                             say whether it counts at all and what leaving a match has cost -, and
+                             each is narrow enough that a second row would only add height the hero
+                             picker underneath needs. -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <!-- Penalty games after a disconnect. The icon IS the control: a left click
+                                 counts up, a right click counts down. WPF knows RightClick as a MouseAction,
+                                 that needs no code-behind handler. Clamping to 0..MaxPenaltyGames happens
+                                 in the setter, so both clicks may always fire. -->
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock Text="{loc:Str dialog.penaltyGames}" Style="{StaticResource FieldLabelStyle}" />
+                                <Border CornerRadius="8" Padding="6" Cursor="Hand" HorizontalAlignment="Left"
+                                        ToolTip="{Binding PenaltyHint}">
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick" Command="{Binding MorePenaltyCommand}" />
+                                        <MouseBinding MouseAction="RightClick" Command="{Binding LessPenaltyCommand}" />
+                                    </Border.InputBindings>
+                                    <Border.Style>
+                                        <!-- Background belongs in the style: written as an attribute,
+                                             the local value would beat the hover trigger. Transparent instead
+                                             of null, otherwise the surface isn't clickable and only the image
+                                             itself catches the mouse. -->
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#2A2D36" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid Width="48" Height="48">
+                                        <Image Source="pack://application:,,,/UI/Images/penalty.png"
+                                               RenderOptions.BitmapScalingMode="HighQuality">
+                                            <Image.Style>
+                                                <!-- dimmed without penalty games, so the state can be
+                                                     read without text -->
+                                                <Style TargetType="Image">
+                                                    <Setter Property="Opacity" Value="0.25" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasPenalty}" Value="True">
+                                                            <Setter Property="Opacity" Value="1.0" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Image.Style>
+                                        </Image>
+                                        <Border Background="#15171E" BorderBrush="#D62A2A" BorderThickness="1.5"
+                                                CornerRadius="10" Width="20" Height="20"
+                                                HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasPenalty}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding HotsPenaltyGames}" Foreground="White" FontSize="11"
+                                                       FontWeight="Bold" HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Vertical" Margin="30,0,0,0" VerticalAlignment="Top">
+                                <TextBlock Text="{loc:Str dialog.placements}" Style="{StaticResource FieldLabelStyle}" />
+                                <CheckBox IsChecked="{Binding PlacementsPending}" Margin="0,10,0,0">
+                                    <TextBlock Text="{loc:Str dialog.placementsPending}" Foreground="#8F8F92" FontSize="12"
+                                               FontWeight="DemiBold">
+                                        <TextBlock.ToolTip>
+                                            <ToolTip>
+                                                <TextBlock
+                                                    Text="{loc:Str dialog.placementsHint}" />
+                                            </ToolTip>
+                                        </TextBlock.ToolTip>
+                                    </TextBlock>
+                                </CheckBox>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- The rank grid is ALWAYS there, like the hero grid below it - there is
+                             no button that opens it up, and no second medal next to it that shows
+                             the current standing. Both would be a second answer to the same question:
+                             which rank applies is told by the highlighting in the grid itself.
+
+                             Three levels: columns, rows inside them, medals inside those. Splitting
+                             happens in the ViewModel (RankColumns) - a split with index arithmetic in
+                             the XAML would be silently wrong at the next change of the tier list.
+
+                             The medal is 58x64 and thus as tall as a hero circle one row
+                             below; 58 instead of 64 in width, because the asset measures 160x176 and a
+                             squashed image stands out immediately. -->
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="{loc:Str dialog.rank}" Style="{StaticResource FieldLabelStyle}" />
+                            <ItemsControl ItemsSource="{Binding RankColumns}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <ItemsControl ItemsSource="{Binding}" Margin="0,0,24,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <ItemsControl ItemsSource="{Binding}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Orientation="Horizontal"
+                                                                            HorizontalAlignment="Left" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Button Cursor="Hand" CommandParameter="{Binding}"
+                                                                        Command="{Binding DataContext.PickRankCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                                    <Button.Template>
+                                                                        <ControlTemplate TargetType="Button">
+                                                                            <Border x:Name="hover"
+                                                                                    Background="Transparent"
+                                                                                    CornerRadius="4" Padding="2">
+                                                                                <Grid>
+                                                                                    <!-- Not selected means
+                                                                                         dimmed - the same
+                                                                                         language as in the
+                                                                                         hero grid. -->
+                                                                                    <Image Source="{Binding ImageSource}"
+                                                                                           Height="64" Width="58"
+                                                                                           Opacity="{Binding Opacity}"
+                                                                                           RenderOptions.BitmapScalingMode="HighQuality" />
+                                                                                    <!-- Border only on the selected one.
+                                                                                         Blue like the tabs, because
+                                                                                         a rank has no color of its
+                                                                                         own - unlike a
+                                                                                         hero, which carries its
+                                                                                         role color. -->
+                                                                                    <Border BorderBrush="#1A73E8"
+                                                                                            BorderThickness="2"
+                                                                                            CornerRadius="4"
+                                                                                            Visibility="{Binding RingVisibility}" />
+                                                                                </Grid>
+                                                                            </Border>
+                                                                            <ControlTemplate.Triggers>
+                                                                                <Trigger Property="IsMouseOver"
+                                                                                         Value="True">
+                                                                                    <Setter TargetName="hover"
+                                                                                            Property="Background"
+                                                                                            Value="#2F323C" />
+                                                                                </Trigger>
+                                                                            </ControlTemplate.Triggers>
+                                                                        </ControlTemplate>
+                                                                    </Button.Template>
+                                                                </Button>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- The same surface as in the hero filter, just embedded: HeroPickerView is used
+                         here and in the HeroPicker.xaml window. Title, close cross and footer fall
+                         away via Embedded=true - the tab above it already says what's being chosen,
+                         and "Esc closes" would simply be wrong here. -->
+                    <local:HeroPickerView Grid.Row="2" DataContext="{Binding HeroPicker}"
+                                          BorderBrush="#313339" BorderThickness="0,1,0,0" />
+                </Grid>
+            </ScrollViewer>
+
+            <!-- ================= the three without their own fields ================= -->
+            <Control Visibility="{Binding OverwatchTabVisibility}"
+                     Template="{StaticResource EmptyTabTemplate}" />
+            <Control Visibility="{Binding WowTabVisibility}"
+                     Template="{StaticResource EmptyTabTemplate}" />
+            <Control Visibility="{Binding DiabloTabVisibility}"
+                     Template="{StaticResource EmptyTabTemplate}" />
+        </Grid>
+    </DockPanel>
+</Window>

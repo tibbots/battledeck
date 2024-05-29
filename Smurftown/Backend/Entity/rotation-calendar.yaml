@@ -1,0 +1,104 @@
+# The free hero rotation as a calendar - month and day, without a year.
+#
+# It repeats yearly: the same calendar day carries the same 14 heroes.
+# This is measured and not assumed. Each of the 48 periods matches across
+# at least TWO independent years; checked were 2023, 2024, 2025
+# and 2026 on nexuscompendium.com/rotations (as of 20.08.2026).
+#
+# It still can't be calculated, though. The first six slots do run
+# in a three-way cycle, but that breaks twice a year: on 03-08 the
+# Raynor group stands for a second time in a row, and on 04-15 Tychus sits on
+# Dehaka's slot. A table carries both outliers without a special case, a
+# formula would have to know them as an exception.
+#
+# Periods begin on the 1st, 8th, 15th and 22nd of every month. Which one is currently
+# running is calculated by HotsRotationPeriod - not this file. Days other than 01, 08, 15
+# and 22 are never found here.
+#
+# The identifiers are those of the hero catalog (HotsHeroCatalog) and at the same time the
+# file names of the portraits. An identifier that doesn't exist there gets
+# REPORTED and skipped when loading - it doesn't silently disappear.
+#
+# Two oddities that are not bugs:
+#   - Mei doesn't appear in a single period.
+#   - Seven pairs are identically populated, for instance 01-01 and 10-08.
+#
+# Editable by hand. This version sits as an embedded resource in the
+# application; a file at ~/.smurftown/rotation-calendar.yaml supersedes it.
+# The same pattern as with screen-map.yaml and for the same reason: the
+# installation folder lives under Program Files, where you don't just casually
+# put something.
+
+periods:
+
+  # January
+  "01-01": [raynor, muradin, sonya, nazeebo, uther, jaina, tyrael, ana, brightwing, zeratul, leoric, hanzo, dva, medivh]
+  "01-08": [malfurion, valla, gazlowe, johanna, thrall, dehaka, arthas, kharazim, chromie, kerrigan, stukov, rexxar, kelthuzad, the-lost-vikings]
+  "01-15": [li-li, etc, zagara, the-butcher, kaelthas, artanis, auriel, ragnaros, garrosh, valeera, tassadar, zuljin, cassia, malganis]
+  "01-22": [raynor, muradin, sonya, nazeebo, uther, jaina, tychus, malthael, blaze, alexstrasza, anubarak, tracer, mephisto, nova]
+
+  # February
+  "02-01": [malfurion, valla, gazlowe, johanna, thrall, dehaka, lucio, greymane, falstad, xul, zarya, alarak, tyrande, abathur]
+  "02-08": [li-li, etc, zagara, the-butcher, kaelthas, artanis, rehgar, diablo, kerrigan, chromie, stukov, junkrat, azmodan, medivh]
+  "02-15": [raynor, muradin, sonya, nazeebo, uther, jaina, leoric, greymane, varian, alexstrasza, tassadar, yrel, qhira, deathwing]
+  "02-22": [malfurion, valla, gazlowe, johanna, thrall, dehaka, tyrael, li-ming, malganis, mephisto, arthas, genji, lt-morales, samuro]
+
+  # March
+  "03-01": [li-li, etc, zagara, the-butcher, kaelthas, artanis, garrosh, dva, whitemane, valeera, sgt-hammer, maiev, nova, probius]
+  "03-08": [raynor, muradin, sonya, nazeebo, uther, jaina, kharazim, blaze, lunara, orphea, zarya, tyrande, xul, ragnaros]
+  "03-15": [raynor, muradin, sonya, nazeebo, uther, jaina, rehgar, azmodan, brightwing, kelthuzad, rexxar, samuro, valeera, medivh]
+  "03-22": [malfurion, valla, gazlowe, johanna, thrall, dehaka, garrosh, malganis, zuljin, tassadar, tracer, ana, nova, zeratul]
+
+  # April
+  "04-01": [li-li, etc, zagara, the-butcher, kaelthas, artanis, arthas, cassia, auriel, mephisto, lucio, greymane, qhira, the-lost-vikings]
+  "04-08": [raynor, muradin, sonya, nazeebo, uther, jaina, ragnaros, anubarak, stukov, malthael, zarya, sgt-hammer, li-ming, maiev]
+  "04-15": [malfurion, valla, gazlowe, johanna, thrall, tychus, blaze, tyrande, alexstrasza, hogger, xul, junkrat, alarak, probius]
+  "04-22": [li-li, etc, zagara, the-butcher, kaelthas, artanis, illidan, lunara, lt-morales, dva, sylvanas, guldan, murky, abathur]
+
+  # May
+  "05-01": [raynor, muradin, sonya, nazeebo, uther, jaina, genji, chen, falstad, deckard, stitches, kerrigan, whitemane, orphea]
+  "05-08": [malfurion, valla, gazlowe, johanna, thrall, dehaka, hanzo, imperius, anduin, fenix, leoric, kharazim, yrel, kelthuzad]
+  "05-15": [li-li, etc, zagara, the-butcher, kaelthas, artanis, brightwing, azmodan, zuljin, chromie, ana, rexxar, cho, gall]
+  "05-22": [raynor, muradin, sonya, nazeebo, uther, jaina, diablo, rehgar, varian, mephisto, auriel, cassia, tracer, samuro]
+
+  # June
+  "06-01": [malfurion, valla, gazlowe, johanna, thrall, dehaka, greymane, lucio, nova, malganis, tyrael, tassadar, qhira, medivh]
+  "06-08": [li-li, etc, zagara, the-butcher, kaelthas, artanis, arthas, sylvanas, rehgar, malthael, ana, garrosh, azmodan, abathur]
+  "06-15": [raynor, muradin, sonya, nazeebo, uther, jaina, leoric, lunara, brightwing, stukov, hanzo, chromie, rexxar, kelthuzad]
+  "06-22": [malfurion, valla, gazlowe, johanna, thrall, dehaka, tychus, ragnaros, cassia, malganis, illidan, rehgar, varian, tassadar]
+
+  # July
+  "07-01": [li-li, etc, zagara, the-butcher, kaelthas, artanis, anubarak, blaze, auriel, zuljin, chen, xul, tracer, alarak]
+  "07-08": [raynor, muradin, sonya, nazeebo, uther, jaina, zarya, falstad, alexstrasza, maiev, tyrande, mephisto, probius, murky]
+  "07-15": [malfurion, valla, gazlowe, johanna, thrall, dehaka, li-ming, diablo, lucio, lt-morales, sgt-hammer, genji, samuro, the-lost-vikings]
+  "07-22": [li-li, etc, zagara, the-butcher, kaelthas, artanis, stitches, junkrat, deckard, orphea, whitemane, fenix, cho, gall]
+
+  # August
+  "08-01": [raynor, muradin, sonya, nazeebo, uther, jaina, kharazim, ana, guldan, yrel, imperius, lunara, zeratul, medivh]
+  "08-08": [malfurion, valla, gazlowe, johanna, thrall, dehaka, rehgar, tyrael, dva, brightwing, sylvanas, valeera, abathur, deathwing]
+  "08-15": [li-li, etc, zagara, the-butcher, kaelthas, artanis, hanzo, azmodan, garrosh, nova, leoric, chromie, rexxar, stukov]
+  "08-22": [raynor, muradin, sonya, nazeebo, uther, jaina, arthas, malthael, auriel, kelthuzad, tassadar, cassia, ragnaros, tracer]
+
+  # September
+  "09-01": [malfurion, valla, gazlowe, johanna, thrall, dehaka, tychus, anubarak, greymane, alexstrasza, zuljin, tyrande, xul, malganis]
+  "09-08": [li-li, etc, zagara, the-butcher, kaelthas, artanis, lucio, falstad, illidan, mephisto, zarya, alarak, sgt-hammer, murky]
+  "09-15": [raynor, muradin, sonya, nazeebo, uther, jaina, chen, lt-morales, li-ming, varian, junkrat, maiev, genji, orphea]
+  "09-22": [malfurion, valla, gazlowe, johanna, thrall, dehaka, blaze, deckard, probius, fenix, stitches, imperius, guldan, anduin]
+
+  # October
+  "10-01": [li-li, etc, zagara, the-butcher, kaelthas, artanis, sylvanas, diablo, lunara, whitemane, rehgar, azmodan, yrel, samuro]
+  "10-08": [raynor, muradin, sonya, nazeebo, uther, jaina, tyrael, ana, brightwing, zeratul, leoric, hanzo, dva, medivh]
+  "10-15": [malfurion, valla, gazlowe, johanna, thrall, dehaka, arthas, kharazim, chromie, kerrigan, stukov, rexxar, kelthuzad, the-lost-vikings]
+  "10-22": [li-li, etc, zagara, the-butcher, kaelthas, artanis, auriel, ragnaros, garrosh, valeera, tassadar, zuljin, cassia, malganis]
+
+  # November
+  "11-01": [raynor, muradin, sonya, nazeebo, uther, jaina, tychus, malthael, blaze, alexstrasza, anubarak, tracer, mephisto, nova]
+  "11-08": [malfurion, valla, gazlowe, johanna, thrall, dehaka, lucio, xul, falstad, greymane, zarya, alarak, tyrande, abathur]
+  "11-15": [li-li, etc, zagara, the-butcher, kaelthas, artanis, li-ming, lt-morales, illidan, genji, maiev, probius, cho, gall]
+  "11-22": [raynor, muradin, sonya, nazeebo, uther, jaina, chen, sgt-hammer, deckard, junkrat, varian, fenix, imperius, murky]
+
+  # December
+  "12-01": [malfurion, valla, gazlowe, johanna, thrall, dehaka, guldan, stitches, anduin, orphea, sylvanas, dva, lunara, yrel]
+  "12-08": [li-li, etc, zagara, the-butcher, kaelthas, artanis, leoric, diablo, hanzo, whitemane, chromie, kharazim, tyrael, kerrigan]
+  "12-15": [raynor, muradin, sonya, nazeebo, uther, jaina, rehgar, azmodan, brightwing, kelthuzad, rexxar, samuro, valeera, medivh]
+  "12-22": [malfurion, valla, gazlowe, johanna, thrall, dehaka, garrosh, malganis, zuljin, tassadar, tracer, ana, nova, zeratul]

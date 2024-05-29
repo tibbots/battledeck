@@ -1,0 +1,46 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style x:Key="BattlenetRadioButtonTheme" TargetType="RadioButton">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Foreground" Value="Gray"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>       
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid>
+                        <ContentPresenter x:Name="contentPresenter"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          TextBlock.FontWeight="Bold"
+                                          TextBlock.FontSize="22"
+                                          TextBlock.Foreground="Gray"/>
+                     
+                        <Border x:Name="underline" 
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Bottom"
+                                Height="2"
+                                Background="Transparent"
+                                Width="{Binding ActualWidth, ElementName=contentPresenter}"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="contentPresenter" Property="TextBlock.Foreground" Value="White"/>
+                            <Setter TargetName="underline" Property="Background" Value="#1A73E8"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="False">
+                            <Setter TargetName="contentPresenter" Property="TextBlock.Foreground" Value="Gray"/>
+                            <Setter TargetName="underline" Property="Background" Value="Transparent"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="contentPresenter" Property="TextBlock.Foreground" Value="LightGray"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

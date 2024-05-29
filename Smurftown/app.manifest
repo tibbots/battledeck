@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+    <assemblyIdentity version="1.0.0.0" name="MyApplication.app"/>
+    <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+        <security>
+            <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+                <!-- UAC manifest options
+                     To change the User Account Control level for Windows, replace the
+                     "requestedExecutionLevel" node as follows.
+        
+                <requestedExecutionLevel  level="asInvoker" uiAccess="false" />
+                <requestedExecutionLevel  level="requireAdministrator" uiAccess="false" />
+                <requestedExecutionLevel  level="highestAvailable" uiAccess="false" />
+        
+                    Specifying the "requestedExecutionLevel" element disables file and registry
+                    virtualisation. Remove this element if that virtualisation is required for
+                    backwards compatibility of the application.
+                -->
+                <!-- asInvoker since the Windows users were removed: elevated rights were needed
+                     solely for creating and deleting local accounts. Starting the game,
+                     capturing the screen and sending input all work without them. -->
+                <requestedExecutionLevel level="asInvoker" uiAccess="false"/>
+            </requestedPrivileges>
+        </security>
+    </trustInfo>
+
+    <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+        <application>
+            <!-- A list of the Windows versions this application has been tested on and
+                 developed for. Uncommenting the corresponding elements makes Windows
+                 select the most compatible environment automatically. -->
+
+            <!-- Windows Vista -->
+            <!--<supportedOS Id="{e2011457-1546-43c5-a5fe-008deee3d3f0}" />-->
+
+            <!-- Windows 7 -->
+            <!--<supportedOS Id="{35138b9a-5d96-4fbd-8e2d-a2440225f93a}" />-->
+
+            <!-- Windows 8 -->
+            <!--<supportedOS Id="{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}" />-->
+
+            <!-- Windows 8.1 -->
+            <!--<supportedOS Id="{1f676c76-80e1-4239-95bb-83d0f6d0da78}" />-->
+
+            <!-- Windows 10 -->
+            <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>
+
+        </application>
+    </compatibility>
+
+    <!-- Declares that the application is DPI aware and will not be scaled up automatically by
+         Windows. WPF (Windows Presentation Foundation) applications are DPI aware by default; no
+         activation is required. Windows Forms applications targeting .NET Framework 4.6 that turn
+         this setting on must also set "EnableWindowsFormsHighDpiAutoResizing" to TRUE in
+         "app.config".
+
+         This also lets the application use long paths. See
+         https://docs.microsoft.com/windows/win32/fileio/maximum-file-path-limitation.-->
+    <!--
+    <application xmlns="urn:schemas-microsoft-com:asm.v3">
+      <windowsSettings>
+        <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true</dpiAware>
+        <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+      </windowsSettings>
+    </application>
+    -->
+
+    <!-- Enable themes for common Windows controls and dialogs (Windows XP and later) -->
+    <!--
+    <dependency>
+      <dependentAssembly>
+        <assemblyIdentity
+            type="win32"
+            name="Microsoft.Windows.Common-Controls"
+            version="6.0.0.0"
+            processorArchitecture="*"
+            publicKeyToken="6595b64144ccf1df"
+            language="*"
+          />
+      </dependentAssembly>
+    </dependency>
+    -->
+
+</assembly>

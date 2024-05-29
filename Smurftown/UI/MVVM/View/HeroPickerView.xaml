@@ -1,0 +1,290 @@
+<UserControl x:Class="Smurftown.UI.MVVM.View.HeroPickerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Smurftown.UI.MVVM.View"
+        xmlns:loc="clr-namespace:Smurftown.UI.MVVM"
+             mc:Ignorable="d"
+             UseLayoutRounding="True"
+             Background="#1B1D24"
+             d:DesignWidth="1200" d:DesignHeight="800"
+             FocusManager.FocusedElement="{Binding ElementName=SearchBox}"
+             d:DataContext="{d:DesignInstance {x:Type local:HeroPickerViewModel}}">
+
+    <!-- The selection surface itself, without any window trimmings.
+
+         It has two hosts: HeroPicker.xaml (a window, opened from the filter bar and
+         from the rotation symbol) and the HotS tab of the account dialog. That's exactly why it
+         lives here and not in one of the two - two copies would have drifted apart sooner or
+         later, as already happened once with the battletag-to-Windows-user derivation.
+
+         WHAT BREAKS WHEN EMBEDDING, if you're not careful: the commands of the role chips and the
+         hero circles sit in DataTemplates, so they get the ViewModel via RelativeSource.
+         Until 21.08.2026 AncestorType=Window stood there - embedded, that would be the
+         account dialog, whose DataContext is an AddOrEditAccountViewModel. The binding would run
+         into nothing, no click would do anything, and neither the compiler nor the log would say a word.
+         AncestorType=UserControl hits this file in BOTH hosts. -->
+
+    <UserControl.Resources>
+        <!-- A hero in the grid. The name stands exclusively in the tooltip - in the grid
+             itself no hero is spelled out, exactly like with the ranks. -->
+        <ControlTemplate x:Key="HeroButtonTemplate" TargetType="Button">
+            <!-- 64 DIP plus 10 spacing gives 15 circles per row at 1200px window width.
+                 Whoever changes the size recalculates the row occupancy and raises the
+                 source resolution in tools/build-hero-assets.py accordingly (currently 160px). -->
+            <Grid x:Name="wrap" Width="64" Height="64" Margin="0,0,10,10" RenderTransformOrigin="0.5,0.5">
+                <Ellipse Opacity="{Binding PortraitOpacity}">
+                    <Ellipse.Fill>
+                        <ImageBrush ImageSource="{Binding ImageSource}" Stretch="UniformToFill" />
+                    </Ellipse.Fill>
+                </Ellipse>
+                <!-- Ring in role color when owned; otherwise neutral and thinner -->
+                <Ellipse Stroke="{Binding RingBrush}" StrokeThickness="{Binding RingThickness}" />
+                <!-- Free in the current period: the same Nexus symbol that sits on the
+                     hero tile ingame. Deliberately a badge and not a second ring - the border
+                     already carries the role color, another ring around it would be
+                     confusable with it. In rotation mode the ViewModel never delivers it visibly. -->
+                <Image Source="pack://application:,,,/UI/Images/free.png"
+                       Visibility="{Binding FreeBadgeVisibility}"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       Width="22" Height="22" Margin="0,-2,-2,0"
+                       HorizontalAlignment="Right" VerticalAlignment="Top" />
+            </Grid>
+            <ControlTemplate.Triggers>
+                <!-- The whole RenderTransform is set, not ScaleX/ScaleY individually:
+                     TargetName only hits named elements in the template tree, and a
+                     ScaleTransform is not one - that gives MC4111 at compile time. -->
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="wrap" Property="RenderTransform">
+                        <Setter.Value>
+                            <ScaleTransform ScaleX="1.12" ScaleY="1.12" />
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <!-- Button and not ToggleButton: the state hangs on the ViewModel (IsActive), a
+             ToggleButton would keep its own state alongside it and the two would drift apart. -->
+        <ControlTemplate x:Key="RoleChipTemplate" TargetType="Button">
+            <Border x:Name="chip" Height="26" CornerRadius="13" Padding="8,0,11,0" Margin="0,0,6,0"
+                    Background="#20222A" BorderBrush="#313339" BorderThickness="1">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8" Fill="{Binding RoleBrush}" Margin="0,0,7,0"
+                             VerticalAlignment="Center" />
+                    <TextBlock x:Name="name" Text="{Binding Name}" Foreground="#8F8F92" FontSize="12"
+                               FontWeight="DemiBold" VerticalAlignment="Center" />
+                    <TextBlock x:Name="count" Text="{Binding CountLabel}" Foreground="#6E7079" FontSize="12"
+                               FontWeight="DemiBold" Margin="7,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="chip" Property="Background" Value="#2F323C" />
+                    <Setter TargetName="name" Property="Foreground" Value="#DDDDDD" />
+                </Trigger>
+                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                    <Setter TargetName="chip" Property="Background" Value="#2F323C" />
+                    <Setter TargetName="chip" Property="BorderBrush" Value="{Binding RoleBrush}" />
+                    <Setter TargetName="name" Property="Foreground" Value="White" />
+                    <Setter TargetName="count" Property="Foreground" Value="#CFD1D8" />
+                </DataTrigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <ControlTemplate x:Key="BulkButtonTemplate" TargetType="Button">
+            <Border x:Name="bulk" Height="26" CornerRadius="13" Padding="12,0" Margin="6,0,0,0"
+                    Background="Transparent" BorderBrush="#313339" BorderThickness="1">
+                <ContentPresenter VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="bulk" Property="Background" Value="#2A2D36" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <ControlTemplate x:Key="CloseButtonTemplate" TargetType="Button">
+            <Border x:Name="close" Background="Transparent" Width="28" Height="28">
+                <TextBlock Text="&#x2715;" Foreground="#9A9CA5" FontSize="14"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="close" Property="Background" Value="#B22222" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header: what's being chosen, search, the two bulk buttons, standing.
+
+             Title and close cross hang on ChromeVisibility - embedded, the tab above it
+             already says what's being chosen, and there's nothing to close there.
+             Search field, bulk buttons and counter remain in both hosts.
+
+             THE BULK BUTTONS STAND DIRECTLY BEHIND THE SEARCH BOX, and that is their place
+             rather than a decoration: both act on what is currently VISIBLE, and what is
+             visible is decided one element to their left. Standing a row further down, next
+             to the role chips, that connection had to be read out of the label.
+
+             DECLARATION ORDER IS LOAD-BEARING HERE: a DockPanel serves its children in the
+             order they stand - whoever comes first gets their space first. The left-docked
+             group therefore claims its width before the counter on the right does, and the
+             counter is the element that yields at a narrow window. That is deliberate: a
+             clipped action is a broken button, a clipped counter is a missing number.
+
+             Measured at the tighter of the two hosts, the account dialog at 1000 points:
+             search field and buttons together take about 530 of the roughly 960 available,
+             the counter needs about 200. -->
+        <Border Grid.Row="0" Background="#15171E" BorderBrush="#313339" BorderThickness="0,0,0,1">
+            <DockPanel LastChildFill="False" Margin="16,0">
+                <TextBlock DockPanel.Dock="Left" Text="{Binding Title}" Visibility="{Binding ChromeVisibility}"
+                           Foreground="White" FontSize="15"
+                           FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock DockPanel.Dock="Left" Text="{Binding Subtitle}" Visibility="{Binding SubtitleVisibility}"
+                           Foreground="#8F8F92" FontSize="14" VerticalAlignment="Center" Margin="10,0,0,0" />
+                <TextBox DockPanel.Dock="Left" x:Name="SearchBox" Width="210" Height="30" Margin="20,0,0,0"
+                         VerticalAlignment="Center" Style="{StaticResource BattlenetTextBoxTheme}"
+                         Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" />
+                <Button DockPanel.Dock="Left" Command="{Binding SelectShownCommand}" Cursor="Hand"
+                        VerticalAlignment="Center" Margin="8,0,0,0"
+                        Template="{StaticResource BulkButtonTemplate}">
+                    <TextBlock Text="{Binding SelectShownLabel}" Foreground="#8F8F92" FontSize="12"
+                               FontWeight="DemiBold" />
+                </Button>
+                <Button DockPanel.Dock="Left" Command="{Binding ClearShownCommand}" Cursor="Hand"
+                        VerticalAlignment="Center"
+                        Template="{StaticResource BulkButtonTemplate}">
+                    <TextBlock Text="{Binding ClearShownLabel}" Foreground="#8F8F92" FontSize="12"
+                               FontWeight="DemiBold" />
+                </Button>
+
+                <Button DockPanel.Dock="Right" Command="{Binding CloseCommand}" Cursor="Hand"
+                        Visibility="{Binding ChromeVisibility}"
+                        VerticalAlignment="Center" Margin="10,0,0,0"
+                        Template="{StaticResource CloseButtonTemplate}" />
+                <TextBlock DockPanel.Dock="Right" Text="{Binding MatchLabel}"
+                           Visibility="{Binding MatchVisibility}" Foreground="#8F8F92" FontSize="13"
+                           VerticalAlignment="Center" Margin="14,0,0,0" />
+                <TextBlock DockPanel.Dock="Right" Text="{Binding CountLabel}" Foreground="#DDDDDD" FontSize="13"
+                           FontWeight="DemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+
+        <!-- Roles as chips. They have the row to themselves since the bulk buttons moved up
+             into the header - and with that, the clipping trap this row used to carry is gone:
+             the chips can now take the full width, wrap into a second line via WrapPanel, and
+             there is nothing beside them left to squeeze.
+
+             What that trap was, in case anyone puts something back next to them: a DockPanel
+             serves its children in declaration order, and the chips are long enough to eat the
+             whole row. On 22.08.2026 the account dialog showed "selec" instead of "select all",
+             because "Melee Assassin" reads "Nahkampf-Assassine" in German - silently truncated,
+             without a compile error and without a binding warning. -->
+        <ItemsControl Grid.Row="1" ItemsSource="{Binding Roles}" Margin="16,10,16,4">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Button Cursor="Hand" CommandParameter="{Binding}"
+                            Command="{Binding DataContext.PickRoleCommand,
+                                      RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Template="{StaticResource RoleChipTemplate}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Grid: one group per role, header line in the role color
+
+             WHO SCROLLS HERE DEPENDS ON THE HOST and is therefore not fixed in the XAML: in the
+             window this grid scrolls and the header above it stays put (Auto), embedded
+             the whole HotS tab scrolls and this grid doesn't at all (Disabled). Two
+             nested scroll areas would be the worse UX there - the mouse wheel would
+             hit one or the other depending on pointer position.
+
+             Disabled and NOT Hidden: Hidden would let the ScrollViewer keep scrolling and only
+             hide the bar - the grid would stay clamped to the tab height and would have a
+             second, invisible scroll area. Disabled passes the height constraint through, and
+             under an outer ScrollViewer that is unbounded: the grid grows to its
+             natural height. Reasoning at HeroPickerViewModel.GridScrollBarVisibility.
+
+             Row 2 may stay "*" in this: a Grid resolves star rows to their desired height
+             under unbounded measurement, so it behaves like Auto there.
+
+             DISABLED ALONE ISN'T ENOUGH, and that is the trap that cost half a day:
+             a ScrollViewer PROCESSES the mouse wheel even when it can't scroll.
+             OnMouseWheel sets Handled=true regardless of whether an offset changed - Disabled
+             turns off the scrolling, not the processing. Embedded, the wheel therefore stayed
+             ineffective over the grid, while it worked over the region bar and rank block. The
+             handler below therefore passes it up by hand. -->
+        <Grid Grid.Row="2">
+            <ScrollViewer x:Name="GridScroller"
+                          Style="{StaticResource BattlenetScrollViewerTheme}"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="{Binding GridScrollBarVisibility}"
+                          PreviewMouseWheel="GridScroller_PreviewMouseWheel"
+                          Margin="16,4,10,8">
+                <ItemsControl ItemsSource="{Binding Groups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Vertical" Margin="0,0,0,6">
+                                <DockPanel Margin="0,6,6,8">
+                                    <TextBlock DockPanel.Dock="Left" Text="{Binding RoleName}"
+                                               Foreground="{Binding RoleBrush}" FontSize="11" FontWeight="Bold" />
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding CountLabel}"
+                                               Foreground="#63656E" FontSize="11" FontWeight="DemiBold"
+                                               Margin="10,0,0,0" />
+                                    <Rectangle Height="1" Fill="#313339" Margin="10,0,0,0"
+                                               VerticalAlignment="Center" />
+                                </DockPanel>
+                                <ItemsControl ItemsSource="{Binding Heroes}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Cursor="Hand" ToolTip="{Binding Tooltip}"
+                                                    CommandParameter="{Binding}"
+                                                    Command="{Binding DataContext.ToggleHeroCommand,
+                                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    Template="{StaticResource HeroButtonTemplate}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <TextBlock Text="{loc:Str heroes.noMatch}" Visibility="{Binding EmptyHintVisibility}"
+                       Foreground="#8F8F92" FontSize="14" HorizontalAlignment="Center"
+                       VerticalAlignment="Top" Margin="0,30,0,0" />
+        </Grid>
+
+        <!-- Footer: height Auto instead of a fixed 36, so it really disappears when embedded
+             instead of remaining as an empty strip. -->
+        <Border Grid.Row="3" BorderBrush="#313339" BorderThickness="0,1,0,0" Height="36"
+                Visibility="{Binding ChromeVisibility}">
+            <TextBlock Foreground="#63656E" FontSize="12" VerticalAlignment="Center" Margin="16,0">
+                <Run Text="{loc:Str heroes.hintClickKey}" Foreground="#9A9CA5" /><Run Text="{loc:Str heroes.hintClickText}" /><Run
+                    Text="{loc:Str heroes.hintEscKey}" Foreground="#9A9CA5" /><Run Text="{loc:Str heroes.hintEscText}" />
+            </TextBlock>
+        </Border>
+    </Grid>
+</UserControl>
