@@ -39,8 +39,10 @@ Smurftown/
       GameInstallations.cs finds HeroesSwitcher_x64.exe
       screen-map.yaml      calibration: anchors and offsets, embedded resource
       ScreenMap.cs         loads it, maps anchors onto the window (Spot, Layout)
-      GameWindow.cs        find window, bring to front, measure client area
-      GameSession.cs       start, set region, log in, detect screens
+      GameWindow.cs        find window, bring to front, measure client area - and
+                           IsRunning(), which only asks the process list, for the poll
+      GameSession.cs       start, set region, log in, detect screens - and AttachToRunning,
+                           which takes over a signed-in client and touches nothing
       LoginLocator.cs      find the login form in the image instead of calibrating it
       Screenshot.cs        BGRA buffer: crop, scale, distance metrics
       InputSender.cs       SendInput: click, text, mouse wheel
@@ -61,9 +63,16 @@ Smurftown/
       StrExtension.cs    {loc:Str key} in XAML - yields a BINDING, not a string
       View/              XAML + code-behind + AddOrEditAccountViewModel and HeroPickerViewModel
                          (they live here, not in ViewModel/)
-      ViewModel/         Main, Accounts, AccountCard, Settings, UpdateOffer
+                         RegionPicker asks which region a running client is signed into -
+                         the game says it nowhere
+      ViewModel/         Main, Accounts, AccountCard, Settings, UpdateOffer, RunningGame
                          UpdateOffer is ONE object for two places - the version chip in
                          the header and the ABOUT & UPDATES card in the settings
+                         RunningGame is the same shape: the chip beside that version, the
+                         poll behind it, and the busy flag the account rows take too
+      HotsReadout.cs     the read-out, shared by BOTH entrances - the account row and the
+                         header chip. It is here and not in Backend/Automation/ because it
+                         asks the gateway who owns a battletag
       Converter/         Entity -> CardViewModel
       Controls/          BindableRichTextBox (currently unused)
       Dialogs.cs         static DialogService + toast notifier

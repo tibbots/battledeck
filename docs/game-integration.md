@@ -9,9 +9,29 @@ of coordinates, and [game-reading.md](game-reading.md) for the read procedures t
 stands what is specific to this app: the flow with its four exits, what is calibrated and what has
 to be searched, and what ends up in `data.yaml`.
 
+**There are two entrances and one read-out.** The account row starts from the app: a row is
+picked, the game is started, that account is signed in. The header chip starts from the game: a
+client is already running with somebody signed into it, and the app only asks who. What happens
+afterwards is the same thing in both cases, and it lives in one place — `UI/MVVM/HotsReadout.cs`.
+A second copy of it would be where the two drift apart, in the collection paging or in the merge
+rule for heroes.
+
+```
+account row ──► GameSession.StartAndLogin ──┐
+                (starts, signs out, signs in)│
+                                             ├──► HotsReadout.ReadAll ──► data.yaml
+header chip ──► GameSession.AttachToRunning ─┘    (chests, profile, penalty,
+                (takes over, touches nothing)      header, heroes)
+```
+
 One flow, four exits: start → log in → **stop here**, or read and then leave the game
 **open**, **close** it, or first **open the loot chests**, then read and close. Which one applies
 is chosen in the start menu of the row (see the button column in [`ui-layout.md`](ui-layout.md)).
+
+**Only one run at a time**, whichever entrance it came through. Two flows clicking into the same
+client take turns bringing the window to the front, and every click then lands on whatever screen
+the other one just opened. `RunningGame.TryBegin` is the one flag both take; a second run is
+refused with a message instead of queued.
 
 **The first exit reads nothing at all** and is the default behind the game icon. Somebody
 clicking in order to play does not want the app switching screens, paging and clicking for over
@@ -70,6 +90,99 @@ bootstrapper per its manifest, and the path `Versions\BaseNNNNN\` moves with eve
 **The region must be set to Europe anew on every start.** The game does not remember it —
 checked: neither the registry nor `Variables.txt` changes with it. Two clicks are cheaper than
 any registry trick.
+
+## The running client
+
+The other entrance. A chip appears in the header of the window while a Heroes of the Storm client
+is up, and it reads the account that is **already** signed in.
+
+**It signs nobody out and it closes nothing.** That is the whole promise, and it is why
+`AttachToRunning` stands next to `StartAndLogin` instead of being a fifth `SessionPlan`: the plan
+says what to do after signing in, the entrance says how the session comes to be. `AttachToRunning`
+brings the window up, measures it, checks that the main menu is standing — and stops. No sign-out,
+no region click.
+
+**A session that came from there is never disposed.** `GameSession.Dispose` kills the game process,
+and there is a human in it. Not on success, not in the error branch, not in a `finally`.
+
+**Only from the main menu**, for the same reason the sign-out has that rule. At the login form
+there is no account to read; in a hero select or a match the profile overlay is not reachable, and
+clicking there anyway costs the human the match. Both cases abort with a sentence that says which
+one it was.
+
+**The poll costs a process list and nothing else.** `GameWindow.IsRunning` every three seconds — no
+capture, no `BringToFront`. A poll that steals the focus every three seconds would take the machine
+away from whoever is playing on it. It is a separate method from `Find()` and not a convenience:
+`Find()` hands out a `Process` per candidate, and one leaked handle every three seconds is a handle
+leak measured in hours.
+
+### Who is signed in
+
+Nobody said, so the profile says. `ProfileReader.ReadAsync(session, expected: null)` opens the
+overlay once and comes back with the battletag **and** the values, out of the same capture — the
+reading that answers "who is this" is the one that supplies the numbers, and it is handed on rather
+than taken again.
+
+```
+battletag read ──► shape valid (NAME#DIGITS)? ──no──► nothing, warn
+        │
+       yes
+        ▼
+   carried by exactly one account? ──no──► nothing, warn ("not in Smurftown")
+        │                                  (two accounts carrying it counts as no)
+       yes
+        ▼
+   region settled ──cancelled──► nothing
+        │
+        ▼
+   read and write
+```
+
+**There is deliberately no confirming second reading here**, unlike the rename case. Two captures of
+the same static overlay are the same pixels and yield the same misreading — the guard would be
+theatre. What actually guards this path sits on the other side: the tag has to match a stored
+account **character for character**, and the realistic slips (`I`/`l`, `0`/`O`, `5`/`S`) turn a
+battletag into a string that matches nothing. Then nothing is written, which is the safe outcome.
+
+**Two accounts carrying the same battletag count as no answer.** Identity here is the email, so
+nothing stops two entries from carrying the same tag; picking one of the two would write a whole
+reading into an account chosen by list order.
+
+### Which region
+
+**The game does not say.** Rank, heroes and currencies are stored per region, the client is signed
+into exactly one — and on none of the calibrated screens does it stand which. Searched for on
+22.08.2026: neither the main menu nor the profile overlay shows it. So it is derived where it can
+be and asked where it cannot.
+
+| The account plays HotS in | What happens |
+|---|---|
+| exactly one region | that one, no question — the normal case |
+| several | asked, offering exactly those |
+| none yet | asked, offering all three; the pick is **added** to the account's HotS regions |
+
+The last row is not politeness. The overview builds one row per played region, so a reading written
+into a region nobody plays would have no row to appear in — it would be invisible, which is worse
+than an extra tick.
+
+**It is asked before the reading, not after.** The collection alone takes over a minute, and a
+question at the end of that is a minute spent before finding out nobody was there to answer.
+
+**Asking costs the focus, and that has a price worth naming.** The game is in front at that moment;
+a dialog behind a full-screen client is one nobody answers, so the main window is brought up first.
+A client in *exclusive* full screen minimises itself when it loses the focus, and a client minimised
+out of full screen does not come back from outside — that is the same wall documented above with
+three methods. The reading then fails, but it fails with the sentence that says exactly that,
+because every capture checks the window size. Borderless full screen and windowed mode, which is
+what the calibration is measured against, are unaffected. It is one more reason the question is only
+asked when it has to be.
+
+### What it ends on
+
+The same done marker as "Play and refresh data": the PLAY screen, on ARAM. Without it the client
+sits on some collection screen and whoever looks over cannot tell whether the app has finished or is
+still paging. Here it matters more than there — the human is at the machine and wants to keep
+playing.
 
 ## Anchors instead of fixed coordinates
 

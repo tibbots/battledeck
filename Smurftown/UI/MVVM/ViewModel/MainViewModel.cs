@@ -36,6 +36,12 @@ namespace Smurftown.UI.MVVM.ViewModel
             // request. What can be shown without one - the version the last run found - is
             // already on screen when this returns, the rest arrives a moment later.
             _ = UpdateOffer.Instance.Look();
+
+            // Starts the poll for a running game client, and hands over the dialog owner in
+            // the same call: the region question needs a ViewModel whose view carries
+            // md:DialogServiceViews.IsRegistered, and RunningGame is nobody's DataContext -
+            // it hangs in the header of THIS window.
+            RunningGame.Instance.Watch(this);
         }
 
         /// <summary>
@@ -45,6 +51,14 @@ namespace Smurftown.UI.MVVM.ViewModel
         ///     over there has to reach this corner - see <see cref="UpdateOffer" />.
         /// </summary>
         public UpdateOffer Update => UpdateOffer.Instance;
+
+        /// <summary>
+        ///     The chip left of the version, and the flow behind it: a Heroes of the Storm
+        ///     client is running - read the account signed into it, without signing it out.
+        ///     <b>Not state of this ViewModel</b> either: the account rows take its busy flag
+        ///     so that two runs cannot click into the same client at once.
+        /// </summary>
+        public RunningGame Running => RunningGame.Instance;
 
         /// <summary>
         ///     Only built on the first visit. The settings ViewModel's constructor scans

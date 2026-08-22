@@ -64,6 +64,15 @@ start.refreshHint: starten, anmelden, lesen, dann das Spiel beenden
 start.chests: Beutetruhen öffnen
 start.chestsHint: starten, anmelden, alle Truhen öffnen, lesen, dann beenden
 
+# =========================================================== Running client ========
+running.chip: Aktualisieren
+running.busy: Lese...
+running.hint: Heroes of the Storm läuft. Liest das Konto, das angemeldet ist - ohne es abzumelden und ohne den Client zu schließen.
+# region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
+region.pickTitle: Welche Region?
+region.pickQuestion: "{0} ist angemeldet. Der Client sagt nicht, in welcher Region er spielt - wähle sie."
+region.pickCancel: Abbrechen
+
 # =========================================================== Currencies ============
 currency.gold: Gold
 currency.shards: Splitter
@@ -198,6 +207,7 @@ update.selfUpdateNo: "nicht möglich - {0}"
 
 # =========================================================== Progress ==============
 progress.reusing: Benutze den laufenden Client weiter
+progress.attaching: Übernehme den laufenden Client
 progress.starting: Starte Heroes of the Storm
 progress.waitLogin: Warte auf die Anmeldemaske
 progress.region: Setze die Region auf {0}
@@ -215,6 +225,7 @@ progress.chest: Öffne Truhe {0} von {1}
 
 # =========================================================== Toasts ===============
 toast.signedIn: "{0} ist angemeldet"
+toast.readingRunning: Liest den laufenden Client
 toast.nothingChanged: "{0}: nichts geändert"
 toast.copied: "{0} in die Zwischenablage kopiert"
 toast.copyEmpty: "{0} ist leer - nichts kopiert"
@@ -236,6 +247,7 @@ change.chestOne: 1 Truhe geöffnet
 change.chestMany: "{0} Truhen geöffnet"
 change.heroesAdded: "{0} Helden dazu ({1} insgesamt)"
 change.heroes: Helden {0} -> {1} ({2} dazu, {3} weg)
+change.regionAdded: Region {0} hinzugefügt
 
 # =========================================================== What went wrong ========
 # Only the frame is translated - what stands in {0} is an exception text or the note
@@ -250,6 +262,9 @@ problem.tagNotATagFirst: "Das Profil zeigt '{0}' - das ist kein Battletag, für 
 problem.tagNotATag: "Das Profil zeigt '{0}', erwartet war '{1}' - das ist kein Battletag, es wird nichts übernommen."
 problem.tagForeign: "Das Profil zeigt '{0}' - das gehört einem anderen Konto ({1}). Für '{2}' wird nichts übernommen."
 problem.tagAmbiguous: "Das Profil zeigte '{0}', die zweite Aufnahme '{1}' - uneindeutig, für '{2}' wird nichts übernommen."
+problem.runBusy: Ein Spieldurchlauf läuft bereits - warte, bis er fertig ist.
+problem.runNotATag: "Das Profil zeigt '{0}' - das ist kein Battletag. Es wird nichts geschrieben."
+problem.runUnknown: "Der Client ist als '{0}' angemeldet - kein Konto in Smurftown trägt diesen Battletag. Es wird nichts geschrieben."
 
 # =========================================================== Error window ==========
 error.title: Anwendungsfehler

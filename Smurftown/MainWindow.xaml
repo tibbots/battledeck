@@ -98,6 +98,56 @@
             </Style.Triggers>
         </Style>
 
+        <!-- The chip for a RUNNING game client. Local to this window for the same reason as
+             the version chip beside it: it exists exactly once.
+
+             IT IS NOT A BADGE BUT A BUTTON, and that is the difference to its neighbour. The
+             version chip says something and takes a click only in the rare case; this one
+             exists to be clicked and is not there at all otherwise - Visibility hangs on
+             whether a client is running.
+
+             THE HOTS ACCENT (#4A9FD8) IS THE SAME as the one the account rows carry for the
+             game, taken from GameVisuals. It is not decoration here: the chip is about
+             exactly one game, and the header has no other place that says which.
+
+             WHILE A RUN IS GOING ON the button is disabled - and unlike the version chip, a
+             disabled look is right here: the label beside it reads "Reading..." at the same
+             time, so the dimming carries no statement of its own that could be missed. -->
+        <Style x:Key="RunningChipTheme" TargetType="Button">
+            <Setter Property="Height" Value="26" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="DemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="chip" CornerRadius="13" BorderThickness="1"
+                                Background="#152430" BorderBrush="#2B4A61">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                        Margin="10,0,12,0">
+                                <Image Source="pack://application:,,,/UI/Images/hots.png"
+                                       Width="14" Height="14" Margin="0,0,7,0"
+                                       RenderOptions.BitmapScalingMode="HighQuality" />
+                                <TextBlock x:Name="label" Text="{Binding Running.Label}"
+                                           Foreground="#7FB6DC" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="chip" Property="BorderBrush" Value="#4A9FD8" />
+                                <Setter TargetName="label" Property="Foreground" Value="#CFE6F5" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="chip" Property="Opacity" Value="0.55" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- The version chip. Local to this window like the two window-button styles
              above: it exists exactly once, and a style in App.xaml would suggest otherwise.
 
@@ -298,6 +348,18 @@
         <StackPanel Grid.Row="1" Orientation="Horizontal"
                     HorizontalAlignment="Right" VerticalAlignment="Center"
                     Margin="0,0,20,0">
+            <!-- LEFT OF THE VERSION, because it comes and goes. A chip that appears would
+                 push a neighbour sideways if it stood on the right; on the left the version
+                 keeps its place at the edge, which is where the eye looks for it.
+
+                 It is invisible unless a Heroes of the Storm client is running, and the
+                 tooltip carries the whole promise - reads the account that is signed in,
+                 signs nobody out. -->
+            <Button Style="{StaticResource RunningChipTheme}"
+                    Command="{Binding Running.RefreshCommand}"
+                    Visibility="{Binding Running.Visibility}"
+                    ToolTip="{Binding Running.Hint}" />
+
             <!-- IsHitTestVisible and NOT IsEnabled: in the quiet state the chip is a badge
                  and takes no click, but a disabled button would also be DRAWN as one - grey
                  on grey, looking like something that broke. -->

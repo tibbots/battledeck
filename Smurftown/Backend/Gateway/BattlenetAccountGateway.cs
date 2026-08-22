@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Windows.Data;
@@ -208,6 +208,48 @@ namespace Smurftown.Backend.Gateway
             return BattlenetAccounts.FirstOrDefault(other =>
                 !string.Equals(other.Email, except.Email, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(other.Battletag(), battletag, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        ///     Which account carries this battletag - the counterpart to <see cref="OwnerOf" />,
+        ///     and the only place that answers the question at all.
+        ///     <para>
+        ///         <b>Two hits give <c>null</c>, not the first one.</b> A duplicate battletag in
+        ///         the list is a broken state (the identity of an entry is its email, so nothing
+        ///         stops two of them from carrying the same tag), and picking one of the two would
+        ///         write a whole reading into an account chosen by list order. Ambiguous means
+        ///         unanswered here.
+        ///     </para>
+        ///     <para>
+        ///         <b>The archive counts.</b> An archived account still owns its battletag, and if
+        ///         it is the one signed into the client, then that is whose numbers these are.
+        ///     </para>
+        ///     <para>
+        ///         <b>This is what secures the running-client path.</b> There the read tag alone
+        ///         decides whose data gets written, and the safeguard is exactly that it has to
+        ///         match a stored account character for character: the realistic reading errors
+        ///         (I/l, 0/O, 5/S) turn a battletag into a string that matches nothing, and then
+        ///         nothing is written. See <c>ProfileReader.ReadAsync</c>.
+        ///     </para>
+        /// </summary>
+        public BattlenetAccount? FindByBattletag(string? battletag)
+        {
+            if (string.IsNullOrWhiteSpace(battletag)) return null;
+
+            var hits = BattlenetAccounts
+                .Where(account => account.HasBattletag &&
+                                  string.Equals(account.Battletag(), battletag,
+                                      StringComparison.OrdinalIgnoreCase))
+                .Take(2)
+                .ToList();
+
+            if (hits.Count == 1) return hits[0];
+
+            if (hits.Count > 1)
+                Log.Warning("Battletag {Battletag} is carried by more than one account - " +
+                            "nothing is resolved", battletag);
+
+            return null;
         }
 
         private bool Contains(BattlenetAccount account, string searchQuery)

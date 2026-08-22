@@ -69,6 +69,15 @@ start.refreshHint: iniciar, conectarse, leer y luego cerrar el juego
 start.chests: Abrir los cofres
 start.chestsHint: iniciar, conectarse, abrir todos los cofres, leer y cerrar
 
+# =========================================================== Running client ========
+running.chip: Actualizar
+running.busy: Leyendo...
+running.hint: Heroes of the Storm está en ejecución. Lee la cuenta conectada - sin desconectarla ni cerrar el cliente.
+# region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
+region.pickTitle: ¿Qué región?
+region.pickQuestion: "{0} ha iniciado sesión. El cliente no dice en qué región juega - elígela."
+region.pickCancel: Cancelar
+
 # =========================================================== Currencies ============
 currency.gold: Oro
 currency.shards: Esquirlas
@@ -203,6 +212,7 @@ update.selfUpdateNo: "no posible - {0}"
 
 # =========================================================== Progress ==============
 progress.reusing: Reutilizando el cliente en ejecución
+progress.attaching: Tomando el control del cliente en ejecución
 progress.starting: Iniciando Heroes of the Storm
 progress.waitLogin: Esperando la pantalla de inicio de sesión
 progress.region: Estableciendo la región en {0}
@@ -220,6 +230,7 @@ progress.chest: Abriendo el cofre {0} de {1}
 
 # =========================================================== Toasts ===============
 toast.signedIn: "{0} ha iniciado sesión"
+toast.readingRunning: Leyendo el cliente en ejecución
 toast.nothingChanged: "{0}: sin cambios"
 toast.copied: "{0} copiado al portapapeles"
 toast.copyEmpty: "{0} está vacío - no se copió nada"
@@ -241,6 +252,7 @@ change.chestOne: 1 cofre abierto
 change.chestMany: "{0} cofres abiertos"
 change.heroesAdded: "{0} héroes añadidos ({1} en total)"
 change.heroes: Héroes {0} -> {1} ({2} añadidos, {3} retirados)
+change.regionAdded: Región {0} añadida
 
 # =========================================================== What went wrong ========
 # Only the frame is translated - what goes in {0} is an exception text or the note of a
@@ -255,6 +267,9 @@ problem.tagNotATagFirst: "El perfil muestra «{0}» - eso no es un battletag, no
 problem.tagNotATag: "El perfil muestra «{0}», se esperaba «{1}» - eso no es un battletag, no se adopta nada."
 problem.tagForeign: "El perfil muestra «{0}» - pertenece a otra cuenta ({1}). No se adopta nada para «{2}»."
 problem.tagAmbiguous: "El perfil mostró «{0}» y la segunda captura «{1}» - ambiguo, no se adopta nada para «{2}»."
+problem.runBusy: Ya hay una ejecución de juego en curso - espera a que termine.
+problem.runNotATag: "El perfil muestra «{0}» - eso no es un battletag. No se escribe nada."
+problem.runUnknown: "El cliente ha iniciado sesión como «{0}» - ninguna cuenta en Smurftown tiene ese battletag. No se escribe nada."
 
 # =========================================================== Error window ==========
 error.title: Error de la aplicación

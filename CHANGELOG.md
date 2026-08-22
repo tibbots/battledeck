@@ -21,6 +21,28 @@ nothing else on the line.
 
 ## [Upcoming]
 
+### Added
+
+- **Refresh from a client that is already running.** While Heroes of the Storm is up, a chip
+  appears in the header of the window. It reads the account that is signed in — rank, placement
+  status, account level, heroes, gold, shards, gems, loot chests and leaver penalty — and writes it
+  into that account's record. **It signs nobody out and it closes nothing**: the client is left
+  exactly as it was found, and afterwards it stands on the ARAM screen, ready to play. Until now
+  refreshing meant starting the game from a row, which signed the running account out first.
+- The app finds out **by itself** which account is signed in, by reading the battletag off the
+  profile. If no account in Smurftown carries that battletag, nothing is written and the chip says
+  so.
+- **Which region the client is playing in is asked** when the answer is not already known. The game
+  shows it on none of its screens, and rank and heroes are stored per region — so an account that
+  plays in one region is refreshed without a question, and one that plays in several is asked
+  before anything is read. Cancelling that question writes nothing.
+
+### Changed
+
+- **Only one game run at a time.** Starting an account from a row while another run is in progress
+  used to be possible and produced two flows clicking into the same client, each landing on
+  whatever screen the other had just opened. It is now refused with a message.
+
 ## [1.0.0] - 2026-08-22
 
 First public release.

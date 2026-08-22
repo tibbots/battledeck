@@ -48,6 +48,45 @@ namespace Smurftown.Backend.Automation
             if (IsMinimised) NativeMethods.ShowWindow(Handle, NativeMethods.SW_RESTORE);
         }
 
+        /// <summary>
+        ///     Whether a client is running at all - <b>without</b> building a
+        ///     <see cref="GameWindow" /> for it.
+        ///     <para>
+        ///         That is the whole difference to <see cref="Find" />, and it is the reason this
+        ///         exists: the header chip asks this question every few seconds, and every
+        ///         <see cref="Process" /> that <c>Find</c> hands out keeps an OS handle alive.
+        ///         One leaked handle every three seconds is a handle leak measured in hours.
+        ///     </para>
+        ///     <para>
+        ///         <b>It touches the window itself with nothing.</b> No capture, no
+        ///         <c>BringToFront</c> - a poll that steals the focus every three seconds would take
+        ///         the machine away from whoever is playing on it.
+        ///     </para>
+        /// </summary>
+        public static bool IsRunning()
+        {
+            foreach (var name in ProcessNames)
+            {
+                var processes = Process.GetProcessesByName(name);
+                try
+                {
+                    foreach (var process in processes)
+                    {
+                        process.Refresh();
+                        if (process.MainWindowHandle != IntPtr.Zero &&
+                            NativeMethods.IsWindowVisible(process.MainWindowHandle))
+                            return true;
+                    }
+                }
+                finally
+                {
+                    foreach (var process in processes) process.Dispose();
+                }
+            }
+
+            return false;
+        }
+
         public static GameWindow? Find()
         {
             foreach (var name in ProcessNames)
@@ -65,15 +104,31 @@ namespace Smurftown.Backend.Automation
         ///     Waits until the game window has its full size. The loading screen appears after
         ///     a few seconds, the actual window noticeably later - therefore it is not enough
         ///     to wait for just any window.
+        ///     <para>
+        ///         <b>On failure it says what it saw, and that is not decoration.</b> This used
+        ///         to time out with "No usable game window after 15s" and nothing else, so
+        ///         every caller that wanted to explain the failure had to <i>assert</i> a cause
+        ///         it had never measured - "the window is minimised" was a guess that happened
+        ///         to be right often. The last observation now travels in the message and into
+        ///         the log: handle, minimised or not, and the size that was measured. A client
+        ///         reporting 160x28 is a different fault from one reporting nothing at all,
+        ///         and the two want different sentences.
+        ///     </para>
         /// </summary>
         public static async Task<GameWindow> WaitForPlayableWindow(TimeSpan timeout, CancellationToken token = default)
         {
             var deadline = DateTime.UtcNow + timeout;
+            var seen = "no window found at all";
+
             while (DateTime.UtcNow < deadline)
             {
                 token.ThrowIfCancellationRequested();
                 var window = Find();
-                if (window != null)
+                if (window == null)
+                {
+                    seen = "no window found at all";
+                }
+                else
                 {
                     // Restore in EVERY round, not just once beforehand: a client can
                     // minimize itself again while waiting, and a single attempt
@@ -81,6 +136,14 @@ namespace Smurftown.Backend.Automation
                     window.Restore();
 
                     var bounds = window.Bounds();
+
+                    // Read AFTER Restore and after measuring: whether it is minimised NOW is
+                    // the interesting half. A window that keeps saying "minimised" through
+                    // every round did not come back, and one that says "no" while still
+                    // measuring 160x28 is the invisible-proxy case.
+                    seen = $"window 0x{window.Handle:X} is {bounds.Width}x{bounds.Height} " +
+                           $"at {bounds.Left},{bounds.Top}, minimised={window.IsMinimised}";
+
                     if (bounds.Width >= MinimumPlayableWidth && bounds.Height >= MinimumPlayableHeight)
                     {
                         Log.Information("Game window ready: {Width}x{Height} at {Left},{Top}",
@@ -89,10 +152,16 @@ namespace Smurftown.Backend.Automation
                     }
                 }
 
+                // Debug and not Information: this runs twice a second, and at Information a
+                // single failed wait would bury the run it belongs to under thirty lines.
+                Log.Debug("Waiting for a usable game window - {Seen}", seen);
                 await Task.Delay(500, token);
             }
 
-            throw new TimeoutException($"No usable game window after {timeout.TotalSeconds:n0}s.");
+            Log.Warning("No usable game window after {Seconds:n0}s - last seen: {Seen}",
+                timeout.TotalSeconds, seen);
+            throw new TimeoutException(
+                $"No usable game window after {timeout.TotalSeconds:n0}s - last seen: {seen}.");
         }
 
         /// <summary>

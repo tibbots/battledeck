@@ -72,6 +72,14 @@ namespace Smurftown.Backend.Automation
     ///         follows from that is decided by the caller; here it is only read and reported.
     ///     </para>
     ///     <para>
+    ///         <b>Since 22.08.2026 there is a third role</b>, and it is the one where the tag
+    ///         carries the most weight: with <c>expected</c> set to <c>null</c> nobody said who
+    ///         should be standing there, and the read tag alone decides which of the stored
+    ///         accounts this reading belongs to. That is the path behind the running client -
+    ///         it is signed in already, and the app has to find out into whose row the numbers
+    ///         go.
+    ///     </para>
+    ///     <para>
     ///         It stays language-dependent, but differently: instead of an image replacement
     ///         per rank, there is now a table of seven words below. On a client with a
     ///         different language, nothing is recognized and nothing is written.
@@ -129,8 +137,29 @@ namespace Smurftown.Backend.Automation
         private static readonly Regex RankPattern =
             new(@"^([a-z]+(?: [a-z]+)*?)(?:\s+([1-5]))?$", RegexOptions.Compiled);
 
+        /// <param name="expected">
+        ///     The battletag that <b>should</b> be standing there - or <c>null</c> for
+        ///     "tell me who is signed in".
+        ///     <para>
+        ///         The two cases are the two entrances of this app. With a value it is a
+        ///         <b>cross-check</b>: an account was chosen and signed in, and a deviation means
+        ///         either a rename or a foreign screen. With <c>null</c> the reading <b>is</b> the
+        ///         identification - a client was already running and nobody said whose it is.
+        ///     </para>
+        ///     <para>
+        ///         Both cases come back the same way, and that is deliberate: <c>Matches</c> false
+        ///         plus a <c>SeenBattletag</c>. "Identity not settled here" is the honest answer in
+        ///         both, and it keeps <see cref="ProfileReading" /> from growing a third state that
+        ///         two callers would have to agree on.
+        ///     </para>
+        ///     <para>
+        ///         <b>A string and not a <c>BattlenetAccount</c></b>, and not because it is shorter:
+        ///         with the account in hand it is one careless line to look up the list from here,
+        ///         and <c>Backend/Automation</c> deliberately does not know the gateway.
+        ///     </para>
+        /// </param>
         public static async Task<ProfileReading> ReadAsync(GameSession session,
-            BattlenetAccount account, CancellationToken token = default)
+            string? expected, CancellationToken token = default)
         {
             if (!TextReader.Available)
                 return Nothing("Without text recognition rank and account level stay unread.");
@@ -170,7 +199,20 @@ namespace Smurftown.Backend.Automation
                     // answered by the caller - that needs the list of all accounts, and
                     // Backend/Automation deliberately does not know it.
                     var seen = await ReadBattletag(session, map, last!, token);
-                    var expected = account.Battletag();
+
+                    // NOBODY SAID WHO SHOULD BE STANDING THERE - so this reading is the
+                    // identification, and the values come along with it. Exactly ONE capture is
+                    // taken for both, and that is the point: a second one would show a different
+                    // frame, and the tag would then no longer belong to the numbers it identifies.
+                    //
+                    // There is deliberately no confirming second reading here, unlike the rename
+                    // case. Two captures of the same static overlay are the same pixels and give
+                    // the same misreading - the guard would be theatre. What actually guards this
+                    // path is on the other side: the tag has to match exactly one stored account,
+                    // and the realistic slips (I/l, 0/O, 5/S) produce a string that matches none.
+                    if (expected == null)
+                        return Evaluate(block, seen) with { SeenBattletag = seen, Matches = false };
+
                     if (!string.Equals(seen, expected, StringComparison.OrdinalIgnoreCase))
                         return Evaluate(block, seen) with { SeenBattletag = seen, Matches = false };
 

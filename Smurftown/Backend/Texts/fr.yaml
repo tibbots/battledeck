@@ -67,6 +67,15 @@ start.refreshHint: lancer, se connecter, lire, puis fermer le jeu
 start.chests: Ouvrir les coffres
 start.chestsHint: lancer, se connecter, ouvrir chaque coffre, lire, puis fermer
 
+# =========================================================== Running client ========
+running.chip: Actualiser
+running.busy: Lecture...
+running.hint: Heroes of the Storm tourne. Lit le compte connecté - sans le déconnecter ni fermer le client.
+# region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
+region.pickTitle: "Quelle région\xA0?"
+region.pickQuestion: "{0} est connecté. Le client ne dit pas dans quelle région il joue - choisissez-la."
+region.pickCancel: Annuler
+
 # =========================================================== Currencies ============
 currency.gold: Or
 currency.shards: Éclats
@@ -201,6 +210,7 @@ update.selfUpdateNo: "pas possible - {0}"
 
 # =========================================================== Progress ==============
 progress.reusing: Réutilisation du client en cours
+progress.attaching: Prise en charge du client en cours
 progress.starting: Lancement de Heroes of the Storm
 progress.waitLogin: Attente de l'écran de connexion
 progress.region: Réglage de la région sur {0}
@@ -218,6 +228,7 @@ progress.chest: Ouverture du coffre {0} sur {1}
 
 # =========================================================== Toasts ===============
 toast.signedIn: "{0} est connecté"
+toast.readingRunning: Lecture du client en cours
 toast.nothingChanged: "{0}\xA0: aucun changement"
 toast.copied: "{0} copié dans le presse-papiers"
 toast.copyEmpty: "{0} est vide - rien n'a été copié"
@@ -239,6 +250,7 @@ change.chestOne: 1 coffre ouvert
 change.chestMany: "{0} coffres ouverts"
 change.heroesAdded: "{0} héros ajoutés ({1} au total)"
 change.heroes: Héros {0} -> {1} ({2} ajoutés, {3} retirés)
+change.regionAdded: Région {0} ajoutée
 
 # =========================================================== What went wrong ========
 # Only the frame is translated - what stands in {0} is an exception text or the note
@@ -253,6 +265,9 @@ problem.tagNotATagFirst: "Le profil affiche « {0} » - ce n'est pas un battleta
 problem.tagNotATag: "Le profil affiche « {0} », « {1} » était attendu - ce n'est pas un battletag, rien n'est repris."
 problem.tagForeign: "Le profil affiche « {0} » - cela appartient à un autre compte ({1}). Rien n'est repris pour « {2} »."
 problem.tagAmbiguous: "Le profil affichait « {0} », la seconde capture « {1} » - ambigu, rien n'est repris pour « {2} »."
+problem.runBusy: Une exécution est déjà en cours - attendez qu'elle se termine.
+problem.runNotATag: "Le profil affiche « {0} » - ce n'est pas un battletag. Rien n'est écrit."
+problem.runUnknown: "Le client est connecté sous « {0} » - aucun compte dans Smurftown ne porte ce battletag. Rien n'est écrit."
 
 # =========================================================== Error window ==========
 error.title: Erreur de l'application

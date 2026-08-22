@@ -130,39 +130,8 @@ namespace Smurftown.Backend.Automation
             var running = GameWindow.Find();
             if (running != null)
             {
-                // MINIMIZED COUNTS AS RUNNING, but is not measurable. A minimized window
-                // keeps WS_VISIBLE - IsWindowVisible therefore still says "yes", and Find() accepts
-                // it -, but its GetClientRect returns 0x0. Whoever measures immediately here
-                // fails with "Game window is only 0x0" on a client that is completely
-                // fine. Exactly this happened on 21.08.2026.
-                //
-                // BringToFront() calls ShowWindow(SW_RESTORE) and brings it back; afterward
-                // the window needs a few moments before the content area has its size again.
-                // The wait therefore uses the same tool as in the restart branch below,
-                // just with a short deadline - the window is already there after all.
-                progress?.Report(Strings.Current["progress.reusing"]);
-                running.BringToFront();
-
-                GameWindow restored;
-                try
-                {
-                    restored = await GameWindow.WaitForPlayableWindow(RestoreTimeout, token);
-                }
-                catch (TimeoutException)
-                {
-                    // "No usable window after 15s" would be a false statement here: the
-                    // window is there, it is just unusable - and permanently so. A client minimized
-                    // from fullscreen does not come back from outside, that is
-                    // documented on 21.08.2026 with three methods (see GameWindow.BringToFront).
-                    // Whoever reads this message should know what THEY need to do.
-                    throw new InvalidOperationException(
-                        "A Heroes of the Storm client is running but its window is minimised, and a " +
-                        "minimised full-screen client cannot be restored from outside. Bring it up " +
-                        "yourself or close it, then try again.");
-                }
-
-                session = new GameSession(restored, map);
-                session.RequireUsableSize();
+                progress?.Report(Strings.ForLog("progress.reusing"));
+                session = await TakeOver(running, map, token);
                 session.SignOut(progress);
             }
             else
@@ -175,7 +144,7 @@ namespace Smurftown.Backend.Automation
                     throw new FileNotFoundException(
                         $"Game not found: {gamePath}. Adjust the path in the settings.", gamePath);
 
-                progress?.Report(Strings.Current["progress.starting"]);
+                progress?.Report(Strings.ForLog("progress.starting"));
                 Log.Information("{Battletag}: starting {Path}", account.Battletag(), gamePath);
                 Process.Start(new ProcessStartInfo { FileName = gamePath, UseShellExecute = true });
 
@@ -188,32 +157,147 @@ namespace Smurftown.Backend.Automation
             // checks via the brightness of the header bar that the game has left the
             // loading screen at all. The second searches for the form itself - and that comes noticeably
             // later, because a loading spinner stands in its place first.
-            progress?.Report(Strings.Current["progress.waitLogin"]);
+            progress?.Report(Strings.ForLog("progress.waitLogin"));
             await session.WaitForScreen(GameScreen.Login, LoginScreenTimeout, token);
 
             var form = await session.LocateLogin("before the region change", token);
-            progress?.Report(Strings.Format("progress.region", region.DisplayName()));
+            progress?.Report(Strings.FormatForLog("progress.region", region.DisplayName()));
             session.SelectRegion(form, region);
 
             // The region change rebuilds the form. Without this wait, the first
             // keystrokes land in nothing - observed: the email stayed empty, the password arrived, because
             // enough time had passed by then.
-            progress?.Report(Strings.Current["progress.waitSettle"]);
+            progress?.Report(Strings.ForLog("progress.waitSettle"));
             await session.WaitForStableForm(form, token);
 
             // Search again afterward: the form is rebuilt after the region change, and whether it
             // ends up in the same place is an assumption that can be cheaply avoided.
             form = await session.LocateLogin("after the region change", token);
 
-            progress?.Report(Strings.Format("progress.signingIn", account.Battletag()));
+            progress?.Report(Strings.FormatForLog("progress.signingIn", account.Battletag()));
             session.FillCredentials(account, form);
 
-            progress?.Report(Strings.Current["progress.waitMenu"]);
+            progress?.Report(Strings.ForLog("progress.waitMenu"));
             await session.WaitForScreen(GameScreen.Menu, MenuTimeout, token);
 
-            progress?.Report(Strings.Current["progress.signedIn"]);
+            progress?.Report(Strings.ForLog("progress.signedIn"));
             Log.Information("{Battletag}: signed in", account.Battletag());
             return session;
+        }
+
+        /// <summary>
+        ///     Takes over an already running client: bring it up, wait for a usable window,
+        ///     measure it.
+        ///     <para>
+        ///         <b>MINIMISED COUNTS AS RUNNING, but is not measurable.</b> A minimised window
+        ///         keeps WS_VISIBLE - <c>IsWindowVisible</c> therefore still says "yes", and
+        ///         <see cref="GameWindow.Find" /> accepts it -, but its <c>GetClientRect</c>
+        ///         returns 0x0. Whoever measures immediately here fails with
+        ///         "Game window is only 0x0" on a client that is completely fine. Exactly this
+        ///         happened on 21.08.2026.
+        ///     </para>
+        ///     <para>
+        ///         <c>BringToFront()</c> calls <c>ShowWindow(SW_RESTORE)</c> and brings it back;
+        ///         afterward the window needs a few moments before the content area has its size
+        ///         again. The wait therefore uses the same tool as the restart branch, just with a
+        ///         short deadline - the window is already there after all.
+        ///     </para>
+        ///     <para>
+        ///         <b>It decides nothing about what happens next.</b> Signing out is
+        ///         <see cref="StartAndLogin" />'s business, and <see cref="AttachToRunning" />
+        ///         deliberately never signs out at all - that is the entire difference between the
+        ///         two entrances, and it is why this step stands here on its own instead of being
+        ///         written twice.
+        ///     </para>
+        /// </summary>
+        private static async Task<GameSession> TakeOver(GameWindow running, ScreenMap map,
+            CancellationToken token)
+        {
+            running.BringToFront();
+
+            GameWindow restored;
+            try
+            {
+                restored = await GameWindow.WaitForPlayableWindow(RestoreTimeout, token);
+            }
+            catch (TimeoutException e)
+            {
+                // WHAT WAS MEASURED COMES FIRST, the likely cause after it. This used to
+                // assert "its window is minimised" flatly - a cause nothing here had ever
+                // checked, and one that told somebody who had just watched the client come up
+                // on screen that it had not. The wait now reports what it saw, and that
+                // sentence is carried through unchanged.
+                //
+                // The usual cause is still the one documented on 21.08.2026 with three
+                // methods (see GameWindow.BringToFront): a client in EXCLUSIVE full screen
+                // minimises itself the moment it loses the focus, comes back up for a moment
+                // when restored from outside and goes away again, while its real surface sits
+                // in an invisible D3DProxyWindow that cannot be reached. Windowed and
+                // borderless full screen - which is what the calibration is measured against -
+                // are unaffected, so that is the way out worth naming.
+                throw new InvalidOperationException(
+                    $"The Heroes of the Storm window never became usable. {e.Message} " +
+                    "A client in exclusive full screen minimises itself as soon as it loses " +
+                    "the focus and cannot be brought back from outside - switch the game to " +
+                    "windowed or borderless full screen, or close it and start the account " +
+                    "from its row.", e);
+            }
+
+            var session = new GameSession(restored, map);
+            session.RequireUsableSize();
+            return session;
+        }
+
+        /// <summary>
+        ///     The second entrance: attach to a client that is <b>already signed in</b> and leave
+        ///     it exactly as it was found.
+        ///     <para>
+        ///         <b>It signs nobody out and it sets no region.</b> That is not an omission but
+        ///         the whole point: <see cref="StartAndLogin" /> exists to put a <i>chosen</i>
+        ///         account into the client, this one exists to read the account that is
+        ///         <i>already</i> in it. Whoever adds a sign-out here has rebuilt the other method.
+        ///     </para>
+        ///     <para>
+        ///         Which account that is, this class does not answer - it does not know the list.
+        ///         <c>ProfileReader</c> reads the battletag, and the UI resolves it against the
+        ///         accounts.
+        ///     </para>
+        ///     <para>
+        ///         <b>Never <see cref="Dispose" /> a session that came from here.</b> Dispose kills
+        ///         the game process, and the human is playing in it.
+        ///     </para>
+        ///     <para>
+        ///         Only from the <b>main menu</b>, and for the same reason the sign-out has that
+        ///         rule: at the login form there is no account to read, and in a hero select or a
+        ///         match the profile overlay is not reachable - clicking there anyway costs the
+        ///         human the match.
+        ///     </para>
+        /// </summary>
+        public static async Task<GameSession> AttachToRunning(IProgress<string>? progress = null,
+            CancellationToken token = default)
+        {
+            var running = GameWindow.Find()
+                          ?? throw new InvalidOperationException(
+                              "No Heroes of the Storm client is running - there is nothing to read.");
+
+            progress?.Report(Strings.ForLog("progress.attaching"));
+            var session = await TakeOver(running, ScreenMap.Load(), token);
+
+            var screen = session.ScreenOf(session.Capture());
+            if (screen == GameScreen.Menu)
+            {
+                Log.Information("Attached to the running client, main menu");
+                return session;
+            }
+
+            // The session is deliberately NOT disposed on the way out - that would kill the
+            // client the human is sitting in front of. It is dropped, nothing more; it holds no
+            // resource beyond the process handle.
+            throw new InvalidOperationException(screen == GameScreen.HeroSelect
+                ? "The client is in a hero select or in a match - the profile is not reachable " +
+                  "there. Come back to the main menu and try again."
+                : "The client is running, but no account is signed in - the login form is " +
+                  "showing. Sign in, or start the account from its row instead.");
         }
 
         /// <summary>
@@ -484,7 +568,7 @@ namespace Smurftown.Backend.Automation
                     $"A Heroes of the Storm instance is running, but it shows {screen} instead of " +
                     "the main menu. Sign out or close it yourself.");
 
-            progress?.Report(Strings.Current["progress.signingOut"]);
+            progress?.Report(Strings.ForLog("progress.signingOut"));
             Log.Information("Reusing the running client - signing out");
 
             Window.BringToFront();

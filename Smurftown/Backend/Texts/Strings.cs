@@ -178,6 +178,43 @@ namespace Smurftown.Backend.Texts
         }
 
         /// <summary>
+        ///     The English text for a key, whatever language is set - for the lines that end
+        ///     up in <c>smurftown.log</c>.
+        ///     <para>
+        ///         <b>It exists because a channel was mis-wired, and the mis-wiring is worth
+        ///         knowing about.</b> The progress steps of a game run
+        ///         (<c>GameSession</c>, <c>CollectionReader</c>, <c>LootOpener</c>) go through
+        ///         an <c>IProgress&lt;string&gt;</c>, and that channel is meant for a display.
+        ///         There is none: its only subscriber writes into the log. So on a German
+        ///         installation lines like <c>25 von 31 Karten gelesen</c> stood in the log -
+        ///         against the rule two paragraphs up in this class, and unsearchable in four
+        ///         wordings.
+        ///     </para>
+        ///     <para>
+        ///         <b>The translations are kept rather than deleted</b>, and that is a decision
+        ///         and not an oversight: they are correct, a progress display for a flow that
+        ///         takes a minute is a plausible thing to build, and deleting is the one
+        ///         irreversible move here. Until then they render in English, because a log
+        ///         line is what they actually are.
+        ///     </para>
+        /// </summary>
+        public static string ForLog(string key)
+        {
+            return Current._fallback.TryGetValue(key, out var english) ? english : Current[key];
+        }
+
+        /// <summary>
+        ///     <see cref="ForLog" /> with placeholders. Deliberately without the
+        ///     <see cref="FormatException" /> safety net of <see cref="Format" />: the English
+        ///     text is the original, so if its placeholders do not match the values, the fault
+        ///     is in the caller and there is nothing left to fall back to.
+        /// </summary>
+        public static string FormatForLog(string key, params object?[] values)
+        {
+            return string.Format(CultureInfo.InvariantCulture, ForLog(key), values);
+        }
+
+        /// <summary>
         ///     Loads a language and notifies everything that depends on it. Called at
         ///     start and after every save of the settings - the same design as
         ///     <c>InputSender.Pace</c> and <c>GameVocabulary.Current</c>.

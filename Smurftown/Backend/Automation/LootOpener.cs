@@ -108,7 +108,7 @@ namespace Smurftown.Backend.Automation
             while (count > 0 && opened < start)
             {
                 token.ThrowIfCancellationRequested();
-                progress?.Report(Strings.Format("progress.chest", opened + 1, start));
+                progress?.Report(Strings.FormatForLog("progress.chest", opened + 1, start));
 
                 var before = count.Value;
                 var after = await OpenOne(session, before, token);

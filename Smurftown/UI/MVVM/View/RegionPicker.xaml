@@ -1,0 +1,74 @@
+<Window x:Class="Smurftown.UI.MVVM.View.RegionPicker"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Smurftown.UI.MVVM.View"
+        xmlns:loc="clr-namespace:Smurftown.UI.MVVM"
+        mc:Ignorable="d"
+        UseLayoutRounding="True"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        WindowStartupLocation="CenterOwner"
+        Background="#23252B"
+        BorderBrush="#313339"
+        BorderThickness="1"
+        Title="{loc:Str region.pickTitle}" Height="260" Width="440"
+        d:DataContext="{d:DesignInstance {x:Type local:RegionPickerViewModel}}">
+
+    <!-- 440x260, well inside the maximum of 1292x752 (main window minus DialogBounds.Padding
+         per side), so the clamping in the constructor changes nothing here. It stands there
+         anyway, so the rule keeps holding if somebody enlarges this dialog.
+
+         THE BUTTON ROW IS AN ItemsControl and not three fixed buttons: how many regions
+         are offered depends on the account. One that plays in Europe and America gets two,
+         one whose region list is still empty gets all three - and a fixed row would have to
+         hide the ones that do not apply, which is the same thing with more places to be
+         wrong.
+
+         Escape cancels, and cancelling writes nothing. There is deliberately no default
+         button: a return key that picks a region would pick the FIRST one, and which region
+         that is depends on the account. -->
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
+    </Window.InputBindings>
+
+    <StackPanel Orientation="Vertical">
+        <TextBlock Text="{loc:Str region.pickTitle}" Foreground="White" FontSize="24"
+                   FontWeight="DemiBold" HorizontalAlignment="Left" Margin="20,20,0,0" />
+        <Separator Background="#313339" Margin="0,18" />
+
+        <TextBlock Text="{Binding Question}" Foreground="#8F8F92" FontSize="14"
+                   FontWeight="DemiBold" TextWrapping="Wrap" Margin="20,0,20,0" />
+
+        <ItemsControl ItemsSource="{Binding Choices}" Margin="20,22,20,0">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <!-- CommandParameter BEFORE Command, and that order is not cosmetic. WPF
+                         applies attributes in document order; with Command first, the button
+                         evaluates CanExecute against a parameter that is still null - and
+                         RelayCommand<T> answers false for a null parameter as soon as T is a
+                         value type, which an enum is. The button then comes up disabled. It
+                         would recover the moment the parameter arrives, but only because
+                         ButtonBase happens to re-evaluate on that; this way it never gets
+                         into the state at all. -->
+                    <Button Style="{StaticResource BattlenetButtonPrimaryTheme}"
+                            Content="{Binding Label}" Width="120" Height="34" Margin="0,0,10,0"
+                            CommandParameter="{Binding Region}" Command="{Binding Command}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Separator Background="#313339" Margin="0,20,0,10" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,0,20,20">
+            <Button Style="{StaticResource BattlenetButtonSecondaryTheme}"
+                    Content="{loc:Str region.pickCancel}" Width="120" Height="30"
+                    Command="{Binding CancelCommand}" IsCancel="True" />
+        </StackPanel>
+    </StackPanel>
+</Window>

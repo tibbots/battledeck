@@ -115,6 +115,15 @@ start.refreshHint: start, log in, read, then close the game
 start.chests: Open loot chests
 start.chestsHint: start, log in, open every chest, read, then close
 
+# =========================================================== Running client ========
+running.chip: Refresh
+running.busy: Reading...
+running.hint: Heroes of the Storm is running. Reads the account that is signed in - without signing it out and without closing the client.
+# region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
+region.pickTitle: Which region?
+region.pickQuestion: "{0} is signed in. The client does not say which region it is playing in - pick it."   # 0 = Battletag
+region.pickCancel: Cancel
+
 # =========================================================== Currencies ============
 currency.gold: Gold
 currency.shards: Shards
@@ -256,10 +265,18 @@ update.selfUpdateYes: possible
 update.selfUpdateNo: "not possible - {0}"                # 0 = the reason from update.reason*
 
 # =========================================================== Progress ==============
-# These go exclusively to the human, into the progress display - never into a
-# file. That's why they are translated even though they arise during an
-# automation run.
+# THEY DO NOT CURRENTLY REACH ANY HUMAN, and until 23.08.2026 this comment claimed the
+# opposite ("never into a file"). The IProgress<string> they travel on has exactly one
+# subscriber, and it writes into smurftown.log - so on a German installation the log read
+# "25 von 31 Karten gelesen", against the rule that a log stays English in every language.
+#
+# The automation therefore renders them through Strings.ForLog, which always takes the
+# English line. The translations below are KEPT rather than deleted: they are correct, a
+# progress display for a flow that runs for a minute is a plausible thing to build, and
+# deleting is the one irreversible move here. Whoever builds that display switches the call
+# sites in GameSession, CollectionReader and LootOpener back to Strings.Current.
 progress.reusing: Reusing the running client
+progress.attaching: Taking over the running client
 progress.starting: Starting Heroes of the Storm
 progress.waitLogin: Waiting for the login form
 progress.region: Setting region to {0}                   # 0 = region
@@ -277,6 +294,7 @@ progress.chest: Opening chest {0} of {1}
 
 # =========================================================== Toasts ===============
 toast.signedIn: "{0} is signed in"                       # 0 = Battletag
+toast.readingRunning: Reading the running client
 toast.nothingChanged: "{0}: nothing changed"
 toast.copied: "{0} copied to clipboard"                  # 0 = "E-mail" / "Password"
 toast.copyEmpty: "{0} is empty - nothing copied"
@@ -301,6 +319,7 @@ change.chestOne: 1 chest opened
 change.chestMany: "{0} chests opened"
 change.heroesAdded: "{0} heroes added ({1} total)"
 change.heroes: Heroes {0} -> {1} ({2} added, {3} removed)
+change.regionAdded: Region {0} added                     # 0 = region name
 
 # =========================================================== What went wrong ========
 # ONLY THE FRAME is translated. What stands in {0} is the text of an exception or the
@@ -315,6 +334,9 @@ problem.tagNotATagFirst: "The profile shows '{0}' - that is not a battletag, so 
 problem.tagNotATag: "The profile shows '{0}', expected '{1}' - that is not a battletag, nothing is adopted."
 problem.tagForeign: "The profile shows '{0}' - that belongs to another account ({1}). Nothing is adopted for '{2}'."
 problem.tagAmbiguous: "The profile showed '{0}', the second capture '{1}' - ambiguous, nothing is adopted for '{2}'."
+problem.runBusy: A game run is already in progress - wait for it to finish.
+problem.runNotATag: "The profile shows '{0}' - that is not a battletag. Nothing is written."
+problem.runUnknown: "The client is signed in as '{0}' - no account in Smurftown carries that battletag. Nothing is written."
 
 # =========================================================== Error window ==========
 error.title: Application Error

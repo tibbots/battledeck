@@ -128,13 +128,13 @@ namespace Smurftown.Backend.Automation
 
             var map = session.Map.Collection;
 
-            progress?.Report(Strings.Current["progress.openCollection"]);
+            progress?.Report(Strings.ForLog("progress.openCollection"));
             if (!await OpenHeroCollection(session, map, token))
                 return new CollectionReading([], 0, 0, false,
                     "The collection could not be opened - the tab was not found. Check that the " +
                     "client language matches the one set in Smurftown.");
 
-            progress?.Report(Strings.Current["progress.setFilter"]);
+            progress?.Report(Strings.ForLog("progress.setFilter"));
             await ChooseFromDropdown(session, map, map.OwnedFilter, map.OwnedItem, token);
             await ChooseFromDropdown(session, map, map.SortFilter, map.AlphabeticalItem, token);
 
@@ -144,7 +144,7 @@ namespace Smurftown.Backend.Automation
             session.Click(map.AllRoles);
             await Task.Delay(2500, token);
             var (expected, total) = await ReadExpectedCount(session, map, token);
-            if (expected > 0) progress?.Report(Strings.Format("progress.owned", expected, total));
+            if (expected > 0) progress?.Report(Strings.FormatForLog("progress.owned", expected, total));
 
             var found = new List<string>();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -206,8 +206,8 @@ namespace Smurftown.Backend.Automation
                 else dry = 0;
 
                 progress?.Report(expected > 0
-                    ? Strings.Format("progress.cardsOf", cards.Count, expected)
-                    : Strings.Format("progress.cards", cards.Count));
+                    ? Strings.FormatForLog("progress.cardsOf", cards.Count, expected)
+                    : Strings.FormatForLog("progress.cards", cards.Count));
 
                 if (expected > 0 && cards.Count >= expected) break;
 
