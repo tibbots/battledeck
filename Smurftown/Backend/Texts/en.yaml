@@ -97,9 +97,11 @@ row.penaltyOne: 1 penalty game
 row.penaltyMany: "{0} penalty games"
 row.placementsPending: placements pending
 row.rankPlacements: "{0} - placements pending"           # 0 = previous season rank
+row.rankClickHint: Click to correct the rank
 row.neverRead: never read in this region
 row.readAt: read {0}                                     # 0 = timestamp, language-neutral
 row.heroCount: "{0} of {1} heroes"                       # 0 = owned, 1 = all
+row.heroesClickHint: Click to edit the heroes
 row.noData: No {0} data yet                              # 0 = game name, untranslated
 row.noDataOverwatch: Rank per role, endorsement level and competitive points would go here.
 row.noDataWow: Character, class, item level and Mythic+ rating would go here.

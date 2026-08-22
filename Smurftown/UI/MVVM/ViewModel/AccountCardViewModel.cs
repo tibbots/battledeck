@@ -115,6 +115,9 @@ namespace Smurftown.UI.MVVM.ViewModel
 
         private bool _startMenuOpen;
         private bool _actionsMenuOpen;
+        private bool _rankMenuOpen;
+        private RelayCommand<HotsRankChoice>? _pickRankCommand;
+        private RelayCommand? _editHeroesCommand;
         private IReadOnlyList<StartOption> _startOptions = [];
 
         private Visibility _overwatch;
@@ -126,6 +129,7 @@ namespace Smurftown.UI.MVVM.ViewModel
 
         private string? _rankImageSource;
         private string _rankName = "";
+        private string _rankHint = "";
         private double _rankOpacity = 1.0;
         private Visibility _rankVisibility = Visibility.Collapsed;
         private Visibility _wow;
@@ -275,6 +279,7 @@ namespace Smurftown.UI.MVVM.ViewModel
                 RankImageSource = rank ?? (placements ? HotsRankImages.NoRank : null);
                 RankVisibility = RankImageSource == null ? Visibility.Collapsed : Visibility.Visible;
                 RankName = RankLabel(hots, data, placements, rank != null);
+                RankHint = Hinted(RankName, "row.rankClickHint");
                 RankOpacity = placements ? 0.4 : 1.0;
 
                 // Name column: the battletag, as soon as one has been read, otherwise the email.
@@ -315,7 +320,7 @@ namespace Smurftown.UI.MVVM.ViewModel
                 HeroCountText = heroes.Count == 0 && data?.ReadAt == null
                     ? $"– / {HotsHeroCatalog.Count}"
                     : $"{heroes.Count} / {HotsHeroCatalog.Count}";
-                HeroStripHint = HeroLabel(heroes);
+                HeroStripHint = Hinted(HeroLabel(heroes), "row.heroesClickHint");
 
                 // The stats that were read. They now sit IN the HotS panel and therefore need
                 // no dedicated visibility anymore: the panel is only visible when HotS is chosen,
@@ -449,6 +454,18 @@ namespace Smurftown.UI.MVVM.ViewModel
         }
 
         /// <summary>Plain text for the tooltip, e.g. "Gold 3" or "Gold 3 - placements pending".</summary>
+        /// <summary>
+        ///     The tooltip of the medal: the rank plus the sentence that it can be clicked.
+        ///     Separate from <see cref="RankName" />, which stays a name - the call to action
+        ///     belongs in a hint, the way <c>HeroStripHint</c> and <c>CurrencyHint</c> carry
+        ///     theirs.
+        /// </summary>
+        public string RankHint
+        {
+            get { return _rankHint; }
+            set { SetProperty(ref _rankHint, value); }
+        }
+
         public string RankName
         {
             get { return _rankName; }
@@ -653,6 +670,43 @@ namespace Smurftown.UI.MVVM.ViewModel
         }
 
         /// <summary>
+        ///     Whether the rank grid on the medal is expanded. Since 23.08.2026 the medal is
+        ///     not a picture but a button, and it carries the shortest way to correct a rank
+        ///     the reading got wrong: two clicks instead of the five through the dialog.
+        ///     <para>
+        ///         Same mechanism as <see cref="StartMenuOpen" /> and for the same reason:
+        ///         <c>StaysOpen="False"</c> reacts only to clicks <b>outside</b>, so
+        ///         <see cref="PickRank" /> resets the value first thing.
+        ///     </para>
+        ///     <para>
+        ///         <b>A <c>ToggleButton</c> is what makes the medal safe to double-click.</b>
+        ///         The row opens the edit dialog on a double-click, and the medal is one of the
+        ///         two spots that must not: <c>ButtonBase</c> marks <c>MouseLeftButtonDown</c>
+        ///         as handled, so the binding on the row never sees the gesture - and the
+        ///         second click of an accidental double closes the grid again instead of
+        ///         picking whatever medal happens to lie under the pointer.
+        ///     </para>
+        /// </summary>
+        public bool RankMenuOpen
+        {
+            get { return _rankMenuOpen; }
+            set { SetProperty(ref _rankMenuOpen, value); }
+        }
+
+        /// <summary>
+        ///     The 28 ranks as the grid draws them - the same layout the HotS tab of the edit
+        ///     dialog shows, laid out once in <see cref="HotsRankGrid" />.
+        ///     <para>
+        ///         <b>Which region it writes to is not a question here</b>, unlike everywhere
+        ///         the game is read out of a running client: a row IS an account in one
+        ///         region, so <c>_row.Region</c> is the answer and there is nothing to ask.
+        ///     </para>
+        /// </summary>
+        public IReadOnlyList<IReadOnlyList<IReadOnlyList<HotsRankChoice>>> RankColumns =>
+            HotsRankGrid.Columns(_row?.Hots?.Tier ?? HotsRankTier.None,
+                _row?.Hots?.Division ?? 0, PickRankCommand);
+
+        /// <summary>
         ///     "42 of 90 heroes" plus one line per role that is represented. Roles without heroes
         ///     stay off - a list with six zeros says less than three real lines.
         /// </summary>
@@ -684,6 +738,22 @@ namespace Smurftown.UI.MVVM.ViewModel
                 : Strings.Format("row.readAt", $"{data.ReadAt:yyyy-MM-dd HH:mm}"));
 
             return string.Join("\n", lines);
+        }
+
+        /// <summary>
+        ///     Puts the call to action under a tooltip - two blank-line-separated blocks, the
+        ///     statement first.
+        ///     <para>
+        ///         <b>It has to survive an empty text</b>, and that is not a corner case: the
+        ///         hero strip says nothing at all when nothing has been read, and that is
+        ///         exactly when the click matters most. A bare concatenation would leave a
+        ///         leading blank line there.
+        ///     </para>
+        /// </summary>
+        private static string Hinted(string text, string key)
+        {
+            var hint = Strings.Current[key];
+            return text.Length == 0 ? hint : text + "\n\n" + hint;
         }
 
         private static string HeroLabel(IReadOnlyList<HotsHero> heroes)
@@ -941,6 +1011,18 @@ namespace Smurftown.UI.MVVM.ViewModel
         public Visibility ArchiveUpVisibility =>
             Account is { Inactive: true } ? Visibility.Visible : Visibility.Collapsed;
 
+        /// <summary>A medal in the grid was clicked - see <see cref="PickRank" />.</summary>
+        public ICommand PickRankCommand
+        {
+            get { return _pickRankCommand ??= new RelayCommand<HotsRankChoice>(PickRank); }
+        }
+
+        /// <summary>The hero strip was clicked - see <see cref="EditHeroes" />.</summary>
+        public ICommand EditHeroesCommand
+        {
+            get { return _editHeroesCommand ??= new RelayCommand(EditHeroes); }
+        }
+
         public ICommand OpenSettingsCommand
         {
             get
@@ -1104,7 +1186,71 @@ namespace Smurftown.UI.MVVM.ViewModel
         private void OpenSettings()
         {
             ActionsMenuOpen = false;
-            ShowDialog(viewModel => Dialogs.DialogService.ShowDialog(this, viewModel));
+            ShowDialog();
+        }
+
+        /// <summary>
+        ///     Writes a rank picked from the grid on the medal straight into the region of
+        ///     this row.
+        ///     <para>
+        ///         <b><c>ReadAt</c> stays untouched</b>, and that is the point of the whole
+        ///         method: a correction by hand is not a reading, and the timestamp under the
+        ///         name would otherwise claim the game had been asked. <c>PlacementsPending</c>
+        ///         stays too - carrying a rank from last season and still owing the placement
+        ///         matches is a real state, and picking a medal does not end it.
+        ///     </para>
+        ///     <para>
+        ///         The write goes the way the read-out goes: mutate the region record, then
+        ///         <c>AddOrUpdate</c>, which saves and rebuilds the rows.
+        ///     </para>
+        /// </summary>
+        private void PickRank(HotsRankChoice? choice)
+        {
+            RankMenuOpen = false;
+            if (choice == null || _row == null) return;
+
+            var wanted = choice.Tier;
+            var division = wanted.HasDivisions() ? choice.Division : 0;
+            var current = _row.Hots;
+
+            // Nothing to write - either the region already says this, or there is no record
+            // yet and "no rank" is exactly what an absent one already means. Without this
+            // check HotsFor below would create an empty entry that data.yaml then carries
+            // forever, just because somebody clicked the medal that was already lit.
+            if ((current?.Tier ?? HotsRankTier.None) == wanted &&
+                (current?.Division ?? 0) == division) return;
+
+            var account = _row.Account;
+
+            // HotsFor and not HotsIn: this is a write, so the record has to come into being
+            // if this region has never been read.
+            var data = account.HotsFor(_row.Region);
+            data.Tier = wanted;
+            data.Division = division;
+
+            _battlenetAccountGateway.UpdateInteraction(account);
+
+            // Medal, tooltip and opacity hang on the setter; the highlight in the grid does
+            // not, it is a computed property without a notification of its own.
+            Row = _row;
+            OnPropertyChanged(nameof(RankColumns));
+        }
+
+        /// <summary>
+        ///     The hero strip was clicked. Opens the edit dialog on the HotS tab, where the
+        ///     picker already sits embedded.
+        ///     <para>
+        ///         <b>Deliberately not a quick pick of its own.</b> Ninety heroes are not a
+        ///         popup, and the list is the value this application MEASURES - see
+        ///         <see cref="HotsReadout" />. A comfortable way to type it by hand would
+        ///         invite it to drift away from what the collection actually holds. The rank
+        ///         is one value out of 28 and gets the short way; the heroes get the wide
+        ///         surface.
+        ///     </para>
+        /// </summary>
+        private void EditHeroes()
+        {
+            ShowDialog(true);
         }
 
         /// <summary>
@@ -1202,12 +1348,26 @@ namespace Smurftown.UI.MVVM.ViewModel
             }
         }
 
-        private void ShowDialog(Func<AddOrEditAccountViewModel, bool?> showDialog)
+        /// <summary>
+        ///     Opens the edit dialog for this row.
+        ///     <para>
+        ///         <b>It hands over the region of the row</b>, and that is not decoration:
+        ///         without it the dialog opens on the first HotS region of the account, so
+        ///         editing from an Americas row landed on the Europe tab and the ranks
+        ///         standing there looked wrong.
+        ///     </para>
+        ///     <para>
+        ///         The <c>Func</c> that used to be the parameter is gone. It had exactly one
+        ///         caller and one implementation, and it stood in the way of the two arguments
+        ///         that now matter.
+        ///     </para>
+        /// </summary>
+        private void ShowDialog(bool hotsTab = false)
         {
             Application.Current.MainWindow!.Opacity = 0.4;
-            var dialogViewModel = new AddOrEditAccountViewModel(Account!);
+            var dialogViewModel = new AddOrEditAccountViewModel(Account!, _row?.Region, hotsTab);
 
-            var success = showDialog(dialogViewModel);
+            var success = Dialogs.DialogService.ShowDialog(this, dialogViewModel);
             Application.Current.MainWindow!.Opacity = 100;
             dialogViewModel.Execute(success);
         }

@@ -49,9 +49,11 @@ row.penaltyOne: 1 partie de pénalité
 row.penaltyMany: "{0} parties de pénalité"
 row.placementsPending: placement en cours
 row.rankPlacements: "{0} - placement en cours"
+row.rankClickHint: Cliquer pour corriger le rang
 row.neverRead: jamais lu dans cette région
 row.readAt: lu {0}
 row.heroCount: "{0} héros sur {1}"
+row.heroesClickHint: Cliquer pour modifier les héros
 row.noData: Aucune donnée {0} pour l'instant
 row.noDataOverwatch: Rang par rôle, niveau de recommandation et points de compétition apparaîtraient ici.
 row.noDataWow: Personnage, classe, niveau d'objet et cote Mythique+ apparaîtraient ici.

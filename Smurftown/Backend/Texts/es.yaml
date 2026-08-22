@@ -51,9 +51,11 @@ row.penaltyOne: 1 partida de penalización
 row.penaltyMany: "{0} partidas de penalización"
 row.placementsPending: clasificación pendiente
 row.rankPlacements: "{0} - clasificación pendiente"
+row.rankClickHint: Haz clic para corregir el rango
 row.neverRead: nunca leído en esta región
 row.readAt: leído {0}
 row.heroCount: "{0} de {1} héroes"
+row.heroesClickHint: Haz clic para editar los héroes
 row.noData: Aún no hay datos de {0}
 row.noDataOverwatch: Aquí irían el rango por rol, el nivel de recomendación y los puntos de competitivo.
 row.noDataWow: Aquí irían el personaje, la clase, el nivel de objeto y la puntuación de Mítica+.

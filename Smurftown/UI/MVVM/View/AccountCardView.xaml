@@ -89,7 +89,96 @@
         anything reporting an error.
     -->
 
+    <UserControl.Resources>
+        <!-- A CLICKABLE ZONE INSIDE THE ROW. Two of them exist - the rank medal and the hero
+             strip - and they are exactly the two spots where the double-click of the row must
+             NOT arrive. That is why they are ButtonBase and not a Border with a MouseBinding:
+             a LeftClick binding matches only ClickCount 1, so the second click of a double
+             would bubble on and open the edit dialog after all. ButtonBase marks
+             MouseLeftButtonDown as handled regardless of the count.
+
+             No chrome of its own: the content is a medal or a strip of portraits, and a
+             button frame around either would be a second border inside a row that already
+             has one. What says "clickable" is the pointer. -->
+        <Style x:Key="RowZoneTheme" TargetType="ButtonBase">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ButtonBase">
+                        <!-- Transparent and not null: without a brush the surface does not
+                             catch the mouse, and only the pixels of the content itself would
+                             be clickable - between two overlapping hero circles there would be
+                             holes. Same trap as with the rotation chip in the filter bar. -->
+                        <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- The medal on top of that: it may carry a hover surface, the hero strip may not.
+             The separator rings between the portraits are HOLES that show the ground behind
+             them - a surface appearing under them on hover would make every ring sit visibly
+             wrong. The medal is a cut-out image over the tint and has no such illusion. -->
+        <Style x:Key="RankZoneTheme" TargetType="ToggleButton"
+               BasedOn="{StaticResource RowZoneTheme}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="zone" Background="Transparent" CornerRadius="6">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="zone" Property="Background" Value="#2F323C" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- One medal in the rank grid. The same template the HotS tab of the edit dialog
+             uses; the grid itself comes from HotsRankGrid, so both draw the same 28 entries.
+             58x64, because the asset measures 160x176 and a squashed image stands out
+             immediately. -->
+        <Style x:Key="RankChoiceTheme" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="hover" Background="Transparent"
+                                CornerRadius="4" Padding="2">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="hover" Property="Background" Value="#2F323C" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Border Margin="20,3,10,3" CornerRadius="8" BorderThickness="1" Height="91">
+        <!-- DOUBLE-CLICK OPENS THE EDIT DIALOG - everywhere on the row except the rank medal
+             and the hero strip, which carry their own gesture and swallow the event.
+
+             The two round buttons in the column on the right need no exception: they are
+             ButtonBase too, so the gesture never reaches this binding from there. Neither do
+             the two menus - a Popup is its own window and does not bubble in here at all.
+
+             A double-click on a list row is a convention and therefore invisible; the way
+             that can be found stays where it was, in the three-dot menu. -->
+        <Border.InputBindings>
+            <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding OpenSettingsCommand}" />
+        </Border.InputBindings>
         <Border.Style>
             <Style TargetType="Border">
                 <Setter Property="Background" Value="#1E1F24" />
@@ -325,93 +414,196 @@
                              grayscale: WPF's FormatConvertedBitmap with Gray8 has no
                              alpha channel, the cut-out medal would get a black
                              blob. -->
-                        <Image DockPanel.Dock="Left"
-                               Source="{Binding RankImageSource}"
-                               Opacity="{Binding RankOpacity}"
-                               Visibility="{Binding RankVisibility}"
-                               ToolTip="{Binding RankName}"
-                               RenderOptions.BitmapScalingMode="HighQuality"
-                               VerticalAlignment="Center" Height="78" Width="71"
-                               Margin="0,0,10,0" />
+                        <!-- THE MEDAL IS A BUTTON since 23.08.2026. A click opens the same
+                             grid the HotS tab of the edit dialog shows, and the pick is written
+                             straight into the region of THIS row - which region is not a
+                             question here, a row is an account in exactly one.
 
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
-                                    VerticalAlignment="Center">
+                             THE GRID SIZES ITSELF, unlike the two menus in the button column.
+                             Those align right under their button and therefore need a fixed
+                             Width, because the offset is computed from it. This one opens to
+                             the RIGHT from the left edge of the medal, at about x=274 of 1340 -
+                             its roughly 680 points fit, and nothing has to be calculated.
 
-                            <!-- Hero strip. ELEVEN circles at 47 points with 13 points of
-                                 overlap occupy 387 points. The path there: six at 26
-                                 (121), eight at 30 (184) with the room from the dropped
-                                 tab column, twelve at 30 (272) with that of the rank text,
-                                 eleven at 36 (296), on 21.08.2026 bigger instead of more -
-                                 eight at 47, because medal and circles grew by 30 percent -
-                                 and back to eleven the same day, when penalty triangle, three
-                                 buttons and the accent strip freed up 217 points.
-                                 FOURTEEN WOULD FIT (489 of 508). Eleven were chosen, because
-                                 the row would otherwise stand full from left to right; the 121
-                                 points before it are slack on purpose.
-                                 The overlap grew along with the circle size (10 to
-                                 13), so the circles sit as tightly as before.
-                                 The strip remains a sample; the statement stands as a
-                                 number next to it.
-                                 The margin on the ItemsControl compensates for the overlap of
-                                 the FIRST portrait - it is always the amount of the
-                                 overlap, otherwise the strip protrudes to the left. -->
-                            <ItemsControl ItemsSource="{Binding HeroChips}"
-                                          Visibility="{Binding HeroChipsVisibility}"
-                                          VerticalAlignment="Center" Margin="13,0,0,0"
-                                          ToolTip="{Binding HeroStripHint}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Width="47" Height="47" Margin="-13,0,0,0"
-                                              ToolTip="{Binding Tooltip}">
-                                            <Ellipse>
-                                                <Ellipse.Fill>
-                                                    <ImageBrush ImageSource="{Binding ImageSource}"
-                                                                Stretch="UniformToFill" />
-                                                </Ellipse.Fill>
-                                            </Ellipse>
-                                            <Ellipse Stroke="{Binding RoleBrush}" StrokeThickness="2" />
-                                            <!-- Separator ring, so the overlapping circles
-                                                 stand out from one another. It is a HOLE and
-                                                 therefore carries the color that lies behind
-                                                 it at its spot - since the tint, that is no
-                                                 longer the row's base color, but a value that
-                                                 GameVisuals derives from the same gradient. Set
-                                                 by hand it would drift away from it at the
-                                                 next tweak.
-                                                 The hover stays weak nonetheless: it shifts
-                                                 the ground, not the ring. -->
-                                            <Ellipse Stroke="{Binding DataContext.StripSeparator, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                     StrokeThickness="2" Width="51" Height="51" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                             THE GRID AROUND THE TWO IS NOT DECORATION. A Popup measures 0x0,
+                             but as a direct child of the DockPanel it would take the
+                             LastChildFill slot away from the hero strip. -->
+                        <Grid DockPanel.Dock="Left" VerticalAlignment="Center"
+                              Margin="0,0,10,0" Visibility="{Binding RankVisibility}">
+                            <ToggleButton x:Name="RankMedalButton"
+                                          Style="{StaticResource RankZoneTheme}"
+                                          IsChecked="{Binding RankMenuOpen, Mode=TwoWay}"
+                                          ToolTip="{Binding RankHint}">
+                                <Image Source="{Binding RankImageSource}"
+                                       Opacity="{Binding RankOpacity}"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       Height="78" Width="71" />
+                            </ToggleButton>
 
-                            <TextBlock Text="{Binding HeroOverflow}"
-                                       Visibility="{Binding HeroOverflowVisibility}"
-                                       Foreground="#7E93AE" FontSize="11" VerticalAlignment="Center"
-                                       Margin="8,0,0,0" />
+                            <!-- Three levels: columns, rows inside them, medals inside those.
+                                 The split happens in HotsRankGrid - index arithmetic in the
+                                 XAML would be silently wrong at the next change to the tier
+                                 list.
 
-                            <!-- Without heroes a sentence stands there, not an empty strip: that
-                                 would be a hole in the layout and would leave it open whether
-                                 it was never read or there is nothing there. -->
-                            <TextBlock Text="{loc:Str row.noHeroes}"
-                                       Visibility="{Binding HeroEmptyVisibility}"
-                                       Foreground="#5A5E6C" FontSize="10.5" FontStyle="Italic"
-                                       VerticalAlignment="Center" />
+                                 THE COMMAND COMES OUT OF THE RECORD and not via RelativeSource.
+                                 A popup lies outside the layout tree of the row, and a walk out
+                                 of three nested ItemsControl would have to count levels. The
+                                 start menu above solves it the same way, and since 23.08.2026
+                                 the dialog does too - one mechanism, not two.
 
-                            <!-- The number is the statement, the strip before it only the sample.
-                                 "– / 90" means never read; "0 / 90" would claim the account
-                                 owned not a single hero. -->
-                            <TextBlock Text="{Binding HeroCountText}" FontSize="10.5"
-                                       Foreground="#7E93AE" VerticalAlignment="Center"
-                                       Margin="10,0,0,0" ToolTip="{Binding HeroStripHint}" />
-                        </StackPanel>
+                                 CommandParameter stands BEFORE Command, and that order is not
+                                 cosmetic: WPF applies attributes in document order, and a
+                                 command evaluating CanExecute against a parameter that is not
+                                 set yet would leave the button disabled. -->
+                            <Popup PlacementTarget="{Binding ElementName=RankMedalButton}"
+                                   Placement="Bottom" VerticalOffset="-6" HorizontalOffset="-10"
+                                   StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade"
+                                   IsOpen="{Binding RankMenuOpen, Mode=TwoWay}">
+                                <Border Style="{StaticResource BattlenetMenuSurfaceTheme}">
+                                    <ItemsControl ItemsSource="{Binding RankColumns}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <ItemsControl ItemsSource="{Binding}" Margin="0,0,16,0">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <ItemsControl ItemsSource="{Binding}">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <StackPanel Orientation="Horizontal" />
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Button Style="{StaticResource RankChoiceTheme}"
+                                                                                CommandParameter="{Binding}"
+                                                                                Command="{Binding Command}">
+                                                                            <Grid>
+                                                                                <Image Source="{Binding ImageSource}"
+                                                                                       Height="64" Width="58"
+                                                                                       Opacity="{Binding Opacity}"
+                                                                                       RenderOptions.BitmapScalingMode="HighQuality" />
+                                                                                <!-- The frame sits only on the
+                                                                                     chosen one. Blue like the
+                                                                                     tabs, because a rank has no
+                                                                                     color of its own. -->
+                                                                                <Border BorderBrush="#1A73E8"
+                                                                                        BorderThickness="2"
+                                                                                        CornerRadius="4"
+                                                                                        Visibility="{Binding RingVisibility}" />
+                                                                            </Grid>
+                                                                        </Button>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                            </Popup>
+                        </Grid>
+
+                        <!-- A CLICK ON THE STRIP OPENS THE EDIT DIALOG ON THE HOTS TAB, where
+                             the hero picker already sits embedded. Deliberately not a quick
+                             pick of its own: ninety heroes are not a popup, and the list is the
+                             value this application MEASURES out of the collection - a
+                             comfortable way to type it by hand would invite it to drift away
+                             from what the game actually holds.
+
+                             RowZoneTheme and NOT RankZoneTheme: this zone must not paint a
+                             hover surface. The separator rings between the portraits are holes
+                             that show the ground behind them, and a surface appearing under
+                             them would make every ring sit visibly wrong. The pointer says
+                             enough. -->
+                        <Button Style="{StaticResource RowZoneTheme}"
+                                Command="{Binding EditHeroesCommand}"
+                                ToolTip="{Binding HeroStripHint}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                                <!-- Hero strip. ELEVEN circles at 47 points with 13 points of
+                                     overlap occupy 387 points. The path there: six at 26
+                                     (121), eight at 30 (184) with the room from the dropped
+                                     tab column, twelve at 30 (272) with that of the rank text,
+                                     eleven at 36 (296), on 21.08.2026 bigger instead of more -
+                                     eight at 47, because medal and circles grew by 30 percent -
+                                     and back to eleven the same day, when penalty triangle, three
+                                     buttons and the accent strip freed up 217 points.
+                                     FOURTEEN WOULD FIT (489 of 508). Eleven were chosen, because
+                                     the row would otherwise stand full from left to right; the 121
+                                     points before it are slack on purpose.
+                                     The overlap grew along with the circle size (10 to
+                                     13), so the circles sit as tightly as before.
+                                     The strip remains a sample; the statement stands as a
+                                     number next to it.
+                                     The margin on the ItemsControl compensates for the overlap of
+                                     the FIRST portrait - it is always the amount of the
+                                     overlap, otherwise the strip protrudes to the left. -->
+                                <ItemsControl ItemsSource="{Binding HeroChips}"
+                                              Visibility="{Binding HeroChipsVisibility}"
+                                              VerticalAlignment="Center" Margin="13,0,0,0"
+                                              ToolTip="{Binding HeroStripHint}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Width="47" Height="47" Margin="-13,0,0,0"
+                                                  ToolTip="{Binding Tooltip}">
+                                                <Ellipse>
+                                                    <Ellipse.Fill>
+                                                        <ImageBrush ImageSource="{Binding ImageSource}"
+                                                                    Stretch="UniformToFill" />
+                                                    </Ellipse.Fill>
+                                                </Ellipse>
+                                                <Ellipse Stroke="{Binding RoleBrush}" StrokeThickness="2" />
+                                                <!-- Separator ring, so the overlapping circles
+                                                     stand out from one another. It is a HOLE and
+                                                     therefore carries the color that lies behind
+                                                     it at its spot - since the tint, that is no
+                                                     longer the row's base color, but a value that
+                                                     GameVisuals derives from the same gradient. Set
+                                                     by hand it would drift away from it at the
+                                                     next tweak.
+                                                     The hover stays weak nonetheless: it shifts
+                                                     the ground, not the ring. -->
+                                                <Ellipse Stroke="{Binding DataContext.StripSeparator, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                         StrokeThickness="2" Width="51" Height="51" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <TextBlock Text="{Binding HeroOverflow}"
+                                           Visibility="{Binding HeroOverflowVisibility}"
+                                           Foreground="#7E93AE" FontSize="11" VerticalAlignment="Center"
+                                           Margin="8,0,0,0" />
+
+                                <!-- Without heroes a sentence stands there, not an empty strip: that
+                                     would be a hole in the layout and would leave it open whether
+                                     it was never read or there is nothing there. -->
+                                <TextBlock Text="{loc:Str row.noHeroes}"
+                                           Visibility="{Binding HeroEmptyVisibility}"
+                                           Foreground="#5A5E6C" FontSize="10.5" FontStyle="Italic"
+                                           VerticalAlignment="Center" />
+
+                                <!-- The number is the statement, the strip before it only the sample.
+                                     "– / 90" means never read; "0 / 90" would claim the account
+                                     owned not a single hero. -->
+                                <TextBlock Text="{Binding HeroCountText}" FontSize="10.5"
+                                           Foreground="#7E93AE" VerticalAlignment="Center"
+                                           Margin="10,0,0,0" ToolTip="{Binding HeroStripHint}" />
+                            </StackPanel>
+                        </Button>
                     </DockPanel>
 
                     <!-- ================================================ without data ======

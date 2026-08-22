@@ -90,7 +90,15 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
     /// </summary>
     private readonly bool _inactive;
 
-    public AddOrEditAccountViewModel(BattlenetAccount? account)
+    /// <summary>
+    ///     <paramref name="region" /> and <paramref name="hotsTab" /> come from the account
+    ///     row, which knows both: a row is exactly one account in exactly one region, and a
+    ///     click on its hero strip means the HotS tab and nothing else. Without them the
+    ///     dialog opens on the first HotS region of the account - which, coming from an
+    ///     Americas row, is the wrong one.
+    /// </summary>
+    public AddOrEditAccountViewModel(BattlenetAccount? account, BattlenetRegion? region = null,
+        bool hotsTab = false)
     {
         _inactive = account?.Inactive ?? false;
 
@@ -105,10 +113,12 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
 
         foreach (var entry in account?.HotsByRegion ?? []) _data[entry.Key] = entry.Value.Copy();
 
-        // The first region of HEROES OF THE STORM is edited first - it is the game the tab
-        // below belongs to. Without a checkmark it falls back to Europe; the tab is not
-        // visible at all then.
-        _editRegion = FirstHotsRegion();
+        // The region the caller names, as long as the account plays HotS there - otherwise
+        // the first region of HEROES OF THE STORM, since it is the game the tab below belongs
+        // to. Without a checkmark it falls back to Europe; the tab is not visible at all then.
+        _editRegion = region is { } wanted && HotsRegions().Contains(wanted)
+            ? wanted
+            : FirstHotsRegion();
         // No more long.Parse: since the discriminator is no longer typed, it can be empty,
         // and long.Parse("") ended the dialog with a FormatException before it even opened.
         _name = account?.Name ?? "";
@@ -126,6 +136,10 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
         MorePenaltyCommand = new RelayCommand(() => HotsPenaltyGames = _hotsPenaltyGames + 1);
         LessPenaltyCommand = new RelayCommand(() => HotsPenaltyGames = _hotsPenaltyGames - 1);
         SwitchRegionCommand = new RelayCommand<RegionTab>(SwitchRegion);
+        // Set BEFORE RefreshDialog and not after: its guard bounces the tab back to the
+        // account when the game is not played, and that is exactly the check this needs.
+        if (hotsTab) _tab = TabHots;
+
         RefreshDialog();
         NotifyTabs();
     }
@@ -703,24 +717,12 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
     }
 
     /// <summary>
-    ///     The same six rows, split across two columns of three each - Bronze to Gold on the
-    ///     left, Platinum, Diamond and the division-less tiers on the right.
-    ///     <para>
-    ///         Split here and not in the XAML: a split that would arise there from two
-    ///         <c>ItemsControl</c> with index arithmetic would silently be wrong on the next change
-    ///         to the tier list. Here it stands as one line of code next to the list
-    ///         it splits.
-    ///     </para>
+    ///     The rank grid. Built in <see cref="HotsRankGrid" /> since 23.08.2026, because the
+    ///     account row offers the same grid in a popup on its medal - one copy of the layout
+    ///     is the only way the two cannot drift.
     /// </summary>
-    public IReadOnlyList<IReadOnlyList<IReadOnlyList<HotsRankChoice>>> RankColumns
-    {
-        get
-        {
-            var rows = BuildRankRows(_hotsTier, _hotsDivision);
-            var half = (rows.Count + 1) / 2;
-            return [rows.Take(half).ToList(), rows.Skip(half).ToList()];
-        }
-    }
+    public IReadOnlyList<IReadOnlyList<IReadOnlyList<HotsRankChoice>>> RankColumns =>
+        HotsRankGrid.Columns(_hotsTier, _hotsDivision, PickRankCommand);
 
     /// <summary>
     ///     Starting value of the hero selection. Only used to populate <see cref="HeroPicker" /> in
@@ -730,52 +732,6 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
     {
         get => _hotsHeroes;
         set => _hotsHeroes = value.ToList();
-    }
-
-    /// <summary>
-    ///     Builds the six rows of the rank grid and marks the chosen entry in the process.
-    ///     <para>
-    ///         The list is rebuilt on <b>every</b> rank change instead of being laid out
-    ///         statically once and then mutated. This is deliberate: <c>HotsRankChoice</c> is an
-    ///         immutable record without notification, and a static field would be
-    ///         shared between several open dialogs - one would move the highlight of
-    ///         the other. Rebuilding 28 records costs nothing.
-    ///     </para>
-    /// </summary>
-    private static IReadOnlyList<IReadOnlyList<HotsRankChoice>> BuildRankRows(
-        HotsRankTier current, int currentDivision)
-    {
-        var rows = new List<IReadOnlyList<HotsRankChoice>>();
-
-        // one row per tier, descending: 5 (lowest) on the left, 1 (highest) on the right
-        foreach (var tier in new[]
-                 {
-                     HotsRankTier.Bronze, HotsRankTier.Silver, HotsRankTier.Gold,
-                     HotsRankTier.Platinum, HotsRankTier.Diamond
-                 })
-        {
-            var row = new List<HotsRankChoice>();
-            for (var division = HotsRankTiers.LowestDivision;
-                 division >= HotsRankTiers.HighestDivision;
-                 division--)
-                // Tier AND division must match - otherwise the whole row would light up.
-                row.Add(new HotsRankChoice(tier, division, HotsRankImages.Display(tier, division),
-                    tier == current && division == currentDivision));
-            rows.Add(row);
-        }
-
-        // Division-less tiers plus "unplaced" in one last row. Here only the
-        // tier counts: Master and Grand Master have no division, and "no rank" even less so.
-        rows.Add(new List<HotsRankChoice>
-        {
-            new(HotsRankTier.Master, 0, HotsRankImages.Display(HotsRankTier.Master, 0),
-                current == HotsRankTier.Master),
-            new(HotsRankTier.GrandMaster, 0, HotsRankImages.Display(HotsRankTier.GrandMaster, 0),
-                current == HotsRankTier.GrandMaster),
-            new(HotsRankTier.None, 0, HotsRankImages.NoRank, current == HotsRankTier.None)
-        });
-
-        return rows;
     }
 
     public bool? DialogResult
@@ -930,24 +886,6 @@ public sealed record RegionTab(BattlenetRegion Region, string Label, bool IsActi
 
     /// <summary>The blue underline sits only on the open entry, as with the tabs above.</summary>
     public Visibility UnderlineVisibility => IsActive ? Visibility.Visible : Visibility.Collapsed;
-}
-
-/// <summary>
-///     A selectable rank in the grid. Division is 0 where the tier does not know one.
-///     <para>
-///         <c>IsSelected</c> carries the highlight. It sits in the record and not as a comparison
-///         in the XAML, because there two values must match at once (tier AND division) and a
-///         <c>MultiDataTrigger</c> over that would be harder to read than one line in the ViewModel.
-///     </para>
-/// </summary>
-public sealed record HotsRankChoice(HotsRankTier Tier, int Division, string ImageSource, bool IsSelected)
-{
-    /// <summary>Not chosen means dimmed - the same language as in the hero grid.</summary>
-    public double Opacity => IsSelected ? 1.0 : 0.35;
-
-    /// <summary>The frame sits only on the chosen one. Blue like the tabs, because a rank has no
-    ///     color of its own - unlike a hero, who carries its role color.</summary>
-    public Visibility RingVisibility => IsSelected ? Visibility.Visible : Visibility.Collapsed;
 }
 
 /// <summary>

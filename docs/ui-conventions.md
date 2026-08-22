@@ -265,6 +265,59 @@ template element is a template property, and `ControlTemplate.Triggers` sit abov
 **Rounded corners are not inherited.** A `Border` does not clip its child to its own `CornerRadius`.
 The tint surface therefore carries its own rounding.
 
+### The three click zones
+
+Since 23.08.2026 the row answers to the mouse, and it does so in three places that must not
+overlap:
+
+```
++- row -----------------------------------------------------------------+
+| PUPSI#22733 |  medal   | OOOOOOOO  32/90 | gold  shards |   >     ... |
+| EU . 22.08. |          |                 | gems  chests |             |
++-------------+----------+-----------------+--------------+-------------+
+       ^            ^             ^                              ^
+  double-click  single click  single click                  untouched
+  -> edit       -> rank grid  -> edit dialog,               (the two round
+     dialog        in a popup     HotS tab                   buttons)
+```
+
+| Zone | Gesture | What happens |
+|---|---|---|
+| the row | double-click | `OpenSettingsCommand` — the edit dialog, on **this row's region** |
+| the rank medal | single click | a popup with the same 28 medals the HotS tab shows |
+| the hero strip | single click | the edit dialog on the HotS tab, where the picker sits |
+| the two round buttons | single click | their menus, as before |
+
+- **Why the medal and the strip are `ButtonBase` and not a `Border` with a `MouseBinding`.** A
+  `LeftClick` binding matches only `ClickCount == 1`, so the second click of a double-click would
+  bubble on and open the edit dialog after all. `ButtonBase` marks `MouseLeftButtonDown` as handled
+  regardless of the count — which is also why the two round buttons need no exception of their own,
+  and why a `Popup`, being its own window, never bubbles into the row at all.
+- **The medal is a `ToggleButton`**, and that is what makes an accidental double-click harmless: the
+  second click closes the grid again instead of picking whichever medal happens to lie under the
+  pointer. The same construction as the start menu — `StaysOpen="False"` only reacts to clicks
+  *outside*, so `PickRank` resets the toggle as its first instruction.
+- **The command sits in `HotsRankChoice`**, not in a `RelativeSource` walk. A popup lies outside the
+  layout tree of the row, and a walk out of three nested `ItemsControl` would have to count levels.
+  Since the dialog passes the same field, there is one mechanism and not two — see
+  `UI/MVVM/HotsRankGrid.cs`, which lays out the grid for both.
+- **Which region a click writes to is not a question.** A row *is* an account in exactly one region,
+  so `_row.Region` is the answer. That is the one place where this is easy: reading out of a running
+  client has to ask, because the game shows the region on no screen.
+- **A rank picked by hand does not set `ReadAt`,** and does not clear `PlacementsPending`. A
+  correction is not a reading, and owing the placement matches is a state the medal does not end.
+- **The strip must not paint a hover surface.** The separator rings between the portraits are
+  *holes* that show the ground behind them; a surface appearing under them would make every ring sit
+  visibly wrong. The medal has no such illusion and may have one. Both say "clickable" through the
+  pointer.
+- **The hero strip is deliberately not a quick pick of its own.** Ninety heroes are not a popup, and
+  the list is the value this application *measures* out of the collection — a comfortable way to
+  type it by hand would invite it to drift away from what the game holds. The rank is one value out
+  of 28 and gets the short way.
+- **Without a rank and without pending placements there is no medal**, so there is nothing to click.
+  That follows from `RankVisibility` and is not a gap to fill: the way in is the dialog, which is one
+  double-click away.
+
 ## Settings
 
 Four things, all in `~/.smurftown/settings.yaml`. **Saving is immediate, there is no save button** —

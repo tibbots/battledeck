@@ -36,9 +36,20 @@ nothing else on the line.
   shows it on none of its screens, and rank and heroes are stored per region — so an account that
   plays in one region is refreshed without a question, and one that plays in several is asked
   before anything is read. Cancelling that question writes nothing.
+- **A double-click on a row opens the edit dialog.** Everywhere on the row except the rank medal
+  and the hero strip, which now have gestures of their own.
+- **A click on the rank medal opens the rank grid right there** — the same 28 medals the dialog
+  shows, and the pick is written straight into that row's region. That is two clicks instead of the
+  five it used to take to correct a rank the game was misread on. A rank set by hand does not
+  pretend to have been read: the timestamp under the name stays where it was.
+- **A click on the hero strip opens the edit dialog on the Heroes of the Storm tab**, where the
+  hero picker is.
 
 ### Changed
 
+- **The edit dialog opens on the region of the row it was opened from.** It used to always start on
+  the account's first Heroes of the Storm region, so editing an Americas row showed the European
+  rank and hero list.
 - **Only one game run at a time.** Starting an account from a row while another run is in progress
   used to be possible and produced two flows clicking into the same client, each landing on
   whatever screen the other had just opened. It is now refused with a message.

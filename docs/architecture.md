@@ -79,6 +79,9 @@ Smurftown/
       DialogBounds.cs    clamps every modal to the main window minus a margin
       GameFocus.cs       which game the rows show - set by the game filter
       HotsRankImages.cs  the single tier+division -> image path mapping
+      HotsRankGrid.cs    the 28 ranks laid out as the grid draws them, shared by BOTH
+                         places that let one be picked - the HotS tab of the dialog and
+                         the medal in the account row
       HotsHeroImages.cs  the single hero -> image path mapping, plus HotsRoleColors
       GameVisuals.cs     the single game -> icon/accent/name mapping
     Theme/               Battlenet*Theme.xaml, merged in App.xaml

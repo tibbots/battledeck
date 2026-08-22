@@ -46,9 +46,11 @@ row.penaltyOne: 1 Strafspiel
 row.penaltyMany: "{0} Strafspiele"
 row.placementsPending: Platzierung offen
 row.rankPlacements: "{0} - Platzierung offen"
+row.rankClickHint: Klicken, um den Rang zu korrigieren
 row.neverRead: in dieser Region nie gelesen
 row.readAt: gelesen {0}
 row.heroCount: "{0} von {1} Helden"
+row.heroesClickHint: Klicken, um die Helden zu bearbeiten
 row.noData: Noch keine {0}-Daten
 row.noDataOverwatch: Hier stünden Rang je Rolle, Empfehlungsstufe und Wettkampfpunkte.
 row.noDataWow: Hier stünden Charakter, Klasse, Gegenstandsstufe und Mythisch+-Wertung.

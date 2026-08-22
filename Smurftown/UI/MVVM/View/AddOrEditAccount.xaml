@@ -537,8 +537,15 @@
                                                         </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
+                                                                <!-- The command comes out of the RECORD
+                                                                     since 23.08.2026, not off the window.
+                                                                     The account row shows the same grid in a
+                                                                     popup, and a popup lies outside the
+                                                                     layout tree - there the walk would find
+                                                                     no Window. One mechanism for both beats
+                                                                     two that have to agree. -->
                                                                 <Button Cursor="Hand" CommandParameter="{Binding}"
-                                                                        Command="{Binding DataContext.PickRankCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                                        Command="{Binding Command}">
                                                                     <Button.Template>
                                                                         <ControlTemplate TargetType="Button">
                                                                             <Border x:Name="hover"
