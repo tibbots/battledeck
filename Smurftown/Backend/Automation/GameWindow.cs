@@ -19,6 +19,13 @@ namespace Smurftown.Backend.Automation
 
         private const int MinimumPlayableHeight = 600;
 
+        /// <summary>
+        ///     How long a single click or capture waits for the client to have a picture
+        ///     again. Short, because this is not the wait for a start - the client is up, it
+        ///     just lost the display for a moment.
+        /// </summary>
+        private static readonly TimeSpan PictureTimeout = TimeSpan.FromSeconds(5);
+
         private static readonly string[] ProcessNames = ["HeroesOfTheStorm_x64", "HeroesOfTheStorm"];
 
         private GameWindow(Process process, IntPtr handle)
@@ -28,6 +35,16 @@ namespace Smurftown.Backend.Automation
         }
 
         public Process Process { get; }
+
+        /// <summary>
+        ///     The window that takes the <b>foreground, the focus and the input</b> - the one
+        ///     with class <c>Heroes of the Storm</c>.
+        ///     <para>
+        ///         <b>It is not necessarily the one carrying the picture.</b> That is a second
+        ///         question with a second answer, and <see cref="Bounds" /> asks it fresh every
+        ///         time.
+        ///     </para>
+        /// </summary>
         public IntPtr Handle { get; }
 
         public bool IsAlive => !Process.HasExited;
@@ -38,15 +55,6 @@ namespace Smurftown.Backend.Automation
         ///     but its <c>GetClientRect</c> returns 0x0.
         /// </summary>
         public bool IsMinimised => NativeMethods.IsIconic(Handle);
-
-        /// <summary>
-        ///     Brings a minimized window back. <b>With a fullscreen client this may
-        ///     not help at all under some circumstances</b> - see <see cref="BringToFront" />.
-        /// </summary>
-        public void Restore()
-        {
-            if (IsMinimised) NativeMethods.ShowWindow(Handle, NativeMethods.SW_RESTORE);
-        }
 
         /// <summary>
         ///     Whether a client is running at all - <b>without</b> building a
@@ -85,6 +93,51 @@ namespace Smurftown.Backend.Automation
             }
 
             return false;
+        }
+
+        /// <summary>
+        ///     Whether a client is running, <b>holds the foreground</b> and has its picture -
+        ///     the one state in which it can be driven from outside.
+        ///     <para>
+        ///         <b>This is the question the whole feature turned out to hang on.</b> Measured
+        ///         on 23.08.2026: a client in exclusive full screen that does not hold the front
+        ///         renders through an invisible <c>D3DProxyWindow</c> while its INPUT window
+        ///         stays a 160x28 placeholder. Captures still work - they only need a rectangle
+        ///         off the screen - but a click at picture coordinates goes to wherever that
+        ///         point sits on the DESKTOP, which is not the game. So reading appears to work
+        ///         while nothing can be clicked, and that is the shape the bug had.
+        ///     </para>
+        ///     <para>
+        ///         <b>Both halves, and neither alone.</b> Foreground without a picture is the
+        ///         collapsed client above; a picture without the foreground is a client about to
+        ///         lose it. Only together do they mean "clicks will land".
+        ///     </para>
+        ///     <para>
+        ///         It disposes the process it enumerated, like <see cref="IsRunning" /> and
+        ///         unlike <see cref="Find" />: the run guide asks this three times a second while
+        ///         it waits, and one leaked handle per ask adds up fast.
+        ///     </para>
+        /// </summary>
+        public static bool IsForemostAndPlayable()
+        {
+            var window = Find();
+            if (window == null) return false;
+
+            try
+            {
+                // The foreground window is not necessarily the one Find handed out - in full
+                // screen it can be a sibling of the same process. The PROCESS is the question,
+                // not the handle.
+                NativeMethods.GetWindowProcessId(NativeMethods.GetForegroundWindow(), out var front);
+                if (front != (uint)window.Process.Id) return false;
+
+                var bounds = window.Bounds();
+                return bounds.Width >= MinimumPlayableWidth && bounds.Height >= MinimumPlayableHeight;
+            }
+            finally
+            {
+                window.Process.Dispose();
+            }
         }
 
         public static GameWindow? Find()
@@ -130,19 +183,36 @@ namespace Smurftown.Backend.Automation
                 }
                 else
                 {
-                    // Restore in EVERY round, not just once beforehand: a client can
-                    // minimize itself again while waiting, and a single attempt
-                    // right at the start would let the rest of the deadline run against a 0x0 window.
-                    window.Restore();
+                    // THE FOREGROUND IN EVERY ROUND, and that is the point of this loop.
+                    //
+                    // Until 23.08.2026 this called Restore(), which only fires SW_RESTORE
+                    // while the window is iconic. Measured against a client taken over from
+                    // outside: it leaves the minimised state in the FIRST round and then sits
+                    // at 160x28 - so Restore did nothing for the remaining twenty-nine rounds
+                    // while the loop measured the same collapsed window over and over and
+                    // reported "minimised=False" at the end.
+                    //
+                    // A client in exclusive full screen rebuilds its picture only while it
+                    // holds the FOREGROUND, and one attempt before the loop is not enough:
+                    // whoever clicked has just made Smurftown the foreground application, and
+                    // anything that takes the front back collapses the client again. Measured
+                    // the same day: the very same handle reports 3440x1440 at 0,0 while the
+                    // game is up, and 160x28 at 1640,706 while it is not.
+                    //
+                    // It costs nothing in the start flow: BringToFront returns straight away
+                    // when the window is already in front and not minimised, without its
+                    // 400 ms settle.
+                    var front = window.BringToFront();
 
                     var bounds = window.Bounds();
 
-                    // Read AFTER Restore and after measuring: whether it is minimised NOW is
-                    // the interesting half. A window that keeps saying "minimised" through
-                    // every round did not come back, and one that says "no" while still
-                    // measuring 160x28 is the invisible-proxy case.
+                    // Measured AFTER the attempt, because whether it is in front and
+                    // un-minimised NOW is the interesting half. A window that says
+                    // "foreground=False" every round never got the handover; one that says
+                    // "True" and still measures 160x28 got it and did not use it.
                     seen = $"window 0x{window.Handle:X} is {bounds.Width}x{bounds.Height} " +
-                           $"at {bounds.Left},{bounds.Top}, minimised={window.IsMinimised}";
+                           $"at {bounds.Left},{bounds.Top}, minimised={window.IsMinimised}, " +
+                           $"foreground={front}";
 
                     if (bounds.Width >= MinimumPlayableWidth && bounds.Height >= MinimumPlayableHeight)
                     {
@@ -175,6 +245,11 @@ namespace Smurftown.Backend.Automation
         ///         picture.
         ///     </para>
         ///     <para>
+        ///         <b>It measures the window with the picture, which is not always
+        ///         <see cref="Handle" />.</b> See <see cref="PictureWindow" /> - that is the whole
+        ///         reason this is not two lines any more.
+        ///     </para>
+        ///     <para>
         ///         As a tuple and not as a <c>RECT</c>: the struct lives in
         ///         <see cref="NativeMethods" /> and is <c>internal</c> - it must not appear in any
         ///         public signature.
@@ -182,10 +257,98 @@ namespace Smurftown.Backend.Automation
         /// </summary>
         public (int Left, int Top, int Width, int Height) Bounds()
         {
-            NativeMethods.GetClientRect(Handle, out var client);
+            return ClientBounds(PictureWindow());
+        }
+
+        /// <summary>
+        ///     The window of this process with the <b>largest client area</b> - the one the
+        ///     picture is on.
+        ///     <para>
+        ///         <b>Measured on 23.08.2026, and it cost three evenings.</b> A client taken over
+        ///         from outside comes back out of the minimised state, takes the foreground and
+        ///         still reports 160x28 on <c>Process.MainWindowHandle</c>, centred on the screen.
+        ///         Next to it, in the same process, sits a <c>D3DProxyWindow</c> at 3440x1440 at
+        ///         0,0 - and that is where the picture is. The old reading, that the proxy was an
+        ///         unreachable hiding place, had it backwards: it is not hiding anything, it is
+        ///         the window that has it.
+        ///     </para>
+        ///     <para>
+        ///         <b>And it is reachable</b>, despite <c>IsWindowVisible</c> saying no:
+        ///         <see cref="Screenshot.Capture" /> blits from the SCREEN device context with
+        ///         absolute coordinates. It needs a rectangle, not a window - whoever owns the
+        ///         pixels is beside the point as long as they are on the display.
+        ///     </para>
+        ///     <para>
+        ///         <b>Resolved fresh on every call, never cached.</b> The proxy is created anew
+        ///         with every acquisition of the display - measured 0x1050BCC and 0x9A0AAE within
+        ///         the same hour, and gone entirely while the client is collapsed. A field
+        ///         holding it would be a stale handle within a minute.
+        ///     </para>
+        ///     <para>
+        ///         In every ordinary state the largest window IS <see cref="Handle" /> - during
+        ///         startup, in windowed mode, in borderless full screen. The rule therefore
+        ///         changes nothing about the flow that always worked; it only stops the one that
+        ///         never did from measuring a placeholder.
+        ///     </para>
+        /// </summary>
+        private IntPtr PictureWindow()
+        {
+            var best = Handle;
+            var bestArea = Area(ClientBounds(Handle));
+
+            foreach (var candidate in TopLevelWindowsOf(Process.Id))
+            {
+                if (candidate == Handle) continue;
+
+                var area = Area(ClientBounds(candidate));
+                if (area <= bestArea) continue;
+
+                best = candidate;
+                bestArea = area;
+            }
+
+            // Only when it is NOT the main window: in the normal case this would be a line per
+            // capture, and there are hundreds of those in a collection run.
+            if (best != Handle)
+                Log.Debug("The picture is on 0x{Picture:X}, not on the main window 0x{Main:X}",
+                    best, Handle);
+
+            return best;
+        }
+
+        private static long Area((int Left, int Top, int Width, int Height) bounds)
+        {
+            return (long)bounds.Width * bounds.Height;
+        }
+
+        private static (int Left, int Top, int Width, int Height) ClientBounds(IntPtr handle)
+        {
+            NativeMethods.GetClientRect(handle, out var client);
             var origin = new NativeMethods.POINT { X = 0, Y = 0 };
-            NativeMethods.ClientToScreen(Handle, ref origin);
+            NativeMethods.ClientToScreen(handle, ref origin);
             return (origin.X, origin.Y, client.Width, client.Height);
+        }
+
+        /// <summary>
+        ///     Every top-level window belonging to a process.
+        ///     <para>
+        ///         <c>EnumWindows</c> and not <c>Process.MainWindowHandle</c>, because that hands
+        ///         out exactly one and picks it by a rule of its own - which window a process
+        ///         calls its main one is not the same question as which one has the picture.
+        ///     </para>
+        /// </summary>
+        private static List<IntPtr> TopLevelWindowsOf(int processId)
+        {
+            var windows = new List<IntPtr>();
+
+            NativeMethods.EnumWindows((handle, _) =>
+            {
+                NativeMethods.GetWindowProcessId(handle, out var owner);
+                if (owner == (uint)processId) windows.Add(handle);
+                return true;
+            }, IntPtr.Zero);
+
+            return windows;
         }
 
         /// <summary>
@@ -207,6 +370,16 @@ namespace Smurftown.Backend.Automation
         ///     an invisible <c>D3DProxyWindow</c> (3440x1440), which cannot be
         ///     reached. Whoever reads the return value as "now I can capture" is
         ///     mistaken - <see cref="Capture" /> therefore additionally checks the size.
+        ///     <para>
+        ///         <b>That proxy window is not a way in, and it is not the cause either</b> -
+        ///         measured on 23.08.2026 by enumerating every top-level window of the process
+        ///         in both states. While the client is collapsed there is <i>exactly one</i>
+        ///         window, class <c>Heroes of the Storm</c>, and no proxy at all. The proxy
+        ///         appears only while the client holds the display - i.e. in the state in which
+        ///         the ordinary window already reports its full 3440x1440 and nothing is wrong.
+        ///         Whoever goes looking for a second window to capture is chasing a thing that
+        ///         is only there when it is not needed.
+        ///     </para>
         /// </remarks>
         public bool BringToFront()
         {
@@ -235,24 +408,59 @@ namespace Smurftown.Backend.Automation
             return NativeMethods.GetForegroundWindow() == Handle;
         }
 
-        /// <summary>Captures the entire window content, after the window has been brought to the front.</summary>
+        /// <summary>
+        ///     The bounds of the picture - but only once there IS one. Brings the client to the
+        ///     front and keeps at it until it measures playable again.
+        ///     <para>
+        ///         <b>Every click and every capture goes through here</b>, and that is the point.
+        ///         Until 23.08.2026 only the capture checked the size; <c>GameSession.ClickAt</c>
+        ///         took whatever <see cref="Bounds" /> happened to say and added the calibrated
+        ///         offset to it. With a collapsed client that reads 160x28 at 1640,706, so a click
+        ///         meant for 3371,74 was sent to 5011,780 - off the screen, into nothing. The
+        ///         client then flickers up and down and nothing else happens, which is exactly
+        ///         what it looked like.
+        ///     </para>
+        ///     <para>
+        ///         <b>Waiting and not throwing straight away</b>, because a client in exclusive
+        ///         full screen needs a moment after every handover: it has to reacquire the
+        ///         display, and until it has, its window is a placeholder. One
+        ///         <c>BringToFront</c> plus a glance was too little.
+        ///     </para>
+        ///     <para>
+        ///         The size check belongs here and not in <see cref="Screenshot.Capture" />:
+        ///         there it would be an area check ("Capture area is empty"), here it is a
+        ///         statement about the client.
+        ///     </para>
+        /// </summary>
+        public (int Left, int Top, int Width, int Height) RequirePlayableBounds()
+        {
+            var deadline = DateTime.UtcNow + PictureTimeout;
+
+            while (true)
+            {
+                var front = BringToFront();
+                var bounds = Bounds();
+
+                if (bounds.Width >= MinimumPlayableWidth && bounds.Height >= MinimumPlayableHeight)
+                    return bounds;
+
+                if (DateTime.UtcNow >= deadline)
+                    throw new InvalidOperationException(
+                        $"The Heroes of the Storm window is {bounds.Width}x{bounds.Height} at " +
+                        $"{bounds.Left},{bounds.Top} (foreground={front}) and does not come back " +
+                        $"within {PictureTimeout.TotalSeconds:n0}s. A client in exclusive full " +
+                        "screen drops its picture whenever it loses the front - switch it to " +
+                        "borderless full screen (displaymode=1 in Variables.txt), or start the " +
+                        "account from its row instead.");
+
+                Thread.Sleep(250);
+            }
+        }
+
+        /// <summary>Captures the entire window content, once the window has a picture again.</summary>
         public Screenshot Capture()
         {
-            if (!BringToFront())
-                throw new InvalidOperationException(
-                    "Could not bring the game window to the front - a screenshot would be worthless.");
-
-            var bounds = Bounds();
-
-            // The size check belongs here and not in Screenshot.Capture: there it would be an
-            // area check ("Capture area is empty"), here it is a statement about the
-            // client. A client minimized from fullscreen reports 160x28 or 0x0, while
-            // still being the foreground window - BringToFront above therefore harmlessly says "yes".
-            if (bounds.Width < MinimumPlayableWidth || bounds.Height < MinimumPlayableHeight)
-                throw new InvalidOperationException(
-                    $"The Heroes of the Storm window collapsed to {bounds.Width}x{bounds.Height}. " +
-                    "It was minimised and does not come back on its own - close the client and try again.");
-
+            var bounds = RequirePlayableBounds();
             return Screenshot.Capture(bounds.Left, bounds.Top, bounds.Width, bounds.Height);
         }
 

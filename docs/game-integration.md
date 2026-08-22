@@ -56,20 +56,60 @@ minimised out of fullscreen does **not** come back from outside:
 | plus `BringWindowToTop` + `SetForegroundWindow` | no change, window does not come to front |
 | plus a tapped ALT against the foreground lock | **foreground yes**, size stays 160×28 |
 
-The 160×28 is the placeholder size of a minimised window (window rect at −32000,−32000). The
-actual image lives in an **invisible `D3DProxyWindow`** at 3440×1440 that cannot be reached — the
-process window list shows both side by side. Afterwards the client minimises itself again.
+The 160×28 is the placeholder size of a minimised window (window rect at −32000,−32000). Next to
+it the process list showed an **invisible `D3DProxyWindow`** at 3440×1440.
 
-Three rules follow from that, and they are in the code:
+**That proxy window was read backwards, and the misreading cost three evenings.** It was taken for
+an unreachable hiding place; it is in fact the window that *has* the picture. Enumerating every
+top-level window of the process in all three states on 23.08.2026 — polling every 400 ms while the
+take-over ran, so the failing state was caught live:
 
+| State of the client | What the process owns |
+|---|---|
+| minimised, no foreground | one window, class `Heroes of the Storm`, client `0×0` at `−32000,−32000`. **No proxy.** |
+| restored from outside, **holds** the foreground — the failing state | that window at `160×28`, centred on screen, **plus** `D3DProxyWindow` at `3440×1440` at `0,0` |
+| brought up normally and played in | that window at `3440×1440` at `0,0`, plus the proxy, likewise `3440×1440` |
+
+The middle row is the whole bug. The client has the foreground (`foreground=True` in the log), the
+picture is on screen and the human watches it come up — and `Process.MainWindowHandle` points at a
+`160×28` placeholder centred at `1640,706`, which on a 3440×1440 screen is exactly
+`centre − (80,14)`.
+
+**And the proxy is reachable**, `IsWindowVisible` saying no notwithstanding: `Screenshot.Capture`
+blits from the **screen** device context with absolute coordinates. It needs a rectangle, not a
+window; who owns the pixels does not matter as long as they are on the display. The three attempts
+of 21.08 above did not fail because the picture was unreachable — they were all measured on the
+wrong window.
+
+**The proxy must never be cached.** It is created anew with every acquisition of the display:
+`0x1050BCC` and `0x9A0AAE` within the same hour, and absent entirely while the client is collapsed.
+
+Five rules follow from all this, and they are in the code:
+
+- **`Bounds()` measures the largest window of the process, not `Handle`.** `GameWindow` therefore
+  carries two roles that used to be one handle: `Handle` takes the foreground, the focus and the
+  input; `PictureWindow()` is resolved fresh on every call and is whatever has the largest client
+  area. In every ordinary state — startup, windowed, borderless — that *is* `Handle`, so the flow
+  that always worked is untouched.
 - **"In front" does not mean "usable".** `BringToFront()` can return `true` while the window
   measures 160×28. `Capture()` therefore also checks the size and fails with it in the message,
   rather than attempting a capture 0 points wide (`Capture area is empty` said nothing).
 - **No early `return true` in `BringToFront` for a minimised window** — otherwise `SW_RESTORE`
   further down never runs, precisely when the client already is the foreground window.
-- **`WaitForPlayableWindow` restores on every pass**, not once beforehand: a client can minimise
-  itself again while waiting, and a single attempt at the start lets the remaining time run
-  against a dead window.
+- **`WaitForPlayableWindow` calls `BringToFront()` on every pass**, not `Restore()`. That was the
+  actual bug behind "found the window, never got a picture": `Restore()` only fires `SW_RESTORE`
+  while the window is iconic, and a client taken over from outside leaves that state in the *first*
+  pass. The remaining twenty-nine passes then did nothing at all while the loop measured the same
+  collapsed window over and over — and reported `minimised=False` at the end, which is what finally
+  gave it away. `BringToFront()` costs nothing when the window is already in front and
+  un-minimised: it returns before its 400 ms settle.
+- **The pass logs `foreground=`**, and that flag is what to read first in a failure. `False` in
+  every pass means the handover never happened; `True` with `160×28` means it happened and the
+  client did not use it — two different faults that want two different answers.
+- **Nothing of ours may appear while the handover runs.** A toast is a window too. One stood in
+  `RunningGame.Refresh` before `AttachToRunning` until 23.08.2026, announcing the read for ten
+  seconds while `BringToFront` was trying to hand the front to the game. It is gone; the chip
+  itself already says `Reading…` for the whole run.
 
 If it stays unusable, the reuse branch says so plainly ("bring it up yourself or close it")
 instead of `No usable game window after 15s` — the window is there, it is just not usable.
@@ -95,6 +135,58 @@ any registry trick.
 
 The other entrance. A chip appears in the header of the window while a Heroes of the Storm client
 is up, and it reads the account that is **already** signed in.
+
+### The client has to be in front, and only a human can put it there
+
+This is the fact the whole entrance is built around, and it cost three evenings to find. It is
+worth stating before anything else, because every earlier design here was an attempt to work around
+it without knowing it.
+
+A client in *exclusive* full screen that does not hold the foreground keeps **rendering** at full
+size through an invisible `D3DProxyWindow`, while its **input** window shrinks to a `160×28`
+placeholder centred on the screen. The two halves come apart:
+
+| What | Which window | Works without the foreground? |
+|---|---|---|
+| capture | any — `BitBlt` takes a rectangle off the **screen** DC | **yes** |
+| click | the input window, wherever it currently is | **no** |
+
+So reading appears to work while nothing can be clicked. A click at picture coordinates goes to
+where that point sits on the *desktop* — which is Smurftown, which takes the foreground, which
+collapses the client again. That loop is what a failing run looked like: a client flickering up and
+down for half a minute while nothing happened.
+
+`SetForegroundWindow` does not fix it. It restores the *window* without restoring the *display*;
+three methods were tried on 21.08 and three more on 23.08, and the log line that finally said so
+was `foreground=True` next to `160×28`. What works, first time, every time, is a person pressing
+Alt+Tab.
+
+**Hence `RunGuide`** — a small modal that says what it needs, waits for it, and shows the run while
+it happens. It waits on the measurement and not on a clock: `GameWindow.IsForemostAndPlayable`
+answers "clicks will land" (the foreground window belongs to the client's process **and** the
+picture measures playable), asked three times a second for up to a minute. An earlier version slept
+six seconds instead, which was a race with the human on one side and no way to tell whether it had
+been won.
+
+The five steps are the flow itself, and the detail line under the active one is the run's own
+`IProgress<string>` — the channel whose only subscriber used to be the log, which is why
+`Strings.ForLog` had to exist to keep German out of `smurftown.log`. Here it finally has the reader
+it was written for.
+
+```
+  Bring the client to the front   waits for IsForemostAndPlayable
+  Identify the account            AttachToRunning, profile overlay, FindByBattletag
+  Settle the region               derived, or asked right here
+  Read the values                 waits AGAIN if the region was asked, then HotsReadout
+  Done                            ARAM marker
+```
+
+**Nothing closes itself.** The guide sits behind a full-screen client for the whole run; whoever
+comes back wants to read what happened, not to find an empty screen where a window used to be.
+
+**And nothing of ours may take the front while it runs.** Toasts are windows too. One announced the
+read before `AttachToRunning` and was removed for exactly this reason, and the ARAM marker moved
+*before* the closing toasts rather than after them.
 
 **It signs nobody out and it closes nothing.** That is the whole promise, and it is why
 `AttachToRunning` stands next to `StartAndLogin` instead of being a fifth `SessionPlan`: the plan
@@ -168,14 +260,15 @@ than an extra tick.
 **It is asked before the reading, not after.** The collection alone takes over a minute, and a
 question at the end of that is a minute spent before finding out nobody was there to answer.
 
-**Asking costs the focus, and that has a price worth naming.** The game is in front at that moment;
-a dialog behind a full-screen client is one nobody answers, so the main window is brought up first.
-A client in *exclusive* full screen minimises itself when it loses the focus, and a client minimised
-out of full screen does not come back from outside — that is the same wall documented above with
-three methods. The reading then fails, but it fails with the sentence that says exactly that,
-because every capture checks the window size. Borderless full screen and windowed mode, which is
-what the calibration is measured against, are unaffected. It is one more reason the question is only
-asked when it has to be.
+**It is asked inside the guide, not in a window of its own.** Until 23.08.2026 it opened
+`RegionPicker`, a second modal — and a second window taking the foreground is the one thing this
+flow cannot survive. That window is gone; what survived of it is the `RegionChoice` record, now in
+`RunGuideViewModel`.
+
+**Answering means alt-tabbing away from the game**, so the step *after* the question waits for the
+client to come back before it clicks anything. For an account with one region nothing is asked and
+that second wait returns immediately — which is the normal case, and the reason the question is
+only asked when it has to be.
 
 ### What it ends on
 

@@ -75,10 +75,24 @@ start.chestsHint: iniciar, conectarse, abrir todos los cofres, leer y cerrar
 running.chip: Actualizar
 running.busy: Leyendo...
 running.hint: Heroes of the Storm está en ejecución. Lee la cuenta conectada - sin desconectarla ni cerrar el cliente.
+
+# =========================================================== Run guide ============
+run.title: Actualizar
+run.explain: "Heroes of the Storm solo acepta clics mientras está en primer plano. Tráelo con Alt+Tab; esta ventana espera y la lectura empieza sola."
+run.stepFront: Traer la ventana de Heroes of the Storm al primer plano
+run.stepAccount: Identificar la cuenta
+run.stepRegion: Determinar la región
+run.stepRead: Leer los datos
+run.stepDone: Listo
+run.bringToFront: Esperando a que Heroes of the Storm esté en primer plano ...
+run.backToFront: Trae Heroes of the Storm al primer plano otra vez ...
+run.regionWaiting: Esperando tu respuesta
+run.cancel: Cancelar
+run.close: Cerrar
+run.timeout: "El cliente no pasó al primer plano en {0} segundos."
+run.cancelled: Cancelado.
 # region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
-region.pickTitle: ¿Qué región?
 region.pickQuestion: "{0} ha iniciado sesión. El cliente no dice en qué región juega - elígela."
-region.pickCancel: Cancelar
 
 # =========================================================== Currencies ============
 currency.gold: Oro
@@ -232,7 +246,6 @@ progress.chest: Abriendo el cofre {0} de {1}
 
 # =========================================================== Toasts ===============
 toast.signedIn: "{0} ha iniciado sesión"
-toast.readingRunning: Leyendo el cliente en ejecución
 toast.nothingChanged: "{0}: sin cambios"
 toast.copied: "{0} copiado al portapapeles"
 toast.copyEmpty: "{0} está vacío - no se copió nada"

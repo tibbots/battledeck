@@ -166,18 +166,25 @@
         </Style>
     </UserControl.Resources>
 
-    <Border Margin="20,3,10,3" CornerRadius="8" BorderThickness="1" Height="91">
-        <!-- DOUBLE-CLICK OPENS THE EDIT DIALOG - everywhere on the row except the rank medal
-             and the hero strip, which carry their own gesture and swallow the event.
+    <Border Margin="20,3,10,3" CornerRadius="8" BorderThickness="1" Height="91" Cursor="Hand">
+        <!-- A CLICK ON THE ROW OPENS THE EDIT DIALOG, and the pointer says so.
 
-             The two round buttons in the column on the right need no exception: they are
-             ButtonBase too, so the gesture never reaches this binding from there. Neither do
-             the two menus - a Popup is its own window and does not bubble in here at all.
+             It was a DOUBLE-click until 23.08.2026, which is the convention for a list row and
+             therefore invisible - nothing on screen suggested trying it. The hand cursor is the
+             half that makes the single click discoverable; without it a whole row that reacts
+             to one click is a surprise rather than an affordance.
 
-             A double-click on a list row is a convention and therefore invisible; the way
-             that can be found stays where it was, in the three-dot menu. -->
+             THE EXCEPTIONS NEED NO CODE, and that is why the row can be this greedy. The two
+             round buttons on the right, the rank medal and the hero strip are all ButtonBase,
+             and ButtonBase marks MouseLeftButtonDown as handled - so the gesture never reaches
+             this binding from any of them. The two menus do not either: a Popup is its own
+             window and does not bubble in here at all.
+
+             LeftClick and not LeftDoubleClick: a MouseGesture matches on the click count, so a
+             double-click fires this once on its first click and sends the second into the
+             modal that just opened. Harmless, and the reason there is no second binding. -->
         <Border.InputBindings>
-            <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding OpenSettingsCommand}" />
+            <MouseBinding MouseAction="LeftClick" Command="{Binding OpenSettingsCommand}" />
         </Border.InputBindings>
         <Border.Style>
             <Style TargetType="Border">
@@ -528,8 +535,16 @@
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
 
-                                <!-- Hero strip. ELEVEN circles at 47 points with 13 points of
-                                     overlap occupy 387 points. The path there: six at 26
+                                <!-- Hero strip. ELEVEN circles at 56 points with 16 points of
+                                     overlap occupy 456 of the roughly 508 points available -
+                                     52 left over, where it used to be 121. Grown by 20 percent
+                                     on 23.08.2026 and deliberately as a trial: the strip is a
+                                     sample and not the statement, so it may take the room as
+                                     long as the numbers beside it still line up. The separator
+                                     ring grew with it (51 -> 61) and still clears the row
+                                     height of 91.
+
+                                     The path there: six at 26
                                      (121), eight at 30 (184) with the room from the dropped
                                      tab column, twelve at 30 (272) with that of the rank text,
                                      eleven at 36 (296), on 21.08.2026 bigger instead of more -
@@ -548,7 +563,7 @@
                                      overlap, otherwise the strip protrudes to the left. -->
                                 <ItemsControl ItemsSource="{Binding HeroChips}"
                                               Visibility="{Binding HeroChipsVisibility}"
-                                              VerticalAlignment="Center" Margin="13,0,0,0"
+                                              VerticalAlignment="Center" Margin="16,0,0,0"
                                               ToolTip="{Binding HeroStripHint}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -557,7 +572,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Grid Width="47" Height="47" Margin="-13,0,0,0"
+                                            <Grid Width="56" Height="56" Margin="-16,0,0,0"
                                                   ToolTip="{Binding Tooltip}">
                                                 <Ellipse>
                                                     <Ellipse.Fill>
@@ -577,7 +592,7 @@
                                                      The hover stays weak nonetheless: it shifts
                                                      the ground, not the ring. -->
                                                 <Ellipse Stroke="{Binding DataContext.StripSeparator, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                         StrokeThickness="2" Width="51" Height="51" />
+                                                         StrokeThickness="2" Width="61" Height="61" />
                                             </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

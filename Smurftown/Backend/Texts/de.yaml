@@ -70,10 +70,24 @@ start.chestsHint: starten, anmelden, alle Truhen öffnen, lesen, dann beenden
 running.chip: Aktualisieren
 running.busy: Lese...
 running.hint: Heroes of the Storm läuft. Liest das Konto, das angemeldet ist - ohne es abzumelden und ohne den Client zu schließen.
+
+# =========================================================== Run guide ============
+run.title: Aktualisieren
+run.explain: "Heroes of the Storm nimmt Klicks nur an, solange es im Vordergrund ist. Hol es mit Alt+Tab nach vorn - dieses Fenster wartet, das Auslesen startet von allein."
+run.stepFront: Heroes of the Storm Fenster in den Vordergrund holen
+run.stepAccount: Konto erkennen
+run.stepRegion: Region klären
+run.stepRead: Daten lesen
+run.stepDone: Fertig
+run.bringToFront: Warte darauf, dass Heroes of the Storm vorn ist ...
+run.backToFront: Hol Heroes of the Storm wieder nach vorn ...
+run.regionWaiting: Warte auf deine Antwort
+run.cancel: Abbrechen
+run.close: Schließen
+run.timeout: "Der Client kam in {0} Sekunden nicht in den Vordergrund."
+run.cancelled: Abgebrochen.
 # region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
-region.pickTitle: Welche Region?
 region.pickQuestion: "{0} ist angemeldet. Der Client sagt nicht, in welcher Region er spielt - wähle sie."
-region.pickCancel: Abbrechen
 
 # =========================================================== Currencies ============
 currency.gold: Gold
@@ -227,7 +241,6 @@ progress.chest: Öffne Truhe {0} von {1}
 
 # =========================================================== Toasts ===============
 toast.signedIn: "{0} ist angemeldet"
-toast.readingRunning: Liest den laufenden Client
 toast.nothingChanged: "{0}: nichts geändert"
 toast.copied: "{0} in die Zwischenablage kopiert"
 toast.copyEmpty: "{0} ist leer - nichts kopiert"

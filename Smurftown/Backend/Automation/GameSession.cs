@@ -228,19 +228,22 @@ namespace Smurftown.Backend.Automation
                 // on screen that it had not. The wait now reports what it saw, and that
                 // sentence is carried through unchanged.
                 //
-                // The usual cause is still the one documented on 21.08.2026 with three
-                // methods (see GameWindow.BringToFront): a client in EXCLUSIVE full screen
-                // minimises itself the moment it loses the focus, comes back up for a moment
-                // when restored from outside and goes away again, while its real surface sits
-                // in an invisible D3DProxyWindow that cannot be reached. Windowed and
-                // borderless full screen - which is what the calibration is measured against -
-                // are unaffected, so that is the way out worth naming.
+                // THE CAUSE NAMED HERE IS MEASURED, not inherited from the note of
+                // 21.08.2026. That note blamed an unreachable D3DProxyWindow; enumerating
+                // every window of the process on 23.08.2026 showed there is no proxy at all
+                // while the client is collapsed - see GameWindow.BringToFront. What there is,
+                // is one window that reports 3440x1440 while the game holds the display and
+                // 160x28 while it does not. So the question is only ever the foreground, and
+                // the wait loop now fights for it in every round.
+                //
+                // Borderless full screen is the way out worth naming because it is what the
+                // calibration is measured against anyway.
                 throw new InvalidOperationException(
                     $"The Heroes of the Storm window never became usable. {e.Message} " +
-                    "A client in exclusive full screen minimises itself as soon as it loses " +
-                    "the focus and cannot be brought back from outside - switch the game to " +
-                    "windowed or borderless full screen, or close it and start the account " +
-                    "from its row.", e);
+                    "A client in exclusive full screen rebuilds its picture only while it " +
+                    "holds the foreground, and one measuring 160x28 never got it back. " +
+                    "Switch the game to borderless full screen (displaymode=1 in " +
+                    "Variables.txt), or start the account from its row instead.", e);
             }
 
             var session = new GameSession(restored, map);
@@ -334,10 +337,20 @@ namespace Smurftown.Backend.Automation
             ClickAt(x, y, rightButton);
         }
 
-        /// <summary>Clicks a point in image coordinates of the window content.</summary>
+        /// <summary>
+        ///     Clicks a point in image coordinates of the window content.
+        ///     <para>
+        ///         <b>Through <c>RequirePlayableBounds</c> and not <c>Bounds</c></b> - the guard
+        ///         the capture always had and this never did. <see cref="Layout" /> is built once
+        ///         when the session is created, so <c>Layout.Point</c> is always right; the only
+        ///         live value here is the ORIGIN, and with a collapsed client that is the corner
+        ///         of a 160x28 placeholder. The calibrated offset added to it lands off the
+        ///         screen, and the click goes nowhere at all.
+        ///     </para>
+        /// </summary>
         public void ClickAt(int x, int y, bool rightButton = false)
         {
-            var bounds = Window.Bounds();
+            var bounds = Window.RequirePlayableBounds();
             InputSender.Click(bounds.Left + x, bounds.Top + y, rightButton);
         }
 

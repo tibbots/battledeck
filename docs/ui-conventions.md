@@ -276,23 +276,29 @@ overlap:
 | EU . 22.08. |          |                 | gems  chests |             |
 +-------------+----------+-----------------+--------------+-------------+
        ^            ^             ^                              ^
-  double-click  single click  single click                  untouched
-  -> edit       -> rank grid  -> edit dialog,               (the two round
-     dialog        in a popup     HotS tab                   buttons)
+  click        click         click                          untouched
+  -> edit      -> rank grid  -> edit dialog,                (the two round
+     dialog       in a popup     HotS tab                    buttons)
 ```
 
-| Zone | Gesture | What happens |
-|---|---|---|
-| the row | double-click | `OpenSettingsCommand` — the edit dialog, on **this row's region** |
-| the rank medal | single click | a popup with the same 28 medals the HotS tab shows |
-| the hero strip | single click | the edit dialog on the HotS tab, where the picker sits |
-| the two round buttons | single click | their menus, as before |
+Every one of them is a **single** click, and the whole row carries `Cursor="Hand"` so that says
+itself. It was a double-click on the row until 23.08.2026 — the convention for a list row, and
+therefore invisible: nothing on screen suggested trying it.
 
-- **Why the medal and the strip are `ButtonBase` and not a `Border` with a `MouseBinding`.** A
-  `LeftClick` binding matches only `ClickCount == 1`, so the second click of a double-click would
-  bubble on and open the edit dialog after all. `ButtonBase` marks `MouseLeftButtonDown` as handled
-  regardless of the count — which is also why the two round buttons need no exception of their own,
-  and why a `Popup`, being its own window, never bubbles into the row at all.
+| Zone | What happens |
+|---|---|
+| the row | `OpenSettingsCommand` — the edit dialog, on **this row's region** |
+| the rank medal | a popup with the same 28 medals the HotS tab shows |
+| the hero strip | the edit dialog on the HotS tab, where the picker sits |
+| the two round buttons | their menus, as before |
+
+- **The exceptions need no code, and that is what lets the row be this greedy.** The medal, the
+  strip and the two round buttons are all `ButtonBase`, and `ButtonBase` marks
+  `MouseLeftButtonDown` as handled — so the row's binding never sees the gesture from any of them.
+  A `Popup`, being its own window, never bubbles into the row at all.
+- **`LeftClick` matches on the click count**, so a double-click on the row fires the binding once
+  on its first click and sends the second into the modal that just opened. Harmless, and the reason
+  there is no second binding for it.
 - **The medal is a `ToggleButton`**, and that is what makes an accidental double-click harmless: the
   second click closes the grid again instead of picking whichever medal happens to lie under the
   pointer. The same construction as the start menu — `StaysOpen="False"` only reacts to clicks

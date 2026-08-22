@@ -121,10 +121,24 @@ start.chestsHint: start, log in, open every chest, read, then close
 running.chip: Refresh
 running.busy: Reading...
 running.hint: Heroes of the Storm is running. Reads the account that is signed in - without signing it out and without closing the client.
+
+# =========================================================== Run guide ============
+run.title: Refresh
+run.explain: "Heroes of the Storm only takes clicks while it is in front. Bring it up with Alt+Tab - this window waits, and the reading starts by itself."
+run.stepFront: Bring the Heroes of the Storm window to the front
+run.stepAccount: Identify the account
+run.stepRegion: Settle the region
+run.stepRead: Read the values
+run.stepDone: Done
+run.bringToFront: Waiting for Heroes of the Storm to be in front ...
+run.backToFront: Bring Heroes of the Storm to the front again ...
+run.regionWaiting: Waiting for your answer
+run.cancel: Cancel
+run.close: Close
+run.timeout: "The client did not come to the front within {0} seconds."   # 0 = seconds
+run.cancelled: Cancelled.
 # region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
-region.pickTitle: Which region?
 region.pickQuestion: "{0} is signed in. The client does not say which region it is playing in - pick it."   # 0 = Battletag
-region.pickCancel: Cancel
 
 # =========================================================== Currencies ============
 currency.gold: Gold
@@ -296,7 +310,6 @@ progress.chest: Opening chest {0} of {1}
 
 # =========================================================== Toasts ===============
 toast.signedIn: "{0} is signed in"                       # 0 = Battletag
-toast.readingRunning: Reading the running client
 toast.nothingChanged: "{0}: nothing changed"
 toast.copied: "{0} copied to clipboard"                  # 0 = "E-mail" / "Password"
 toast.copyEmpty: "{0} is empty - nothing copied"

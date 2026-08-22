@@ -25,6 +25,31 @@ fullscreen these are the same; in windowed mode there are **8 points horizontall
 vertically** between them — and missing exactly that offset is what makes clicks land
 in the wrong place.
 
+**The main window is not always the one with the picture, and this is the trap that costs
+the most time.** `Process.MainWindowHandle` hands out one window by a rule of its own. A
+Direct3D game in exclusive full screen, restored from the outside, keeps that window as a
+`160×28` placeholder centred on the screen while a second, `IsWindowVisible`-false window
+of its own (here `D3DProxyWindow`) carries the full `3440×1440` at `0,0`. Everything then
+looks right — the game is in the foreground, the human sees it, `IsIconic` says no — and
+every measurement is wrong.
+
+- **Enumerate with `EnumWindows` and take the largest client area**, filtered by process id
+  via `GetWindowThreadProcessId`. Do not trust `MainWindowHandle` for measuring.
+- **Separate the two roles.** One window takes the foreground and the focus, another may
+  carry the picture. `SetForegroundWindow` on the invisible one does nothing.
+- **Never cache the picture window.** It is recreated with every acquisition of the
+  display; a handle held for a minute is a handle to nothing.
+- **Invisible does not mean uncapturable.** A `BitBlt` from the *screen* device context
+  needs a rectangle, not a window. `IsWindowVisible` answers a different question than
+  "are these pixels on the display".
+- **Guard the click, not only the capture.** This is the half that gets forgotten, because
+  a bad capture fails loudly and a bad click fails silently. A calibrated point is an
+  offset into the content area, and it is added to a *live* origin — take that origin from
+  a collapsed window and the click lands off the screen, hitting nothing and reporting
+  nothing. Route every click and every capture through the same "is there a picture yet"
+  gate, and let that gate wait rather than throw: a full-screen client needs a moment to
+  reacquire the display after every handover.
+
 ## The Mouse
 
 **Positioning uses `SetCursorPos` with real screen coordinates**, not normalised

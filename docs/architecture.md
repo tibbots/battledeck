@@ -41,6 +41,10 @@ Smurftown/
       ScreenMap.cs         loads it, maps anchors onto the window (Spot, Layout)
       GameWindow.cs        find window, bring to front, measure client area - and
                            IsRunning(), which only asks the process list, for the poll
+                           TWO windows, not one: Handle takes the foreground and the input,
+                           PictureWindow() is whichever of the process has the largest
+                           client area - with a client restored from outside that is a
+                           D3DProxyWindow and not the main window
       GameSession.cs       start, set region, log in, detect screens - and AttachToRunning,
                            which takes over a signed-in client and touches nothing
       LoginLocator.cs      find the login form in the image instead of calibrating it
@@ -63,8 +67,10 @@ Smurftown/
       StrExtension.cs    {loc:Str key} in XAML - yields a BINDING, not a string
       View/              XAML + code-behind + AddOrEditAccountViewModel and HeroPickerViewModel
                          (they live here, not in ViewModel/)
-                         RegionPicker asks which region a running client is signed into -
-                         the game says it nowhere
+                         RunGuide walks a human through a run against a client that is
+                         already up - it exists because only a human can put that client
+                         in the foreground, and clicks land nowhere else. The region
+                         question is a step inside it, not a second window
       ViewModel/         Main, Accounts, AccountCard, Settings, UpdateOffer, RunningGame
                          UpdateOffer is ONE object for two places - the version chip in
                          the header and the ABOUT & UPDATES card in the settings

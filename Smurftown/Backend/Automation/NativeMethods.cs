@@ -83,6 +83,26 @@ namespace Smurftown.Backend.Automation
         [DllImport("user32.dll")]
         internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr processId);
 
+        /// <summary>
+        ///     The same function, asked the other question: which <b>process</b> a window
+        ///     belongs to. A second declaration and not an overload of the one above, because
+        ///     the two differ only in the last parameter - <c>EntryPoint</c> ties this name
+        ///     back to the one export.
+        /// </summary>
+        [DllImport("user32.dll", EntryPoint = "GetWindowThreadProcessId")]
+        internal static extern uint GetWindowProcessId(IntPtr hWnd, out uint processId);
+
+        internal delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr parameter);
+
+        /// <summary>
+        ///     Every top-level window on the desktop, one callback each. The only way to reach
+        ///     the <i>other</i> windows of a process - <c>Process.MainWindowHandle</c> hands out
+        ///     one, and with Heroes of the Storm that is not always the one carrying the
+        ///     picture. See <see cref="GameWindow.Bounds" />.
+        /// </summary>
+        [DllImport("user32.dll")]
+        internal static extern bool EnumWindows(EnumWindowsProc callback, IntPtr parameter);
+
         [DllImport("user32.dll")]
         internal static extern bool AttachThreadInput(uint attachTo, uint attachFrom, bool attach);
 

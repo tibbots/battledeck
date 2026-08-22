@@ -168,7 +168,7 @@ namespace Smurftown.Backend.Automation
 
             for (var attempt = 1; attempt <= OpenAttempts; attempt++)
             {
-                Open(session, map);
+                var menu = Open(session, map);
 
                 var (block, last) = await session.RetryAsync<IReadOnlyList<TextLine>>(async shot =>
                 {
@@ -183,8 +183,15 @@ namespace Smurftown.Backend.Automation
                     if (attempt < OpenAttempts) continue;
 
                     var path = GameSession.SaveDiagnostic(last, "profile-not-recognised");
+
+                    // The second picture is the one that explains the first: it shows the
+                    // moment after the right click, i.e. whether a context menu came up and
+                    // where its entries sat.
+                    var menuPath = GameSession.SaveDiagnostic(menu, "profile-menu");
+
                     return Nothing($"Profile overlay not recognised - the line '{RankLabel}' did not " +
-                                   $"appear in {OpenAttempts} attempts. Screenshot: {path}");
+                                   $"appear in {OpenAttempts} attempts. Screenshots: {path} " +
+                                   $"and {menuPath}");
                 }
 
                 try
@@ -231,16 +238,32 @@ namespace Smurftown.Backend.Automation
         ///     Right-click on the profile picture, then "Profil ansehen". Both are measured
         ///     points of the calibration; the context menu is attached to the picture and
         ///     moves with it.
+        ///     <para>
+        ///         <b>It hands back the capture taken BETWEEN the two clicks</b>, and that is
+        ///         the only picture that can say why an overlay did not open: whether the right
+        ///         click landed at all, and where the context menu put its entries. Without it,
+        ///         a failure leaves nothing but a clean menu screen - which looks the same
+        ///         whether the first click missed or the second one did. It is saved only when
+        ///         the reading fails; in the normal case it is 20 MB that is dropped.
+        ///     </para>
+        ///     <para>
+        ///         The <c>BringToFront</c> calls that used to stand before each click are gone.
+        ///         They were the ad-hoc version of a guard that now sits in one place, inside
+        ///         <c>GameWindow.RequirePlayableBounds</c>, which every click and every capture
+        ///         passes through.
+        ///     </para>
         /// </summary>
-        private static void Open(GameSession session, ScreenMap.ProfileSection map)
+        private static Screenshot Open(GameSession session, ScreenMap.ProfileSection map)
         {
-            session.Window.BringToFront();
             session.Click(map.Portrait, true);
             Thread.Sleep(900);
 
-            session.Window.BringToFront();
+            var menu = session.Capture();
+
             session.Click(map.ViewProfile);
             Thread.Sleep(1200);
+
+            return menu;
         }
 
         /// <summary>
@@ -251,7 +274,6 @@ namespace Smurftown.Backend.Automation
         {
             try
             {
-                session.Window.BringToFront();
                 session.Click(map.Close);
                 Thread.Sleep(600);
             }

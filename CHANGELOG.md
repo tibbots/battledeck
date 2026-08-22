@@ -36,8 +36,15 @@ nothing else on the line.
   shows it on none of its screens, and rank and heroes are stored per region — so an account that
   plays in one region is refreshed without a question, and one that plays in several is asked
   before anything is read. Cancelling that question writes nothing.
-- **A double-click on a row opens the edit dialog.** Everywhere on the row except the rank medal
-  and the hero strip, which now have gestures of their own.
+- **A small window walks you through it.** Heroes of the Storm only takes clicks while it is in
+  front, and no application can put it there from the outside — so the window asks you to, waits
+  until it actually is, and then shows each step as it happens: which account was found, which
+  region, how much of the collection has been read. The region question is asked in that same
+  window rather than in one of its own. It stays open when the run is over, so there is something
+  to read when you come back from the game.
+- **A click on a row opens the edit dialog**, and the pointer turns into a hand to say so.
+  Everywhere on the row except the rank medal, the hero strip and the two round buttons, which
+  have gestures of their own.
 - **A click on the rank medal opens the rank grid right there** — the same 28 medals the dialog
   shows, and the pick is written straight into that row's region. That is two clicks instead of the
   five it used to take to correct a rank the game was misread on. A rank set by hand does not
