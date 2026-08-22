@@ -15,7 +15,7 @@ is needed.
 
 | Step | Who |
 |---|---|
-| `./dev version X.Y.Z`, verify, build, test | **Claude** |
+| rename `## [Upcoming]` in `CHANGELOG.md`, `./dev version X.Y.Z`, verify, build, test | **Claude** |
 | `git add` / `commit` / `tag` / `push` | **the user** |
 | watching the workflow, checking the release | either |
 
@@ -26,12 +26,20 @@ let the user push.
 
 ```
 1. ./dev version              read the current number
-2. ./dev version X.Y.Z        writes THREE files + fresh ProductCode/PackageCode
-3. verify (below)
-4. ./dev release              build the ZIP locally and confirm it works
-5. user commits, tags X.Y.Z, pushes the tag
-6. workflow compares tag against <Version> and aborts on mismatch BEFORE building
+2. CHANGELOG.md               rename '## [Upcoming]' to '## [X.Y.Z] - YYYY-MM-DD',
+                              add a fresh empty '## [Upcoming]' above it,
+                              point the link definitions at the new version
+3. ./dev version X.Y.Z        writes THREE files + fresh ProductCode/PackageCode
+4. verify (below)
+5. ./dev release              build the ZIP locally and confirm it works
+6. user commits, tags X.Y.Z, pushes the tag
+7. workflow compares tag against <Version> and aborts on mismatch BEFORE building
 ```
+
+**Step 2 does not write the entries.** They were written in the pull requests that caused them,
+under `## [Upcoming]` — releasing only renames the heading. If that section is empty at release
+time, the honest answer is that nobody wrote them down and the release is not ready; do not
+reconstruct them from `git log` and pretend otherwise.
 
 **`./dev version` exists because the number sits in three places** and they have drifted apart
 before:
@@ -55,6 +63,7 @@ version or `RemovePreviousVersions` / `DetectNewerInstalledVersion` do not engag
 
 ```bash
 ./dev version                                   # prints what is now in the csproj
+./dev notes                                     # prints what the release page will say
 grep -n 'Version' Smurftown/Smurftown.csproj
 grep -n 'version=' Smurftown/app.manifest
 grep -n 'ProductVersion\|ProductCode\|PackageCode\|UpgradeCode' Setup/Setup.vdproj
@@ -69,7 +78,7 @@ first and aborts before building, but catching it here saves a failed run and a 
 | Workflow | Trigger | Runs |
 |---|---|---|
 | `build.yml` | every branch push (`branches: ['**']`, `main` included) | `./dev publish` |
-| `release.yml` | tag push | version check, then `./dev release`, then upload |
+| `release.yml` | tag push | version check, `./dev notes <tag>` into the body, then `./dev release`, then upload |
 
 `build.yml` uses `publish` and not `build` on purpose: a debug build would let a broken
 single-file publish surface only at tag push. Tags do not match the branch filter, so there is no
@@ -105,8 +114,14 @@ Three things are now a contract, and all three are what `./dev release` already 
 | the tag is the version, no `v` prefix — `2.0.1` | compared three-part and numerically; anything else is not seen as an update |
 | **exactly one** `.zip` asset | a second one stops every installed copy from updating |
 | `checksums.txt` lists that ZIP by name | nothing to verify against, the install aborts |
+| the changelog carries a section for that tag | `./dev notes` aborts and the whole run fails — deliberately, see below |
 
-**None of this surfaces in CI.** A release with two ZIPs builds and uploads perfectly; only the
+The last row is the one that behaves differently from the other three: it fails **loudly**, in CI,
+before anything is uploaded. That is the point. The release page is where an installed copy sends
+somebody when it may not replace its own file, so a release with an empty body is one nobody can
+read — better a failed run than that.
+
+**The first three do not surface in CI.** A release with two ZIPs builds and uploads perfectly; only the
 already-installed copies go quiet. If a release ever has to carry a second archive, change
 `UpdateInstaller` in the same commit — the mechanics are in
 [`../../../docs/self-update.md`](../../../docs/self-update.md#what-the-release-has-to-look-like).
@@ -122,6 +137,9 @@ anyway".
 
 ## Checklist
 
+- [ ] `CHANGELOG.md` has a `## [X.Y.Z] - DATE` section with real entries, and a fresh empty
+      `## [Upcoming]` above it
+- [ ] `./dev notes X.Y.Z` prints that section and nothing else — this is the release page
 - [ ] `./dev version X.Y.Z` ran and reported three successful replacements
 - [ ] the three files carry the same number
 - [ ] `UpgradeCode` unchanged, `ProductCode` + `PackageCode` fresh

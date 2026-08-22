@@ -37,12 +37,21 @@ jobs:
             exit 1
           fi
 
+      # The release page is not decoration: an installed copy that may not replace its
+      # own file opens exactly this page instead of updating. An empty body is
+      # therefore a release nobody can read - './dev notes' aborts on a missing or
+      # empty section, which fails the run here rather than publishing one.
+      - name: Release notes from CHANGELOG.md
+        shell: bash
+        run: bash ./dev notes "${GITHUB_REF_NAME}" > release-notes.md
+
       - name: Build release assets
         shell: bash
         run: bash ./dev release
 
       - uses: softprops/action-gh-release@v2
         with:
+          body_path: release-notes.md
           files: |
             dist/*.zip
             dist/checksums.txt

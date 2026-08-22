@@ -38,11 +38,21 @@ question is one nobody reads to the end.
 | `CLAUDE.md` (this file) | stack, build and delivery, working practice |
 | [`docs/`](docs/README.md) | how this app is built — and knowledge that stays true elsewhere too |
 | [`.claude/skills/`](.claude/skills/) | procedures somebody executes: release, screenshots, driving the app or the game |
+| [`CHANGELOG.md`](CHANGELOG.md) | what changed between two releases, in the words a user would use |
 | `git log` | what an element used to look like before today |
 
 That last row is a rule, not a joke. These documents state what **is** — not what it was. A past
 state is mentioned only where it is the warning itself, i.e. where someone would otherwise
 re-introduce a removed hazard.
+
+**`CHANGELOG.md` is the one named exception**, and it is one on purpose: it holds the past because
+somebody outside this repo needs it. An entry is written in the pull request that causes the change,
+under `## [Upcoming]`; releasing renames that heading to `## [X.Y.Z] - DATE` and does not fill it. A
+changelog written on the day of the tag is a `git log` with extra steps — and here there would not
+even be that, the history is a single commit.
+
+What belongs in it is what a **user** notices: a new capability, a changed behaviour, a fixed bug, a
+security-relevant trade-off. A refactoring, a renamed class or a new document does not.
 
 **How this application is built.** Start at the first row; it is the checklist and it points at the
 rest.
@@ -126,6 +136,7 @@ the place somebody reads it.
 | `./dev release` | `publish` + `dist/Smurftown_{version}_win-x64.zip` + `dist/checksums.txt` |
 | `./dev version` | prints the version from the `csproj` |
 | `./dev version 2.0.1` | sets it in `csproj`, `app.manifest` **and** `Setup.vdproj` |
+| `./dev notes` | prints the `CHANGELOG.md` section of the current version — `./dev notes 2.0.1` for another |
 | `./dev clean` | removes `dist/` and the dotnet outputs |
 
 **`./dev version` is the reason the command exists**: the number sits in three places, and those
@@ -141,6 +152,11 @@ otherwise with their running IDE instance. Likewise the user's steps: branch, `c
 `.github/workflows/release.yml`; the run calls the same `./dev release` on `windows-latest` and
 attaches ZIP and checksum to the release. No token lies on a machine, and neither `gh` nor a forge
 MCP is needed.
+
+**The body of that release comes out of `CHANGELOG.md`**, cut out by `./dev notes <tag>` and handed
+over as `body_path`. That is not cosmetic: an installed copy that may not replace its own file opens
+exactly this page instead of updating, so an empty body is a release nobody can read. `./dev notes`
+aborts on a missing or empty section, which fails the run rather than publishing one.
 
 The workflow compares, as its **first** step, the tag against `<Version>` from the `csproj` and
 aborts on deviation, before anything is built or uploaded. Without that check an `.exe` carrying the
