@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using Serilog;
 
 namespace Smurftown.Backend.Gateway
@@ -33,14 +33,20 @@ namespace Smurftown.Backend.Gateway
         /// </summary>
         private const string UnknownVersion = "unknown";
 
-        private static string MarkerFile => Path.Combine(Directories.UserPath, "version.txt");
+        private static string MarkerFile(string folder) => Path.Combine(folder, "version.txt");
 
-        private static string BackupRoot => Path.Combine(Directories.UserPath, "backups");
+        private static string BackupRoot(string folder) => Path.Combine(folder, "backups");
 
         /// <summary>
         ///     Copies the data files aside if they were written by a different version than
         ///     the running one. To be called <b>before the first gateway</b> - afterwards a
         ///     migration may already have overwritten them.
+        ///     <para>
+        ///         <paramref name="folder" /> is the data folder, handed in rather than read
+        ///         from <c>Directories.UserPath</c>: that one resolves once per process, which
+        ///         is right for the application and unusable for a test that needs its own
+        ///         folder per case.
+        ///     </para>
         ///     <para>
         ///         Deliberately without an abort on failure: a backup that cannot be written
         ///         is almost always a full disk, and refusing to start over it would take the
@@ -48,14 +54,14 @@ namespace Smurftown.Backend.Gateway
         ///         which is the one thing that stays true either way.
         ///     </para>
         /// </summary>
-        public static void BeforeMigrations()
+        public static void BeforeMigrations(string folder)
         {
             try
             {
-                var previous = ReadMarker();
+                var previous = ReadMarker(folder);
                 if (previous == AppVersion.Current) return;
 
-                var files = DataFiles();
+                var files = DataFiles(folder);
                 if (files.Length == 0)
                 {
                     // A fresh installation. There is nothing to lose, and an empty folder
@@ -64,7 +70,7 @@ namespace Smurftown.Backend.Gateway
                     return;
                 }
 
-                var target = Path.Combine(BackupRoot, previous ?? UnknownVersion);
+                var target = Path.Combine(BackupRoot(folder), previous ?? UnknownVersion);
                 if (Directory.Exists(target))
                 {
                     // ALREADY THERE, so leave it alone. A second run of the same update
@@ -96,29 +102,29 @@ namespace Smurftown.Backend.Gateway
         ///     <b>after</b> the gateways are up, not before: whoever writes the marker first
         ///     and then fails the migration has no backup left for the second attempt.
         /// </summary>
-        public static void MarkCurrent()
+        public static void MarkCurrent(string folder)
         {
             try
             {
-                if (ReadMarker() == AppVersion.Current) return;
+                if (ReadMarker(folder) == AppVersion.Current) return;
 
-                Directory.CreateDirectory(Directories.UserPath);
-                File.WriteAllText(MarkerFile, AppVersion.Current);
+                Directory.CreateDirectory(folder);
+                File.WriteAllText(MarkerFile(folder), AppVersion.Current);
                 Log.Information("Data files are now on version {Version}", AppVersion.Current);
             }
             catch (Exception e)
             {
                 // Same stance as above. The cost of a lost marker is one superfluous
                 // backup on the next start, not a lost file.
-                Log.Warning(e, "Could not write the version marker {Path}", MarkerFile);
+                Log.Warning(e, "Could not write the version marker {Path}", MarkerFile(folder));
             }
         }
 
         /// <summary>The version that wrote the current data, or <c>null</c> if nobody noted one.</summary>
-        private static string? ReadMarker()
+        private static string? ReadMarker(string folder)
         {
-            if (!File.Exists(MarkerFile)) return null;
-            var text = File.ReadAllText(MarkerFile).Trim();
+            if (!File.Exists(MarkerFile(folder))) return null;
+            var text = File.ReadAllText(MarkerFile(folder)).Trim();
             return text.Length == 0 ? null : text;
         }
 
@@ -130,12 +136,12 @@ namespace Smurftown.Backend.Gateway
         ///         evidence, not data, and copying them would double megabytes per update.
         ///     </para>
         /// </summary>
-        private static string[] DataFiles()
+        private static string[] DataFiles(string folder)
         {
-            if (!Directory.Exists(Directories.UserPath)) return [];
+            if (!Directory.Exists(folder)) return [];
 
             return Directory
-                .EnumerateFiles(Directories.UserPath, "*.*", SearchOption.TopDirectoryOnly)
+                .EnumerateFiles(folder, "*.*", SearchOption.TopDirectoryOnly)
                 .Where(path => path.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase)
                                || path.EndsWith(".yml", StringComparison.OrdinalIgnoreCase))
                 .ToArray();

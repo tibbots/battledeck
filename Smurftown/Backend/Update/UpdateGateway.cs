@@ -126,7 +126,7 @@ namespace Smurftown.Backend.Update
         /// </summary>
         public static readonly TimeSpan Interval = TimeSpan.FromHours(1);
 
-        public static readonly UpdateGateway Instance = new();
+        public static readonly UpdateGateway Instance = new(Directories.UserPath);
 
         private readonly string _stateFile;
 
@@ -145,9 +145,14 @@ namespace Smurftown.Backend.Update
 
         private UpdateState _state = new();
 
-        private UpdateGateway()
+        /// <summary>
+        ///     Reads <c>update.yaml</c> out of <paramref name="folder" />. The folder is a
+        ///     parameter for the reason given at
+        ///     <see cref="Smurftown.Backend.Gateway.BattlenetAccountGateway(string)" />.
+        /// </summary>
+        public UpdateGateway(string folder)
         {
-            _stateFile = Path.Combine(Directories.UserPath, "update.yaml");
+            _stateFile = Path.Combine(folder, "update.yaml");
             Load();
         }
 

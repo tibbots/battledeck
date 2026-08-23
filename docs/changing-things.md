@@ -132,8 +132,10 @@ change — the build is no substitute there.
   `~/.smurftown/rotation-calendar.yaml`; it beats the embedded version. Whoever changes a period
   verifies it against **two years** — the same rule as measuring at two resolutions and for the same
   reason.
-- **No new framework, no DI container, no test setup without asking.** The app is deliberately kept
-  small.
+- **No new framework and no DI container without asking.** The app is deliberately kept small.
+  The tests are no exception to that: `Smurftown.Tests` uses xUnit and nothing else — no mocking
+  library, no assertion library, no fixture framework. A gateway is constructed with a folder,
+  which is what the constructor argument is for.
 - **Changes to layout/paths in the `Setup` project cannot be verified here** — the user has to build
   those.
 

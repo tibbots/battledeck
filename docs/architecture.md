@@ -96,13 +96,20 @@ Smurftown/
       free.png           nexus mark for the free rotation
       Ranks/             27 rank medals plus norank.png, included by wildcard
       Heroes/            90 hero portraits as JPEG (160 px), included by wildcard
+Smurftown.Tests/         xUnit, same target framework and UseWPF - it loads compiled XAML
+  TestHome.cs            module initializer: points SMURFTOWN_HOME at a throwaway folder
+                         BEFORE any test runs, so none can reach the real ~/.smurftown
+  Sta.cs                 runs an action on an STA thread and rethrows what escaped it
+  XamlLoadsTests.cs      loads every compiled XAML once - the incident guard
+  TextsTests.cs          the four language files against the code and each other
+  BattlenetAccountGatewayTests.cs   write, read back, compare - and two folders at once
 Setup/Setup.vdproj       MSI definition
 Smurftown.cer            UNUSED - remnant of a signing that was never enabled
 dev                      entry point for build and release (Bash, Windows-only)
 dev.cmd                  the same entry point from PowerShell and cmd
 .github/workflows/
-  build.yml              every branch push -> ./dev publish on windows-latest
-  release.yml            tag push -> ./dev release + assets onto the GitHub release
+  build.yml              every branch push -> ./dev test, then ./dev publish
+  release.yml            tag push -> ./dev test, then ./dev release + assets onto the release
 docs/                    reusable knowledge, not app-specific
   images/                the README screenshots
 tools/                   not part of the solution - asset generators and drivers
@@ -116,7 +123,7 @@ tools/                   not part of the solution - asset generators and drivers
   gen-demo-data.py         generates tools/demo-data.yaml
   demo-data.yaml           ten invented accounts held in reserve - NEVER photograph the real
                            list, the repo is public
-  check-texts.py           checks the four language files against the code and each other
+  check-texts.py           the same checks as TextsTests, runnable without a build
   smurftown-home.ps1       resolves the data folder the way Directories.cs does - the one
                            place the other scripts ask
   test-home.ps1            demo data into a throwaway folder, SMURFTOWN_HOME set, app started
@@ -131,8 +138,9 @@ tools/                   not part of the solution - asset generators and drivers
 - **`Backend/` does not know `UI/`.** No `System.Windows` reference in entities or gateways.
   (Today's exception: `BattlenetAccountGateway` uses `System.Windows.Data.CollectionViewSource`
   for the filtered view — deliberately tolerated, not a precedent.)
-- **Gateways are hand-written singletons**: `public static readonly XGateway Instance = new();`
-  with a private constructor. No DI container. ViewModels fetch the instance through
+- **Gateways are hand-written singletons**:
+  `public static readonly XGateway Instance = new(Directories.UserPath);` with a **public**
+  constructor taking the data folder. No DI container. ViewModels fetch the instance through
   `private static readonly` fields. If you need a new data source, follow the pattern — do not
   introduce a container without discussing it first.
 - **`Backend/Automation/` does not know `UI/`** and, the other way round, the UI knows only
@@ -144,6 +152,11 @@ tools/                   not part of the solution - asset generators and drivers
   the game path, the input pace and the vocabulary are *set* from outside
   (`SettingsGateway.Apply`) or passed as parameters. Three static fields carry this —
   `InputSender.Pace`, `GameVocabulary.Current`, `TextReader.LanguageTag`.
+- **The data folder is one of those values.** Every gateway and both `DataBackup` methods take it
+  as an argument; `App.OnStartup` is the only place that reads `Directories.UserPath`. That static
+  resolves **once** per process and keeps the answer — right for the application, because a
+  variable changed mid-run would otherwise split the data across two folders, and unusable for a
+  test, which needs a fresh folder per case.
 
 ## Persistence
 

@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using Serilog;
 using Smurftown.Backend.Entity;
 using YamlDotNet.Serialization;
@@ -48,11 +48,13 @@ namespace Smurftown.Backend.Gateway
     /// </summary>
     public class HotsRotationGateway
     {
-        public static readonly HotsRotationGateway Instance = new();
+        public static readonly HotsRotationGateway Instance = new(Directories.UserPath);
 
         private readonly HotsRotationCalendar _calendar;
 
         private readonly string _configFile;
+
+        private readonly string _folder;
 
         // IgnoreUnmatchedProperties like in the account gateway: a file written by a
         // newer app version should not throw a YamlException here.
@@ -67,9 +69,15 @@ namespace Smurftown.Backend.Gateway
 
         private HotsRotation _rotation;
 
-        private HotsRotationGateway()
+        /// <summary>
+        ///     Reads <c>rotation.yaml</c> out of <paramref name="folder" />. The folder is a
+        ///     parameter for the reason given at
+        ///     <see cref="BattlenetAccountGateway(string)" />.
+        /// </summary>
+        public HotsRotationGateway(string folder)
         {
-            _configFile = Path.Combine(Directories.UserPath, "rotation.yaml");
+            _folder = folder;
+            _configFile = Path.Combine(folder, "rotation.yaml");
             _rotation = ReadFromConfigFile();
             _calendar = HotsRotationCalendar.Load();
         }
@@ -156,7 +164,7 @@ namespace Smurftown.Backend.Gateway
 
         private void SaveToConfigFile()
         {
-            Directory.CreateDirectory(Directories.UserPath);
+            Directory.CreateDirectory(_folder);
             File.WriteAllText(_configFile, _yamlOut.Serialize(_rotation));
         }
     }

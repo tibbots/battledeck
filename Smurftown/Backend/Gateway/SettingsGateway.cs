@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using Serilog;
 using Smurftown.Backend.Automation;
 using Smurftown.Backend.Entity;
@@ -21,7 +21,7 @@ namespace Smurftown.Backend.Gateway
     /// </summary>
     public sealed class SettingsGateway
     {
-        public static readonly SettingsGateway Instance = new();
+        public static readonly SettingsGateway Instance = new(Directories.UserPath);
 
         private readonly string _configFile;
 
@@ -36,9 +36,14 @@ namespace Smurftown.Backend.Gateway
 
         private Settings _settings = new();
 
-        private SettingsGateway()
+        /// <summary>
+        ///     Reads <c>settings.yaml</c> out of <paramref name="folder" />. The folder is a
+        ///     parameter for the reason given at
+        ///     <see cref="BattlenetAccountGateway(string)" />.
+        /// </summary>
+        public SettingsGateway(string folder)
         {
-            _configFile = Path.Combine(Directories.UserPath, "settings.yaml");
+            _configFile = Path.Combine(folder, "settings.yaml");
             Load();
         }
 

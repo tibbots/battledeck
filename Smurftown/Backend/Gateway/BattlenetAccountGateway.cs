@@ -11,8 +11,9 @@ namespace Smurftown.Backend.Gateway
 {
     public class BattlenetAccountGateway
     {
-        public static readonly BattlenetAccountGateway Instance = new();
+        public static readonly BattlenetAccountGateway Instance = new(Directories.UserPath);
         private readonly string _configFile;
+        private readonly string _folder;
 
         // IgnoreUnmatchedProperties: without this, a data.yaml containing fields from a
         // newer app version throws a YamlException when read by an older version - the
@@ -27,9 +28,25 @@ namespace Smurftown.Backend.Gateway
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
 
-        private BattlenetAccountGateway()
+        /// <summary>
+        ///     Reads <c>data.yaml</c> out of <paramref name="folder" />.
+        ///     <para>
+        ///         <b>The folder is handed in, not fetched.</b> <c>Directories.UserPath</c>
+        ///         resolves once per process and keeps the answer - deliberately, so that a
+        ///         variable changed while the app runs cannot split the data across two
+        ///         folders. The same property makes it unusable from a test, which needs a
+        ///         fresh folder per case. So the value flows inwards from
+        ///         <c>App.OnStartup</c>, the way it already does for the automation layer.
+        ///     </para>
+        ///     <para>
+        ///         <see cref="Instance" /> stays the one call site of the application.
+        ///         Whoever constructs one of these directly is a test.
+        ///     </para>
+        /// </summary>
+        public BattlenetAccountGateway(string folder)
         {
-            _configFile = Path.Combine(Directories.UserPath, "data.yaml");
+            _folder = folder;
+            _configFile = Path.Combine(folder, "data.yaml");
             foreach (var account in ReadFromConfigFile())
             {
                 BattlenetAccounts.Add(account);
@@ -343,7 +360,7 @@ namespace Smurftown.Backend.Gateway
         {
             if (!File.Exists(_configFile))
             {
-                Directory.CreateDirectory(Directories.UserPath);
+                Directory.CreateDirectory(_folder);
                 using (File.Create(_configFile))
                 {
                 }

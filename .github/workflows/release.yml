@@ -37,6 +37,13 @@ jobs:
             exit 1
           fi
 
+      # Before the publish, not after: a red test should stop the run before anything
+      # is built. The filter excludes tests that need OCR language packs, which a
+      # GitHub runner does not have - see CLAUDE.md.
+      - name: Test
+        shell: bash
+        run: bash ./dev test --filter "needs!=ocr"
+
       # The release page is not decoration: an installed copy that may not replace its
       # own file opens exactly this page instead of updating. An empty body is
       # therefore a release nobody can read - './dev notes' aborts on a missing or

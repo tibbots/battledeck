@@ -51,7 +51,7 @@ namespace Smurftown
             // BEFORE the first gateway, and that is the whole point: every gateway migrates
             // on load, and a migration rewrites the file it just read. Once that has
             // happened, there is nothing left to set aside.
-            DataBackup.BeforeMigrations();
+            DataBackup.BeforeMigrations(Directories.UserPath);
 
             // Carries the saved settings to where they take effect: the input speed,
             // the game's vocabulary, the OCR language - and the UI language.
@@ -77,7 +77,7 @@ namespace Smurftown
 
             // Only now - see DataBackup.MarkCurrent. Everything above may still throw, and
             // then the next start has to find the same backup situation as this one.
-            DataBackup.MarkCurrent();
+            DataBackup.MarkCurrent(Directories.UserPath);
 
             base.OnStartup(e);
         }

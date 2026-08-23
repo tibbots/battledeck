@@ -23,6 +23,13 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      # Before the publish, not after: a red test should stop the run before anything
+      # is built. The filter excludes tests that need OCR language packs, which a
+      # GitHub runner does not have - see CLAUDE.md.
+      - name: Test
+        shell: bash
+        run: bash ./dev test --filter "needs!=ocr"
+
       # publish instead of build: the same thing a release builds, just without the
       # zip. A debug build would only let a broken single-file publish surface at
       # the tag push.

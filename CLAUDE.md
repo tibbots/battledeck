@@ -104,9 +104,22 @@ from outside.
 | Text recognition | `Windows.Media.Ocr` — part of the OS, hence the SDK target |
 | Installer | Visual Studio setup project `Setup/Setup.vdproj` → MSI |
 
-Two projects in `Smurftown.sln`: `Smurftown` (app) and `Setup` (MSI). No test project, no
-devcontainer — and neither is possible, see [Build, release, delivery](#build-release-delivery).
-CI runs two workflows on `windows-latest`.
+Three projects in `Smurftown.sln`: `Smurftown` (app), `Smurftown.Tests` (xUnit) and `Setup`
+(MSI). **No devcontainer, and none is possible** — see
+[Build, release, delivery](#build-release-delivery). CI runs two workflows on `windows-latest`,
+both of which run the tests before they build anything.
+
+`Smurftown.Tests` targets the same `net8.0-windows10.0.19041.0` with `UseWPF`, because it loads
+the application's compiled XAML. It points `SMURFTOWN_HOME` at a throwaway folder from a module
+initializer, so **no test can reach the real `~/.smurftown`** — that file holds the passwords in
+plain text and is rewritten whole on every mutation.
+
+**A test that needs something the build server has not got carries a trait.** `[Trait("needs",
+"ocr")]` marks those that compare against `Windows.Media.Ocr`, whose language packs for German,
+French and Spanish a GitHub runner does not have. Both workflows therefore run
+`./dev test --filter "needs!=ocr"`, while `./dev test` locally runs everything. A test that stands
+red on the build server for a reason that is not a defect gets ignored within two weeks — and the
+ones next to it with it.
 
 **Why the SDK target** `net8.0-windows10.0.19041.0` and not `net8.0-windows`: only that reaches
 `Windows.Media.Ocr`. The price is Windows 10 build 19041 (May 2020) as the minimum. Whoever
@@ -132,6 +145,7 @@ the place somebody reads it.
 | Command | What it does |
 |---|---|
 | `./dev build` | `dotnet build -c Debug` |
+| `./dev test` | `dotnet test` — extra arguments go through, e.g. `--filter` |
 | `./dev publish` | single-file release into `dist/publish/` — framework-dependent, `win-x64` |
 | `./dev release` | `publish` + `dist/Smurftown_{version}_win-x64.zip` + `dist/checksums.txt` |
 | `./dev version` | prints the version from the `csproj` |
@@ -270,16 +284,22 @@ The two drivers are [`drive-smurftown`](.claude/skills/drive-smurftown/) and
 [`drive-hots`](.claude/skills/drive-hots/). Neither of them starts its application; starting stays a
 separate, deliberate step — for Smurftown it is `tools/test-home.ps1` that takes it.
 
-### After every XAML change the app must be started once
+### After every XAML change, `./dev test` — and then start the app once
 
-`./dev build` is **no** substitute. An inserted comment once lost its opening `<!--`; the text then
-stood as content in the `StackPanel` of the tab bar. The build reported `0 errors`, and an XML
-parser would have stayed silent too — `-->` without `<!--` is valid XML in text content. Only on
-loading the BAML did WPF throw a `XamlParseException`, and the app no longer started at all.
+`./dev build` is **no** substitute, and this is the incident that says why. An inserted comment once
+lost its opening `<!--`; the text then stood as content in the `StackPanel` of the tab bar. The
+build reported `0 errors`, an XML parser would have stayed silent too — `-->` without `<!--` is
+valid XML in text content — and even the BAML compiled. Only on loading it did WPF throw a
+`XamlParseException`, and the app no longer started at all.
+
+**That half is now a test.** `XamlLoadsTests` loads every compiled XAML the assembly ships, inside
+one `Application` on an STA thread, and reports every file that fails rather than the first. It is
+the cheapest guard in this repository and it runs in half a second.
+
+**Starting the app is still the other half.** A test that loads the markup says nothing about a
+layout that comes out wrong or a binding that silently finds nothing — those need eyes. What
+changed is that the expensive failure no longer waits for somebody to remember the rule.
 
 **What appears in the log afterwards is only a consequence**: the toast notifier needs an
 already-shown window and throws in turn as soon as the error handler calls it. Always read the
 **first** exception of a run, not the last.
-
-Cheap self-test before starting: strip the comments from the file and check whether a `-->` is left
-anywhere. That catches exactly this case.

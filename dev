@@ -11,6 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 PROJECT="Smurftown/Smurftown.csproj"
+TESTS="Smurftown.Tests/Smurftown.Tests.csproj"
 VDPROJ="Setup/Setup.vdproj"
 MANIFEST="Smurftown/app.manifest"
 CHANGELOG="CHANGELOG.md"
@@ -64,6 +65,12 @@ new_guid() { ps '[guid]::NewGuid().ToString().ToUpper()' | tr -d '\r'; }
 cmd_build() {
     echo "==> Building (Debug)..."
     dotnet build "$PROJECT" -c Debug
+    echo "==> Done"
+}
+
+cmd_test() {
+    echo "==> Testing..."
+    dotnet test "$TESTS" "$@"
     echo "==> Done"
 }
 
@@ -219,6 +226,7 @@ Usage: ./dev <command> [args...]      (from PowerShell/cmd: .\dev.cmd <command>)
 
 Commands:
   build              dotnet build -c Debug
+  test [args...]     dotnet test - extra args go to dotnet test, e.g. --filter
   publish            Single-file Release publish for win-x64 into dist/publish/
   release            publish + dist/Smurftown_<version>_win-x64.zip + checksums.txt
   version            Print the version from Smurftown.csproj
@@ -244,6 +252,7 @@ HELP
 
 case "${1:-help}" in
     build)   cmd_build ;;
+    test)    shift; cmd_test "$@" ;;
     publish) cmd_publish ;;
     release) cmd_release ;;
     version) shift; cmd_version "$@" ;;
