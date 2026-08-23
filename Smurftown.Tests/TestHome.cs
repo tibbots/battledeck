@@ -1,6 +1,7 @@
 using System.IO;
 using System.Runtime.CompilerServices;
 using Smurftown;
+using Smurftown.Backend.Gateway;
 
 namespace Smurftown.Tests
 {
@@ -39,9 +40,17 @@ namespace Smurftown.Tests
             // HTTP request as a side effect of constructing a view. Without this the folder
             // is empty, "never checked" counts as due, and MainViewModel asks GitHub -
             // fire-and-forget, so it would not even fail visibly on a machine that is offline.
+            //
+            // Written as app.yaml in the current layout, not as the update.yaml this used to
+            // be: the migration would carry that one over just as well, but a test setup that
+            // leans on a migration is one that starts failing for a reason that has nothing
+            // to do with the test.
+            var newline = Environment.NewLine;
             File.WriteAllText(
-                System.IO.Path.Combine(Path, "update.yaml"),
-                $"lastCheck: {DateTimeOffset.UtcNow:o}{Environment.NewLine}");
+                System.IO.Path.Combine(Path, "app.yaml"),
+                $"schemaVersion: {AppFile.CurrentSchema}{newline}" +
+                $"update:{newline}" +
+                $"  lastCheck: {DateTimeOffset.UtcNow:o}{newline}");
         }
     }
 }

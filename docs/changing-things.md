@@ -89,9 +89,21 @@ change — the build is no substitute there.
   own way looks into one folder while the app works in another. For `capture-run.ps1` that is not an
   inconvenience but a hole: its safeguard would then be vouching for a file nobody is photographing.
   Nothing reports it — the script runs, and it reports success.
-- **New data file under `~/.smurftown/`**: nothing to do for the backup as long as it ends in
-  `.yaml` — `DataBackup` takes every one of them. Anything else is deliberately not copied; see
+- **New data file under `~/.smurftown/`**: ask first whether it has to be one. There are two,
+  `app.yaml` and `data.yaml`, and four became one on purpose — a third needs a reason that is not
+  "it did not fit". A section in `app.yaml` costs a property and nothing else; see
+  [One file for four kinds of state](architecture.md#one-file-for-four-kinds-of-state). If it does
+  become a file: nothing to do for the backup as long as it ends in `.yaml` — `DataBackup` takes
+  every one of them. Anything else is deliberately not copied; see
   [The backup before a migration](architecture.md#the-backup-before-a-migration).
+- **Changing the shape of `app.yaml` or `data.yaml`**: raise its `schemaVersion` and write the
+  migration next to the one that is already there. Both numbers are per file and independent. A
+  build that meets a *higher* number reads the file but refuses to write it, so an old release run
+  by accident cannot quietly delete what a new one stored.
+- **Writing to either file goes through its owner** — `AppFile` for `app.yaml`,
+  `BattlenetAccountGateway` for `data.yaml` — and never with a `File.WriteAllText` of your own.
+  Both re-read the whole file immediately before writing and hold a lock across the two, which is
+  what keeps one writer from posting a stale copy over another writer's section.
 - **New setting: four places, and two of them fail silently.** `Settings` (the property, without
   `required`, with a default) → `SettingsGateway.Current()` → `SettingsViewModel.Store()` →
   `SettingsView.xaml` plus a property on the ViewModel. **`Current()` and `Store()` both rebuild

@@ -16,7 +16,7 @@ App.OnStartup
                         │
                         ├─ Look()                          once, now
                         │    │
-                        │    ├─ ShowOffer(update.yaml : latestVersion)  ← no network, first frame
+                        │    ├─ ShowOffer(app.yaml : update.latestVersion) ← no network, first frame
                         │    │
                         │    └─ await UpdateGateway.CheckIfDue()   ← only if an hour has passed
                         │         │
@@ -46,7 +46,7 @@ the human reads *why* they have to do it by hand instead of finding out after a 
 | Actor | What it is | Its part here |
 |---|---|---|
 | `GithubReleases` | a static class in `Backend/Update/` | asks the releases API, returns the release or null |
-| `UpdateGateway` | hand-written singleton, same pattern as the other gateways | owns `update.yaml`, decides whether an hour has passed |
+| `UpdateGateway` | hand-written singleton, same pattern as the other gateways | owns the `update` section of `app.yaml`, decides whether an hour has passed |
 | `UpdateInstaller` | a static class beside them | downloads, verifies, swaps the `.exe`, cleans up afterwards |
 | `UpdateOffer` | one ViewModel object, used by two views | holds the four display states and runs the install |
 
@@ -55,7 +55,7 @@ the human reads *why* they have to do it by hand instead of finding out after a 
 **A timer alone would be wrong, and a file alone is no longer enough.** Both exist, and each covers
 what the other cannot.
 
-The file is the clock: `~/.smurftown/update.yaml` holds the time of the last request, and any look
+The file is the clock: `update.lastCheck` in `~/.smurftown/app.yaml` holds the time of the last request, and any look
 that finds it more than an hour old does the check. That is what makes the interval survive a
 restart — Smurftown is opened, used and closed again, and an interval that lived in a timer would
 start over on every one of those, so an application opened five times in an afternoon would ask
@@ -91,9 +91,20 @@ latestVersion: 1.0.1
   It is compared against the running version rather than trusted, so it corrects itself once
   somebody has installed by hand.
 
-**It is not part of `settings.yaml`**, although it would fit in the same file. Settings are what a
-human sets; these two values are what the application noted. Mixed together, every check would
-rewrite a file the human edits by hand.
+**It sits in the same file as the settings, and until 1.3.0 that was the one thing it must not
+do.** The objection was real and worth restating: settings are what a human sets, these two values
+are what the application noted, and an hourly check that rewrites a file somebody edits by hand
+takes their edit with it the one time the two meet.
+
+What changed is not the judgement but the writer. `AppFile` re-reads `app.yaml` completely
+immediately before every write and replaces **only** the section of the caller — under a lock, so
+read and write are one step. The check therefore no longer writes a picture of the whole file; it
+writes four fields into whatever the file says at that moment. An edit made in the meantime is in
+that "whatever", and survives.
+
+**What it does not survive is a second running Smurftown.** Two processes have no lock between
+them, and the re-read only narrows the window — see
+[architecture.md](architecture.md#one-file-for-four-kinds-of-state).
 
 ## When the app may replace itself, and when it may not
 
@@ -212,14 +223,14 @@ after building the switch and looking at it:
   such decisions belong.
 
 The consequence for the code is one less moving part: `UpdateGateway` has no `Enabled`,
-`SettingsGateway.Apply` does not touch `Backend/Update`, and `settings.yaml` gained no field. An
+`SettingsGateway.Apply` does not touch `Backend/Update`, and the `settings` section gained no field. An
 installation that briefly carried a `checkForUpdates` key keeps it harmlessly — the deserialiser
 runs with `IgnoreUnmatchedProperties()`.
 
 **`Check now` in the settings is not that switch coming back.** It calls `UpdateGateway.Check()`,
 which asks regardless of the clock and writes the same stamp the hourly check writes — so it brings
 the next check *forward* and cannot postpone or suppress one. What it is really for is the answer
-beside it: `Last checked` is the first thing that ever showed the value in `update.yaml`, and a
+beside it: `Last checked` is the first thing that ever showed the value of `update.lastCheck`, and a
 date without a way to refresh it invites the question whether the check still runs at all.
 
 ## Testing it

@@ -11,8 +11,8 @@ regularly, and each confusion costs something different:
 
 | Question | Answered where | What breaks if you swap them |
 |---|---|---|
-| Which language does the **client** run in? | `settings.yaml` → `clientLanguage`, vocabulary in `GameVocabulary` | OCR stops reading anything |
-| Which language does **Smurftown** speak? | `settings.yaml` → `appLanguage`, texts in `Backend/Texts/*.yaml` | the user reads a foreign language |
+| Which language does the **client** run in? | `app.yaml` → `settings.clientLanguage`, vocabulary in `GameVocabulary` | OCR stops reading anything |
+| Which language does **Smurftown** speak? | `app.yaml` → `settings.appLanguage`, texts in `Backend/Texts/*.yaml` | the user reads a foreign language |
 | Which language is the **log** in? | not at all — it is always English | one message has four wordings and is no longer searchable |
 
 The first two are **independent of each other**, and that is not caution but the normal case:

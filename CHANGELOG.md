@@ -21,6 +21,38 @@ nothing else on the line.
 
 ## [Upcoming]
 
+### Changed
+
+- **Four of the files in `~/.smurftown/` have become one.** `settings.yaml`, `rotation.yaml`,
+  `update.yaml` and `version.txt` are now sections of a single `app.yaml`; the account list stays in
+  `data.yaml`. Nothing is lost and nothing has to be re-entered — the first start after the update
+  carries the old files over and removes them, and the backup taken just before it holds them as
+  they were. Both files now also record which layout they are written in, so a future change to the
+  format has something to hold on to instead of having to be guessed from the content.
+- **A setting saved while the app is running can no longer be overwritten by the update check.**
+  Both write to the same file now, so each write reads the whole file again first and replaces only
+  its own part of it. Within one running Smurftown that is now guaranteed rather than likely. What
+  it still cannot do is protect against a **second** Smurftown running at the same time — that
+  remains what it always was: the last one to write wins.
+- **A file written by a newer version of Smurftown is read but never written back.** An older build
+  does not know every field a newer one stores, and writing the file back would quietly delete them.
+  It now says so instead and asks for the newer build.
+- **The log no longer grows without end, and it has moved.** It now lives in
+  `~/.smurftown/logs/`, starts a new file every 10 megabytes and keeps five of them; all but the
+  one being written are compressed, so the folder stays somewhere around fifteen megabytes instead
+  of growing for as long as the application is installed. Until now everything went into a single
+  `smurftown.log` next to the account list, and that file had a limit nobody would have guessed:
+  at one gigabyte it stopped being written to, silently. The log of the previous layout is not
+  thrown away — it is compressed into the new folder on the first start.
+- **The backup taken before an update is now one archive per version** instead of a folder,
+  `backups/1.2.0.zip` rather than `backups/1.2.0/`. Existing folders are converted on the first
+  start. Ten of them are kept, and old ones now actually go — until now every version added one and
+  nothing ever removed any. **What that does not change**: an archive still holds a complete copy of
+  the account list, passwords in plain text and all. It is tidier, not safer.
+- **Screenshots of a stranded game run are cleared out.** `shots/` keeps the newest twenty and
+  nothing older than thirty days. One of those images is a full screen and around five megabytes,
+  and nothing had ever deleted one.
+
 ## [1.2.0] - 2026-08-23
 
 ### Added

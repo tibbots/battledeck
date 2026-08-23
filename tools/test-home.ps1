@@ -83,14 +83,24 @@ if (Test-Path $data) {
     Write-Host "demo     $data" -ForegroundColor Green
 }
 
-# The settings carry the game path, the input pace and the two languages - no credentials.
-# Copied over because without hotsPath drive-hots cannot start the game, and typing that
-# path in by hand once per test folder is the kind of step that gets skipped.
-$settings = Join-Path $Path 'settings.yaml'
-$realSettings = Join-Path $real 'settings.yaml'
-if (-not (Test-Path $settings) -and (Test-Path $realSettings)) {
-    Copy-Item -LiteralPath $realSettings -Destination $settings
-    Write-Host "settings $settings  (copied from the real folder - game path, languages)" -ForegroundColor DarkGray
+# app.yaml carries the game path, the input pace, the two languages, a hand-set rotation and
+# what the update check noted - no credentials, those are all in data.yaml. Copied over
+# because without hotsPath drive-hots cannot start the game, and typing that path in by hand
+# once per test folder is the kind of step that gets skipped.
+#
+# settings.yaml is the name it had before 1.3.0; a real folder the new app has not started
+# against yet still holds that one, and copying it lets the test folder migrate it itself.
+$appFile = Join-Path $Path 'app.yaml'
+$legacy = Join-Path $Path 'settings.yaml'
+if (-not (Test-Path $appFile) -and -not (Test-Path $legacy)) {
+    foreach ($name in 'app.yaml', 'settings.yaml') {
+        $source = Join-Path $real $name
+        if (-not (Test-Path $source)) { continue }
+
+        Copy-Item -LiteralPath $source -Destination (Join-Path $Path $name)
+        Write-Host "config   $(Join-Path $Path $name)  (copied from the real folder - game path, languages)" -ForegroundColor DarkGray
+        break
+    }
 }
 
 # ---- the variable ------------------------------------------------------------------------
@@ -119,9 +129,13 @@ if (-not $Exe) {
 # gets clicked is luck - and one of the two is showing the real list.
 $running = @(Get-Process -Name 'Smurftown' -ErrorAction SilentlyContinue)
 if ($running.Count -gt 0 -and -not $Force) {
-    throw ("ABORTED: {0} Smurftown already running (PID {1}). The drive scripts take the " +
-           "first window they find and would then be clicking a coin flip. Close it, or " +
-           "-Force if you know which one you mean." -f $running.Count, ($running.Id -join ', '))
+    # The parentheses around the concatenation are load-bearing: -f binds tighter than +,
+    # so without them only the LAST fragment gets formatted - and that one carries no
+    # placeholder. The message then names neither the count nor the PID it is telling you
+    # to close, which is the one thing it exists to say.
+    throw (("ABORTED: {0} Smurftown already running (PID {1}). The drive scripts take the " +
+            "first window they find and would then be clicking a coin flip. Close it, or " +
+            "-Force if you know which one you mean.") -f $running.Count, ($running.Id -join ', '))
 }
 
 $proc = Start-Process -FilePath $Exe -PassThru

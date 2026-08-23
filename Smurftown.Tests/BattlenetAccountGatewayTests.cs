@@ -114,6 +114,106 @@ namespace Smurftown.Tests
                 File.ReadAllText(Path.Combine(folder, "data.yaml")));
         }
 
+        [Fact]
+        public void The_written_file_says_which_layout_it_is_in()
+        {
+            var folder = FreshFolder();
+
+            new BattlenetAccountGateway(folder).AddOrUpdate(Mail("smurf@example.com"));
+
+            var written = File.ReadAllText(Path.Combine(folder, "data.yaml"));
+            Assert.StartsWith($"schemaVersion: {BattlenetAccountGateway.CurrentSchema}", written);
+            Assert.Contains("accounts:", written);
+        }
+
+        /// <summary>
+        ///     The layout before 1.3.0: a bare sequence, no version in front of it. Every
+        ///     installation up to that release has one, and it has to be read without a word
+        ///     from the human.
+        /// </summary>
+        [Fact]
+        public void A_file_of_the_older_layout_is_read_and_upgraded_by_the_next_save()
+        {
+            var folder = FreshFolder();
+            File.WriteAllText(Path.Combine(folder, "data.yaml"),
+                """
+                # A comment before the first item, as the demo data has one.
+                - name: OLDTIMER
+                  discriminator: '1234'
+                  email: oldtimer@example.com
+                  password: whatever
+                  notes: ''
+                  latestInteractionAt: 2026-08-21T19:40:00
+                  inactive: false
+                """);
+
+            var gateway = new BattlenetAccountGateway(folder);
+            Assert.Equal("oldtimer@example.com", Assert.Single(gateway.BattlenetAccounts).Email);
+
+            // Reading leaves the file alone; the upgrade rides along with the next change.
+            Assert.StartsWith("#", File.ReadAllText(Path.Combine(folder, "data.yaml")));
+
+            gateway.AddOrUpdate(Mail("second@example.com"));
+
+            var written = File.ReadAllText(Path.Combine(folder, "data.yaml"));
+            Assert.StartsWith($"schemaVersion: {BattlenetAccountGateway.CurrentSchema}", written);
+            Assert.Contains("oldtimer@example.com", written);
+            Assert.Contains("second@example.com", written);
+        }
+
+        [Fact]
+        public void A_file_from_a_newer_schema_is_never_overwritten()
+        {
+            var folder = FreshFolder();
+            var path = Path.Combine(folder, "data.yaml");
+            File.WriteAllText(path,
+                $"""
+                 schemaVersion: {BattlenetAccountGateway.CurrentSchema + 1}
+                 accounts: []
+                 somethingFromTomorrow: tomorrow
+                 """);
+
+            var gateway = new BattlenetAccountGateway(folder);
+
+            // Deserialising drops every key this build does not know. Writing the file back
+            // would delete them - and this is the file with the passwords in it.
+            Assert.Throws<InvalidOperationException>(() => gateway.AddOrUpdate(Mail("smurf@example.com")));
+            Assert.Contains("tomorrow", File.ReadAllText(path));
+        }
+
+        [Fact]
+        public void A_save_reads_the_file_again_and_does_not_answer_out_of_memory()
+        {
+            var folder = FreshFolder();
+            var gateway = new BattlenetAccountGateway(folder);
+            gateway.AddOrUpdate(Mail("first@example.com"));
+
+            // Somebody else rewrites the file - another Smurftown, or an editor. This save
+            // still overwrites it, deliberately: refusing would lock the human out of their
+            // own edit. What must not happen is that it goes unnoticed, and the read below is
+            // what notices.
+            File.WriteAllText(Path.Combine(folder, "data.yaml"),
+                $"schemaVersion: {BattlenetAccountGateway.CurrentSchema}{Environment.NewLine}accounts: []");
+
+            gateway.AddOrUpdate(Mail("second@example.com"));
+
+            var read = new BattlenetAccountGateway(folder).BattlenetAccounts;
+            Assert.Equal(2, read.Count);
+        }
+
+        [Fact]
+        public void An_empty_file_is_not_a_file_from_an_unknown_layout()
+        {
+            var folder = FreshFolder();
+
+            // ensureConfigFileExists creates an empty one on the first read of a fresh
+            // installation. Nothing about it says "older layout", and treating it as such
+            // would make the first save log an upgrade that never happened.
+            File.WriteAllText(Path.Combine(folder, "data.yaml"), "");
+
+            Assert.Empty(new BattlenetAccountGateway(folder).BattlenetAccounts);
+        }
+
         private static string FreshFolder()
         {
             var folder = Path.Combine(TestHome.Path, Guid.NewGuid().ToString("N"));

@@ -1,4 +1,4 @@
-namespace Smurftown.Backend.Entity
+﻿namespace Smurftown.Backend.Entity
 {
     /// <summary>
     ///     How fast the app types and clicks in the game.
@@ -208,7 +208,7 @@ namespace Smurftown.Backend.Entity
         }
 
         /// <summary>
-        ///     The default for a <c>settings.yaml</c> that doesn't have the key yet:
+        ///     The default for a file that doesn't have the key yet:
         ///     the language of the Windows UI, as long as we speak it.
         ///     <para>
         ///         <b>Not German as the default</b>, even though the author is German - that
@@ -238,7 +238,7 @@ namespace Smurftown.Backend.Entity
 
     /// <summary>
     ///     What the human sets, as opposed to what the app measures or reads.
-    ///     Lives in <c>~/.smurftown/settings.yaml</c>.
+    ///     Lives in the <c>settings</c> section of <c>~/.smurftown/app.yaml</c>.
     ///     <para>
     ///         Its own file and <b>not</b> in <c>screen-map.yaml</c>: the calibration
     ///         describes what the game looks like - anchors, distances, thresholds. Where
@@ -265,7 +265,7 @@ namespace Smurftown.Backend.Entity
         /// <summary>
         ///     The language of the game client. Default <c>German</c> and not the system
         ///     language: until 21.08.2026 German was hard-wired, and an old
-        ///     <c>settings.yaml</c> without this key is meant to keep behaving exactly
+        ///     A stored file without this key is meant to keep behaving exactly
         ///     as before.
         /// </summary>
         public GameLanguage ClientLanguage { get; set; } = GameLanguage.German;
@@ -277,7 +277,7 @@ namespace Smurftown.Backend.Entity
         ///     it was hard-wired before and an old file shouldn't change.
         ///     <para>
         ///         There is no "before" here: until 22.08.2026 the app only spoke English,
-        ///         so any existing <c>settings.yaml</c> without this key is one whose
+        ///         so any existing file without this key is one whose
         ///         owner never had a choice.
         ///     </para>
         /// </summary>

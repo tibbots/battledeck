@@ -20,7 +20,7 @@ public abstract class Directories
     ///     <para>
     ///         An environment variable and not a command line argument, because the
     ///         PowerShell scripts under <c>tools/</c> read the same files as the app
-    ///         (<c>data.yaml</c> for a login, <c>settings.yaml</c> for the game path). A
+    ///         (<c>data.yaml</c> for a login, <c>app.yaml</c> for the game path). A
     ///         variable set once in a shell reaches the app <b>and</b> them; an argument
     ///         would reach only the app, and the scripts would keep pointing at the real
     ///         folder.

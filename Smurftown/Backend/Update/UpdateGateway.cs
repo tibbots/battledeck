@@ -1,10 +1,11 @@
 ﻿using System.Globalization;
-using System.IO;
 using Serilog;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+
+using Smurftown.Backend.Gateway;
 
 namespace Smurftown.Backend.Update
 {
@@ -126,35 +127,29 @@ namespace Smurftown.Backend.Update
         /// </summary>
         public static readonly TimeSpan Interval = TimeSpan.FromHours(1);
 
-        public static readonly UpdateGateway Instance = new(Directories.UserPath);
+        public static UpdateGateway Instance => Singleton.Value;
 
-        private readonly string _stateFile;
+        private static readonly Lazy<UpdateGateway> Singleton = new(() => new UpdateGateway(AppFile.Instance));
 
-        private readonly IDeserializer _yamlIn = new DeserializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .WithTypeConverter(new DateTimeOffsetYamlConverter())
-            .IgnoreUnmatchedProperties()
-            .Build();
-
-        // The converter is what keeps LastCheck a scalar. See DateTimeOffsetYamlConverter -
-        // without it this line writes a mapping of twenty properties that nothing reads back.
-        private readonly ISerializer _yamlOut = new SerializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .WithTypeConverter(new DateTimeOffsetYamlConverter())
-            .Build();
-
-        private UpdateState _state = new();
+        private readonly AppFile _app;
 
         /// <summary>
-        ///     Reads <c>update.yaml</c> out of <paramref name="folder" />. The folder is a
-        ///     parameter for the reason given at
+        ///     Reads the state out of <paramref name="app" /> - the <c>update</c> section of
+        ///     <c>app.yaml</c>, which was <c>update.yaml</c> until 1.3.0. The file is handed
+        ///     in and not fetched, for the reason given at
         ///     <see cref="Smurftown.Backend.Gateway.BattlenetAccountGateway(string)" />.
         /// </summary>
-        public UpdateGateway(string folder)
+        public UpdateGateway(AppFile app)
         {
-            _stateFile = Path.Combine(folder, "update.yaml");
-            Load();
+            _app = app;
         }
+
+        /// <summary>
+        ///     The stored state. Asked of <see cref="AppFile" /> on every access rather than
+        ///     copied into a field: the file is re-read before every write, and a copy here
+        ///     would be exactly the stale picture that arrangement exists to avoid.
+        /// </summary>
+        private UpdateState _state => _app.State.Update;
 
         /// <summary>
         ///     The release found in this session, once one has been found. The install command
@@ -226,18 +221,23 @@ namespace Smurftown.Backend.Update
         {
             var release = await GithubReleases.Latest(cancel);
 
-            // The stamp goes down even on a failure - see LastCheck. Written before the
-            // comparison, so an unparsable tag does not turn into a check on every start.
-            _state.LastCheck = DateTimeOffset.UtcNow;
+            // A NEW state and not a mutation of the stored one: what is in AppFile belongs
+            // to the file, and the file decides what reaches disk. The stamp goes down even
+            // on a failure - see LastCheck - and before the comparison, so an unparsable tag
+            // does not turn into a check on every start.
+            var noted = new UpdateState
+            {
+                LastCheck = DateTimeOffset.UtcNow,
+                LatestVersion = release?.Version ?? _state.LatestVersion
+            };
 
             if (release != null)
             {
-                _state.LatestVersion = release.Version;
                 Log.Information("Update check: {Latest} offered, {Current} running",
                     release.Version, AppVersion.Current);
             }
 
-            Save();
+            Save(noted);
 
             if (release == null || !AppVersion.IsNewerThanCurrent(release.Version)) return null;
 
@@ -245,35 +245,20 @@ namespace Smurftown.Backend.Update
             return release;
         }
 
-        private void Load()
-        {
-            if (!File.Exists(_stateFile)) return;
-
-            try
-            {
-                _state = _yamlIn.Deserialize<UpdateState>(File.ReadAllText(_stateFile)) ?? new UpdateState();
-            }
-            catch (Exception e)
-            {
-                // A broken file costs one extra check and nothing else. Same reasoning as in
-                // SettingsGateway: the defaults carry the application, the reason is in the log.
-                Log.Warning(e, "update.yaml unreadable, checking again: {Path}", _stateFile);
-                _state = new UpdateState();
-            }
-        }
-
-        private void Save()
+        private void Save(UpdateState noted)
         {
             try
             {
-                File.WriteAllText(_stateFile, _yamlOut.Serialize(_state));
+                _app.SaveUpdate(noted);
             }
             catch (Exception e)
             {
                 // Deliberately only a warning and no exception upwards: the consequence of a
-                // state file that cannot be written is one check per start instead of one per
-                // day. That is not worth an error on a path the human never asked for.
-                Log.Warning(e, "update.yaml could not be written: {Path}", _stateFile);
+                // state that cannot be written is one check per start instead of one per
+                // hour. That is not worth an error on a path the human never asked for - and
+                // it is the right stance for the one case that throws here on purpose, a
+                // file written by a newer schema.
+                Log.Warning(e, "The update state could not be written");
             }
         }
     }

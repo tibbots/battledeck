@@ -30,10 +30,13 @@ Smurftown/
                               embedded resource
       HotsRotationCalendar.cs loads it, looks up by month and day
     Gateway/             BattlenetAccountGateway, HotsRotationGateway, SettingsGateway
-      DataBackup.cs        copies the YAML files to backups/{version}/ before a migration
+      AppFile.cs           owns app.yaml; every write re-reads it and replaces one section
+      DataBackup.cs        zips the YAML files to backups/{version}.zip before a migration
+      Housekeeping.cs      what the folder keeps: 5 logs, 20 captures, 10 backups
+      LogArchive.cs        compresses a log as soon as the sink stops writing to it
     Update/              the hourly update check - see self-update.md
       GithubReleases.cs    asks api.github.com for the newest release; the app's ONLY request
-      UpdateGateway.cs     owns update.yaml, decides whether an hour has passed
+      UpdateGateway.cs     owns the update section of app.yaml, decides whether an hour has passed
       UpdateInstaller.cs   downloads, verifies the checksum, swaps the .exe, restarts
     Automation/          reading from the running game
       GameInstallations.cs finds HeroesSwitcher_x64.exe
@@ -162,21 +165,79 @@ tools/                   not part of the solution - asset generators and drivers
 By default everything under `%USERPROFILE%\.smurftown\` (defined in `Directories.UserPath`):
 
 - `data.yaml` — the complete account list, serialised with camelCase naming
-- `settings.yaml` — what the human configures: game path, input speed, client language, app
-  language. Its own file and **not** part of `screen-map.yaml`, where the path used to sit:
-  calibration describes how the game *looks*, not where it lives
-- `rotation.yaml` — a **hand-set** rotation state; it beats the shipped calendar for its period
-  and is the exception, not the normal case (see [Free rotation](data-model.md#free-rotation))
-- `version.txt` — the version that wrote the files above. One line, nothing else
-- `update.yaml` — when GitHub was last asked and what it offered. **Not** part of `settings.yaml`:
-  those are what a human sets, these two values are what the app noted, and mixing them would have
-  every check rewrite a file the human edits by hand ([self-update.md](self-update.md))
-- `backups/{version}/` — copies of every YAML file, set aside once per version
-- `smurftown.log` — Serilog file sink
+- `app.yaml` — everything the application knows about itself, in four sections:
+  `schemaVersion` (the layout of the file), `appVersion` (which release last wrote it),
+  `settings` (game path, input speed, client language, app language), `rotation` (a **hand-set**
+  rotation, the exception rather than the normal case — see
+  [Free rotation](data-model.md#free-rotation)) and `update` (when GitHub was last asked and what
+  it offered). It was four files until 1.3.0 — `settings.yaml`, `rotation.yaml`, `update.yaml`
+  and `version.txt`; see [One file for four kinds of state](#one-file-for-four-kinds-of-state)
+- `backups/{version}.zip` — copies of every YAML file, set aside once per version
+- `logs/` — `smurftown.log` plus up to four compressed predecessors
 - `shots/` — captures written when an automation run strands
 
 `BattlenetAccountGateway` rewrites the whole list on **every** mutation (`SaveToConfigFile`). No
-diff, no lock. Two parallel app instances overwrite each other.
+diff. Inside one process the write is serialised and reads the file again first; two parallel app
+instances still overwrite each other — see below.
+
+### One file for four kinds of state
+
+`app.yaml` holds what used to be `settings.yaml`, `rotation.yaml`, `update.yaml` and `version.txt`.
+Three gateways read and write it, each owning one section, and `AppFile` owns the file.
+
+```
+SettingsGateway ──┐                        app.yaml
+HotsRotationGateway ├──►  AppFile  ──►     schemaVersion: 1
+UpdateGateway ────┘       │                appVersion: 1.3.0
+DataBackup.MarkCurrent ───┘                settings:  { … }
+                                           rotation:  { … }
+                                           update:    { … }
+```
+
+**Every write re-reads the whole file and replaces only its own section**, and that is what makes
+one file safe where four were needed. The update check runs once an hour; if it wrote its own
+in-memory picture, that picture would carry a `settings` block as old as the moment the window
+opened — and a setting changed in between would be gone. `AppFile.Write` therefore reads `app.yaml`
+fresh, applies the caller's section to *that*, and writes the result.
+
+**Read, change and write sit inside one lock** (`AppFile.FileLock`, and `BattlenetAccountGateway`
+has its own for `data.yaml`). Reading immediately before writing is worth nothing if something can
+slip in between. The lock is `static`, because what is protected is the file and not the object —
+two instances with a lock each would guard nothing.
+
+Today every writer happens to be on the UI thread anyway: the check hangs on a `DispatcherTimer`,
+and the game flows do their reading in `Task.Run` but the gateway call after the `await`, back on
+the caller's thread. That is a convention nobody enforces, and one `Task.Run` around a save would
+turn the re-read from a guarantee into a race that shows up as a lost setting once a month.
+
+**The lock does not reach across processes.** Two running copies of Smurftown still interleave
+between their read and their write. Narrowing that window is all the re-read does; closing it would
+take a named mutex, and that has its own questions — what the second instance does while it waits,
+and what happens to a mutex a crashed instance abandoned. Not built.
+
+**Both files carry a `schemaVersion`, and they carry their own.** `app.yaml` and `data.yaml` may
+evolve independently, so one number each rather than one for the folder.
+
+- **A file from a newer schema is read, never written.** Deserialising drops every key this build
+  does not know, so writing it back would silently delete whatever a later version put there.
+  Reading it best-effort keeps the application usable; the write throws, and the message says to run
+  the newer build.
+- **`data.yaml` was a bare sequence until 1.3.0** — it began with the first account and carried
+  nothing else. It is recognised by its first line that is neither blank nor a comment: an item
+  starts with `-`, the current layout starts with a key. Sniffed rather than found out by letting
+  the deserialiser throw, because an exception used as a fork would swallow the one case that must
+  reach the caller — a file broken in *both* layouts.
+- **A change made by somebody else is named before it is overwritten.** The account gateway keeps
+  the file content it last read and compares it against what is on disk before saving. It still
+  writes — refusing would lock the human out of their own edit — but the log says the change was
+  lost, and losing it silently is the one thing worse.
+
+**The migration runs once, on the first start after the update**, and only when `app.yaml` is
+missing. It is safe to lose: `DataBackup` archives every `*.yaml` moments earlier, which is exactly
+why that call stands before the first gateway. `version.txt` is *not* a `*.yaml` and therefore not
+in the archive — its one value moves into `appVersion` and is not lost either. Each of the four
+files is carried over under its own `try`: a rotation nobody can read is no reason to lose the
+settings as well. The old files are deleted only once the new one stands.
 
 ### A different folder, for tests
 
@@ -196,26 +257,27 @@ default. A typo in the variable would otherwise write into the real folder, whic
 thing the mechanism exists to prevent. The exception flies before Serilog is configured, so its
 message carries the variable and the value itself.
 
-The scripts under `tools/` read the same files — `data.yaml` for a login, `settings.yaml` for the
+The scripts under `tools/` read the same files — `data.yaml` for a login, `app.yaml` for the
 game path — and resolve the folder through `tools/smurftown-home.ps1`, which must stay in step with
 `Directories.Resolve()`. `tools/test-home.ps1` creates such a folder, fills it with the invented
 accounts from `tools/demo-data.yaml` and starts the app against it.
 
 ### The backup before a migration
 
-`DataBackup` copies every `*.yaml` of the data folder into `backups/{version}/` — **once per
+`DataBackup` zips every `*.yaml` of the data folder into `backups/{version}.zip` — **once per
 version**, before the first gateway runs.
 
 ```
 App.OnStartup
   │
-  ├─ DataBackup.BeforeMigrations()      version.txt != running version?
-  │        └─ yes ──► *.yaml  ──►  backups/{the version in the file, else "unknown"}/
-  │                                (an existing folder is NOT overwritten)
+  ├─ DataBackup.BeforeMigrations()      app.yaml : appVersion != running version?
+  │        └─ yes ──► *.yaml  ──►  backups/{the version in the file, else "unknown"}.zip
+  │                                (an existing archive is NOT overwritten)
+  ├─ Housekeeping.Run()                   caps captures, backups and the old flat log
   ├─ SettingsGateway.Apply()
   ├─ BattlenetAccountGateway.Instance    ← forced here, so an unreadable data.yaml stops
   │                                        the start and not the first window
-  └─ DataBackup.MarkCurrent()            writes version.txt
+  └─ DataBackup.MarkCurrent()            notes appVersion in app.yaml
 ```
 
 - **Why per version and not per start.** A copy on every start would push the interesting state out
@@ -224,10 +286,14 @@ App.OnStartup
 - **The marker is written last.** Everything above it may still throw, and then the next start has
   to find the same backup situation as this one. Written first, a failed migration would leave the
   second attempt without a copy.
-- **The folder is named after the version that wrote the data**, not the one running now — that is
-  what `version.txt` is for. Every installation from before 22.08.2026 lands under `unknown`, since
-  none of them wrote a marker.
-- **An existing folder is kept, not refreshed.** A second run of the same update would otherwise
+- **The archive is named after the version that wrote the data**, not the one running now — that is
+  what `appVersion` in `app.yaml` is for, and `version.txt` before it. Every installation from
+  before 22.08.2026 lands under `unknown`, since none of them wrote a marker at all.
+- **It asks `AppFile.PeekAppVersion` and not `AppFile.Instance`.** This runs before the first
+  gateway exists, and building an `AppFile` here would run its migration — which deletes the very
+  files the backup is about to set aside. The peek reads `app.yaml` if it is there, falls back to
+  `version.txt`, and creates nothing.
+- **An existing archive is kept, not refreshed.** A second run of the same update would otherwise
   copy the state a failed migration left behind over the one from before it — precisely the state
   the backup exists to keep.
 - **A failure does not abort the start.** A backup that cannot be written is almost always a full
@@ -245,6 +311,37 @@ helps nor hurts: it is a compile-time feature only, the deserialiser ignores it.
 without `required` and with a sensible default.** The deserialiser runs with
 `IgnoreUnmatchedProperties()` so that a `data.yaml` written by a newer app version does not throw
 a `YamlException` in an older one.
+
+### What the folder keeps
+
+Three things in here grow without an end of their own: the log is appended to on every run, a
+stranded automation leaves a full-screen PNG of some 5 MB, and every version adds a backup.
+`Housekeeping` is where all three bounds stand, and it is the only code in this application that
+deletes anything by itself.
+
+| What | Bound | Why that one |
+|---|---|---|
+| `logs/` | 5 files, roll at 10 MB, all but the current one compressed | Serilog's defaults are worse than they look: one file, 1 GB, no rolling — on reaching it the sink stops writing, silently |
+| `shots/` | the newest 20, and nothing older than 30 days | the count decides the size of the folder, the age takes what the count spared |
+| `backups/` | the newest 10, **no** age limit | the age of a version says nothing about whether somebody still needs to get back to it |
+
+- **Compressed as ZIP and not GZip**, although a log is one file and GZip is made for exactly that.
+  Windows Explorer opens a `.zip` on a double click and offers nothing for a `.gz` — and whoever
+  goes looking for an old log is a human on this machine, not a script.
+- **The log is compressed by a hook, not at startup.** `LogArchive` hangs in the sink's
+  `OnFileOpened`, which fires on every roll. A tidy-up that only ran at startup would leave those
+  files uncompressed for as long as the window stays open — and that session is the one somebody is
+  trying to debug. The same hook is the recovery path after a crash: the next start opens a file and
+  thus lands in it.
+- **Nothing in `LogArchive` logs.** It runs inside the sink while the logger is being built or a
+  roll is under way; a `Log.Warning` from there would re-enter the very sink that is mid-open.
+- **A ZIP is not protection.** Every backup holds a complete `data.yaml`, and that file carries the
+  passwords in plain text. Compressing makes the folder tidy and nothing else — see
+  [security.md](security.md).
+- **The suffixes are matched in code, not by a search pattern.** On Windows a pattern whose
+  extension is exactly three characters also returns names whose extension merely *starts* that way
+  — the reason `*.xls` famously returns `book.xlsx`. `*.log` could therefore return
+  `smurftown.log.zip`, and the sweep would pack an archive into an archive and delete the original.
 
 ## Identity and normalisation
 

@@ -9,11 +9,86 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace Smurftown.Backend.Gateway
 {
+    /// <summary>
+    ///     The shape of <c>data.yaml</c>: a version in front, the accounts behind it.
+    ///     <para>
+    ///         <b>Until 1.3.0 the file was a bare sequence</b> - it began with the first
+    ///         account and carried nothing else. That worked as long as every change to the
+    ///         format could be guessed from the content, and the guessing is what
+    ///         <see cref="SchemaVersion" /> ends: a migration now hangs on a number rather
+    ///         than on somebody noticing that a field looks different.
+    ///     </para>
+    /// </summary>
+    public sealed class AccountFile
+    {
+        private List<BattlenetAccount> _accounts = [];
+
+        /// <summary>
+        ///     The layout of this file, not the version of the application. Zero means the
+        ///     bare sequence of the older layout; nothing writes that any more.
+        /// </summary>
+        public int SchemaVersion { get; set; } = BattlenetAccountGateway.CurrentSchema;
+
+        /// <summary>
+        ///     The accounts. The setter catches null, because <c>accounts:</c> without a
+        ///     value deserialises to null and not to an empty list - the same trap as in
+        ///     <see cref="Entity.HotsRotation.Heroes" />.
+        /// </summary>
+        public List<BattlenetAccount> Accounts
+        {
+            get => _accounts;
+            set => _accounts = value ?? [];
+        }
+    }
+
     public class BattlenetAccountGateway
     {
-        public static readonly BattlenetAccountGateway Instance = new(Directories.UserPath);
+        /// <summary>The shape this build writes. See <see cref="AccountFile.SchemaVersion" />.</summary>
+        internal const int CurrentSchema = 1;
+
+        /// <summary>
+        ///     Serialises read-modify-write against <c>data.yaml</c> for the whole process.
+        ///     Same reasoning and same limits as <see cref="AppFile" />: it makes the re-read
+        ///     below a guarantee inside this process, and it does nothing about a second
+        ///     Smurftown running beside this one.
+        /// </summary>
+        private static readonly object FileLock = new();
+
+        /// <summary>
+        ///     The one gateway of the application.
+        ///     <para>
+        ///         <b>Lazy, and that is not a performance decision.</b> A plain
+        ///         <c>static readonly … = new(…)</c> is built by the type initializer, which
+        ///         runs the moment anything touches this type at all - including
+        ///         <c>new BattlenetAccountGateway(folder)</c> in a test. The singleton was
+        ///         therefore created on whichever thread happened to reach the type first, and
+        ///         its <see cref="AccountRegionsFiltered" /> is an <c>ICollectionView</c>, which
+        ///         is bound to the thread that created it. A test that built one for its own
+        ///         folder handed the XAML test a singleton belonging to a worker thread, and
+        ///         the first <see cref="Reload" /> from the STA thread threw
+        ///         <c>NotSupportedException</c>. Which of the two ran first decided whether the
+        ///         suite was green.
+        ///     </para>
+        ///     <para>
+        ///         With <see cref="Lazy{T}" /> the singleton is built on first <b>use</b>. In
+        ///         the application that is <c>App.OnStartup</c>, on the UI thread, deliberately
+        ///         and by name.
+        ///     </para>
+        /// </summary>
+        public static BattlenetAccountGateway Instance => Singleton.Value;
+
+        private static readonly Lazy<BattlenetAccountGateway> Singleton =
+            new(() => new BattlenetAccountGateway(Directories.UserPath));
+
         private readonly string _configFile;
         private readonly string _folder;
+
+        /// <summary>
+        ///     The file exactly as it was last read or written, so a change made by somebody
+        ///     else can be recognised before the next save runs over it. Null until the first
+        ///     read.
+        /// </summary>
+        private string? _lastKnownContent;
 
         // IgnoreUnmatchedProperties: without this, a data.yaml containing fields from a
         // newer app version throws a YamlException when read by an older version - the
@@ -326,9 +401,7 @@ namespace Smurftown.Backend.Gateway
 
         private List<BattlenetAccount> ReadFromConfigFile()
         {
-            ensureConfigFileExists();
-            var content = File.ReadAllText(_configFile);
-            var accounts = _yamlIn.Deserialize<List<BattlenetAccount>>(new StringReader(content)) ?? [];
+            var accounts = ReadFile().Accounts;
 
             // An account without a single game in a single region would have no row at
             // all - and could then not be repaired either, because the edit button sits
@@ -344,16 +417,112 @@ namespace Smurftown.Backend.Gateway
             return accounts;
         }
 
-        private void SaveToConfigFile()
-        {
-            WriteAccounts(BattlenetAccounts.AsEnumerable());
-        }
-
-        private void WriteAccounts(IEnumerable<BattlenetAccount> accounts)
+        /// <summary>
+        ///     The file as it stands on disk, in either layout.
+        ///     <para>
+        ///         <b>Deliberately without a catch.</b> Everything else in this application
+        ///         falls back to a default when a file cannot be read; this one does not. An
+        ///         empty account list looks exactly like a fresh installation, and the next
+        ///         save would write that emptiness over the real file. A start that stops
+        ///         with an exception is the cheaper outcome.
+        ///     </para>
+        /// </summary>
+        private AccountFile ReadFile()
         {
             ensureConfigFileExists();
-            var content = _yamlOut.Serialize(accounts);
+            var content = File.ReadAllText(_configFile);
+            _lastKnownContent = content;
+
+            if (content.Trim().Length == 0) return new AccountFile();
+
+            if (IsOlderLayout(content))
+            {
+                // Deliberately silent. Reading happens on every start and again on every
+                // Reload, and the layout of a file is a state and not an event - said three
+                // times per start it is noise. The one line worth having is written when the
+                // upgrade actually happens, in SaveToConfigFile.
+                var accounts = _yamlIn.Deserialize<List<BattlenetAccount>>(new StringReader(content)) ?? [];
+                return new AccountFile { SchemaVersion = 0, Accounts = accounts };
+            }
+
+            return _yamlIn.Deserialize<AccountFile>(new StringReader(content)) ?? new AccountFile();
+        }
+
+        /// <summary>
+        ///     Is this the bare sequence of the older layout? Its first line that is neither
+        ///     blank nor a comment begins an item; the current layout begins with a key.
+        ///     <para>
+        ///         Sniffed rather than found out by letting the deserialiser throw. An
+        ///         exception used as a fork would also swallow the one case that has to reach
+        ///         the caller - a file that is broken in both layouts.
+        ///     </para>
+        /// </summary>
+        private static bool IsOlderLayout(string content)
+        {
+            var first = content
+                .Split('\n')
+                .Select(line => line.Trim())
+                .FirstOrDefault(line => line.Length > 0 && !line.StartsWith('#'));
+
+            return first != null && first.StartsWith('-');
+        }
+
+        /// <summary>
+        ///     Writes the whole list.
+        ///     <para>
+        ///         <b>The file is read again first, completely.</b> Two things come out of
+        ///         that. A file already written in a newer schema is not overwritten but
+        ///         reported - deserialising drops every key this build does not know, so
+        ///         writing it back would delete whatever a later version put in it. And a
+        ///         file that somebody else changed since this window read it is named in the
+        ///         log before it is overwritten: this application holds no lock and rewrites
+        ///         the list whole, so the change is lost either way - and the one thing worse
+        ///         than losing it is losing it silently.
+        ///     </para>
+        /// </summary>
+        private void SaveToConfigFile()
+        {
+            // Read, check and write as ONE step - see AppFile.FileLock for the reasoning,
+            // which holds word for word here. Static for the same reason: what is protected
+            // is data.yaml, not this object.
+            lock (FileLock) SaveUnderLock();
+        }
+
+        private void SaveUnderLock()
+        {
+            var known = _lastKnownContent;
+            var onDisk = ReadFile();
+
+            if (onDisk.SchemaVersion > CurrentSchema)
+            {
+                throw new InvalidOperationException(
+                    $"data.yaml is written in schema {onDisk.SchemaVersion}, this build knows {CurrentSchema}. " +
+                    "Refusing to write it back, because that would drop everything the newer version put in it. " +
+                    "Run the newer Smurftown, or move the file aside.");
+            }
+
+            if (known != null && known != _lastKnownContent)
+            {
+                Log.Warning("data.yaml changed outside this window since it was last read - " +
+                            "this save overwrites that change. Another Smurftown, or an editor.");
+            }
+
+            var content = _yamlOut.Serialize(new AccountFile
+            {
+                SchemaVersion = CurrentSchema,
+                Accounts = BattlenetAccounts.ToList()
+            });
+
             File.WriteAllText(_configFile, content);
+            _lastKnownContent = content;
+
+            // Here and not on reading: this is the moment the layout actually changes, and it
+            // happens exactly once per data folder.
+            if (onDisk.SchemaVersion < CurrentSchema && onDisk.Accounts.Count > 0)
+            {
+                Log.Information("data.yaml was written in the layout before 1.3.0 and is now on " +
+                                "schema {Schema}", CurrentSchema);
+            }
         }
 
         private void ensureConfigFileExists()

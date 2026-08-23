@@ -313,7 +313,7 @@ There are two, and their order is the whole logic:
 
 | Rank | Source | File | Applies |
 |---|---|---|---|
-| 1 | manual entry | `~/.smurftown/rotation.yaml` | only in the period it was set in |
+| 1 | manual entry | `~/.smurftown/app.yaml` → `rotation` | only in the period it was set in |
 | 2 | calendar | `Backend/Entity/rotation-calendar.yaml` | always |
 
 **The rotation repeats annually** — the same calendar day carries the same 14 heroes. That is

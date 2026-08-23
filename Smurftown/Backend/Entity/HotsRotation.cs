@@ -4,12 +4,12 @@ namespace Smurftown.Backend.Entity
 {
     /// <summary>
     ///     A <b>manually set</b> rotation state, as it stands in
-    ///     <c>~/.smurftown/rotation.yaml</c>. It is the override for exactly one
+    ///     the <c>rotation</c> section of <c>~/.smurftown/app.yaml</c>. It is the override
+    ///     for exactly one
     ///     period; the default case comes from <see cref="HotsRotationCalendar" />.
     ///     <para>
     ///         The rotation applies equally to all accounts - it hangs on the game, not the
-    ///         account. That's why it lives in its own file and not in
-    ///         <c>data.yaml</c>.
+    ///         account. That's why it lives in <c>app.yaml</c> and not in <c>data.yaml</c>.
     ///     </para>
     ///     <para>
     ///         The period start is stored as a string in it and not as a <c>DateOnly</c>:

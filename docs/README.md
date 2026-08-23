@@ -14,7 +14,7 @@ the rest.
 | File | What it covers |
 |---|---|
 | [changing-things.md](changing-things.md) | **the checklist to read before editing** — plus the known issues nobody fixes in passing |
-| [architecture.md](architecture.md) | the annotated file tree, the layer rules, where the data lives, the backup before a migration |
+| [architecture.md](architecture.md) | the annotated file tree, the layer rules, where the data lives, the two files it lives in, the backup before a migration |
 | [data-model.md](data-model.md) | what `data.yaml` holds: regions, ranks, heroes, free rotation, penalty games, archive |
 | [ui-conventions.md](ui-conventions.md) | MVVM as it is actually done here: themes, dialogs, the account dialog, the account row, settings |
 | [ui-layout.md](ui-layout.md) | the pixel budgets: window and modals, filter bar, account row, dialogs |

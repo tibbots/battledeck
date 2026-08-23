@@ -43,7 +43,7 @@ The pixel budgets — window, filter bar, account row, dialogs — are in [ui-la
 - **Errors go out as a toast**, not as a dialog: `MainViewModel` hooks
   `DispatcherUnhandledException`, **logs the exception with its stack trace** and shows
   `Dialogs.Toast.ShowError`, then `e.Handled = true`. The app therefore practically never crashes —
-  it swallows. **When debugging, look at `~/.smurftown/smurftown.log` first.** The order in the
+  it swallows. **When debugging, look at `~/.smurftown/logs/smurftown.log` first.** The order in the
   handler is deliberate: if the toast itself goes wrong, the reason is already in the file.
 - **For `PasswordBox` and `RichTextBox`** (not bindable) there are code-behind handlers in
   `AddOrEditAccount.xaml.cs` that write into the ViewModel via `(dynamic)DataContext`.
@@ -341,7 +341,7 @@ therefore invisible: nothing on screen suggested trying it.
 
 ## Settings
 
-Four things, all in `~/.smurftown/settings.yaml`. **Saving is immediate, there is no save button** —
+Four things, all in the `settings` section of `~/.smurftown/app.yaml`. **Saving is immediate, there is no save button** —
 the same pattern as with the rank and the hero picker.
 
 ```yaml
@@ -389,7 +389,7 @@ setting there that has nothing to do with Heroes of the Storm.
 **The default for `appLanguage` is the system language** (`AppLanguages.FromSystem`), not a fixed
 value — unlike `clientLanguage`, where German had to stay the default because it was previously
 hard-wired. Here there is no "previously": the app spoke only English, so every existing
-`settings.yaml` without this key belongs to somebody who never had a choice. What is read is
+A file without this key belongs to somebody who never had a choice. What is read is
 `CurrentUICulture` and not `CurrentCulture` — the second says how numbers are formatted, the first
 in which language Windows talks to the human.
 

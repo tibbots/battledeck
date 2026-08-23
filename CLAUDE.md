@@ -60,7 +60,7 @@ rest.
 | Document | What it covers |
 |---|---|
 | [`docs/changing-things.md`](docs/changing-things.md) | **the checklist to read before editing** — plus the known issues nobody fixes in passing |
-| [`docs/architecture.md`](docs/architecture.md) | the annotated file tree, the layer rules, where the data lives, the backup before a migration |
+| [`docs/architecture.md`](docs/architecture.md) | the annotated file tree, the layer rules, where the data lives, the two files it lives in, the backup before a migration |
 | [`docs/data-model.md`](docs/data-model.md) | what `data.yaml` holds: regions, ranks, heroes, free rotation, penalty games, archive |
 | [`docs/ui-conventions.md`](docs/ui-conventions.md) | MVVM as it is actually done here: themes, dialogs, the account dialog, the account row, settings |
 | [`docs/ui-layout.md`](docs/ui-layout.md) | the pixel budgets: window, filter bar, account row, dialogs |
@@ -259,8 +259,9 @@ per change, and it had the AI report on something it had not seen. But the user 
 - **Test against a test folder, not against the real list.** `.\tools\test-home.ps1` creates one
   under `%TEMP%\smurftown-test-home`, fills it with the invented accounts of `tools/demo-data.yaml`,
   points `SMURFTOWN_HOME` at it and starts the app against it. Nothing clicked there reaches the
-  real `data.yaml` — and `BattlenetAccountGateway` rewrites that file whole on **every** mutation,
-  without a lock.
+  real `data.yaml` — and `BattlenetAccountGateway` rewrites that file whole on **every** mutation.
+  A lock serialises that inside one process; **between two processes there is none**, so a second
+  Smurftown on the real folder is still the last writer winning.
 - **One instance at a time.** `drive-smurftown.ps1` and `capture-window.ps1` take the **first**
   Smurftown process that owns a window; with two of them up, which window gets clicked is a coin
   flip — and one of the two is showing the real list. `test-home.ps1` aborts when one is already
@@ -275,9 +276,10 @@ per change, and it had the AI report on something it had not seen. But the user 
   to the scratchpad and nowhere near `docs/images/`; README captures run against the test folder
   — see [`docs/security.md`](docs/security.md#readme-and-screenshots).
 - **Drove the real instance anyway? Put the data back.** A test that ticks a region or renames an
-  account leaves the file changed; compare against `~/.smurftown/backups/` afterwards and restore
-  values **verbatim** rather than re-formatting them. With a test folder this is the exception — it
-  used to be every run.
+  account leaves the file changed; compare against `~/.smurftown/backups/{version}.zip` afterwards
+  and restore values **verbatim** rather than re-formatting them. With a test folder this is the
+  exception — it used to be every run. Mind what those archives are: each holds a whole `data.yaml`
+  with the passwords in it, so unpack into the scratchpad and not next to the repository.
 - **Report what the test showed, then ask.** Naming the steps is not the report — the result is.
 
 The two drivers are [`drive-smurftown`](.claude/skills/drive-smurftown/) and

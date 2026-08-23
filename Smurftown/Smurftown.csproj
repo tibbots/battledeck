@@ -36,6 +36,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The retention numbers and the sweep of the log folder are internal on purpose:
+         nothing outside this assembly has business calling them, and the moment they are
+         public they are a contract. The tests still have to reach them - a test that
+         restates "20 captures" as its own literal passes after somebody changes the
+         constant to 5. -->
+    <InternalsVisibleTo Include="Smurftown.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
       <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0-preview.5.24306.7"/>
       <PackageReference Include="MvvmDialogs" Version="9.1.2" />

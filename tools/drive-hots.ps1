@@ -196,13 +196,20 @@ function Wait-Window([int] $seconds) {
 function Start-Game {
     if (Get-Game) { Write-Host '  start   already running' -ForegroundColor DarkGray; return }
 
-    $settings = Join-Path $SmurftownHome 'settings.yaml'
+    # app.yaml since 1.3.0, settings.yaml before it - a folder the new app has not started
+    # against yet still holds the older one. The pattern allows leading whitespace because
+    # hotsPath now sits indented under "settings:"; it is the only key of that name in
+    # either file, so matching it anywhere in the file is unambiguous.
     $exe = $null
-    if (Test-Path $settings) {
-        $line = Select-String -Path $settings -Pattern '^hotsPath:\s*(.+)$' | Select-Object -First 1
+    foreach ($name in 'app.yaml', 'settings.yaml') {
+        $file = Join-Path $SmurftownHome $name
+        if (-not (Test-Path $file)) { continue }
+
+        $line = Select-String -Path $file -Pattern '^\s*hotsPath:\s*(.+)$' | Select-Object -First 1
         if ($line) {
             $exe = $line.Matches[0].Groups[1].Value.Trim()
             $exe = $exe.Trim([char]39).Trim([char]34)
+            break
         }
     }
     if (-not $exe -or -not (Test-Path $exe)) {
@@ -279,7 +286,17 @@ function Get-Account([string] $battletag) {
     $email = $null; $password = $null; $inBlock = $false
 
     foreach ($line in [System.IO.File]::ReadAllLines($file)) {
-        # A new list entry ends the previous block.
+        # A new list entry ends the previous block. What it guards is the account that
+        # carries no name of its own - a fresh entry has none, because the battletag is read
+        # out of the game and not typed. Without the reset, that account's email and password
+        # would be read while the block of the PREVIOUS one is still open, and this function
+        # types what it returns into a login form.
+        #
+        # ANCHORED AT COLUMN 0, AND THAT STILL HOLDS since data.yaml became a mapping in
+        # 1.3.0: YamlDotNet emits a sequence under a key without indenting it, so the items
+        # begin where they always did. `WithIndentedSequences()` on the serialiser in
+        # BattlenetAccountGateway would move them and break this line - quietly, and in the
+        # path that types a password.
         if ($line -match '^- ') { $inBlock = $false }
 
         if ($line -match '^\s*-?\s*name:\s*(.+)$') {

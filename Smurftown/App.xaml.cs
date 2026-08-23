@@ -21,10 +21,23 @@ namespace Smurftown
             // OCR delivered. On the console that would be around 250 lines per run and
             // thus unreadable; in the file it is exactly the piece of evidence that is
             // missing in case of doubt.
+            //
+            // It rolls at 10 MB and keeps five files, the current one included; everything
+            // that is no longer written to is compressed by LogArchive. Without those
+            // arguments Serilog's defaults apply, and they are worse than they look: a
+            // single file, a limit of 1 GB, and no rolling - so on reaching it the sink
+            // stops writing, silently.
+            var logs = Path.Combine(Directories.UserPath, LogArchive.FolderName);
+            Directory.CreateDirectory(logs);
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Information)
-                .WriteTo.File(Path.Combine(Directories.UserPath, "smurftown.log"))
+                .WriteTo.File(Path.Combine(logs, LogArchive.FileName),
+                    fileSizeLimitBytes: Housekeeping.LogSizeLimitBytes,
+                    rollOnFileSizeLimit: true,
+                    retainedFileCountLimit: Housekeeping.LogsKept,
+                    hooks: new LogArchive())
                 .CreateLogger();
 
             Log.Information("starting smurftown {Version}", AppVersion.Current);
@@ -53,6 +66,12 @@ namespace Smurftown
             // happened, there is nothing left to set aside.
             DataBackup.BeforeMigrations(Directories.UserPath);
 
+            // Directly after, and not at the end: the archive the line above just wrote is
+            // the newest of the ten that survive, so counting them here counts the state
+            // this start actually leaves behind. Captures and the leftover log of the
+            // previous layout come along in the same pass - one place, one policy.
+            Housekeeping.Run(Directories.UserPath);
+
             // Carries the saved settings to where they take effect: the input speed,
             // the game's vocabulary, the OCR language - and the UI language.
             //
@@ -77,7 +96,7 @@ namespace Smurftown
 
             // Only now - see DataBackup.MarkCurrent. Everything above may still throw, and
             // then the next start has to find the same backup situation as this one.
-            DataBackup.MarkCurrent(Directories.UserPath);
+            DataBackup.MarkCurrent(AppFile.Instance);
 
             base.OnStartup(e);
         }

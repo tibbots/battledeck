@@ -1,11 +1,26 @@
 ﻿using System.IO;
+using System.IO.Compression;
 using Serilog;
 
 namespace Smurftown.Backend.Gateway
 {
     /// <summary>
     ///     Sets the data files aside before a new version touches them - once per version,
-    ///     into <c>~/.smurftown/backups/{the version that wrote them}/</c>.
+    ///     into <c>~/.smurftown/backups/{the version that wrote them}.zip</c>.
+    ///     <para>
+    ///         <b>One archive and not a folder</b>, since 1.3.0. It is not a size argument -
+    ///         the files are some 30 KB - but a countable one: <see cref="Housekeeping" />
+    ///         caps the backups at ten, and counting archives is honest in a way that counting
+    ///         folders somebody may have half-emptied is not. Existing folders are converted
+    ///         on the next start.
+    ///     </para>
+    ///     <para>
+    ///         <b>A ZIP is not protection.</b> Every one of these archives holds a complete
+    ///         <c>data.yaml</c>, and that file carries the passwords in plain text. The
+    ///         archive makes the folder tidy, nothing more - whoever treats
+    ///         <c>~/.smurftown/</c> as a password store has to treat <c>backups/</c> as one
+    ///         too.
+    ///     </para>
     ///     <para>
     ///         <b>Why at all</b>: <c>data.yaml</c> holds the credentials in plain text and is
     ///         the actual value of this app, and every schema change so far has been a
@@ -33,9 +48,34 @@ namespace Smurftown.Backend.Gateway
         /// </summary>
         private const string UnknownVersion = "unknown";
 
-        private static string MarkerFile(string folder) => Path.Combine(folder, "version.txt");
+        /// <summary>
+        ///     The version that wrote the data, or <c>null</c> if nobody noted one.
+        ///     <para>
+        ///         <b>Asked of <see cref="AppFile.PeekAppVersion" /> and not of
+        ///         <see cref="AppFile.Instance" />.</b> This runs before the first gateway
+        ///         exists - that is the entire point of it - and building an
+        ///         <see cref="AppFile" /> here would run its migration, which deletes the very
+        ///         files that are about to be set aside.
+        ///     </para>
+        /// </summary>
+        private static string? ReadMarker(string folder)
+        {
+            var version = AppFile.PeekAppVersion(folder);
+            return version.Length == 0 ? null : version;
+        }
 
-        private static string BackupRoot(string folder) => Path.Combine(folder, "backups");
+        /// <summary>
+        ///     Where the backups live. <see cref="Housekeeping" /> caps their number and needs
+        ///     to know the same folder.
+        /// </summary>
+        internal static string BackupRoot(string folder) => Path.Combine(folder, "backups");
+
+        /// <summary>
+        ///     One archive per version, not a folder per version. Named after the version that
+        ///     <i>wrote</i> the files, which is the state somebody would want back.
+        /// </summary>
+        internal static string BackupFile(string folder, string version) =>
+            Path.Combine(BackupRoot(folder), version + ".zip");
 
         /// <summary>
         ///     Copies the data files aside if they were written by a different version than
@@ -56,6 +96,8 @@ namespace Smurftown.Backend.Gateway
         /// </summary>
         public static void BeforeMigrations(string folder)
         {
+            CompressLegacyFolders(folder);
+
             try
             {
                 var previous = ReadMarker(folder);
@@ -64,14 +106,14 @@ namespace Smurftown.Backend.Gateway
                 var files = DataFiles(folder);
                 if (files.Length == 0)
                 {
-                    // A fresh installation. There is nothing to lose, and an empty folder
-                    // named after a version that never ran would only be misleading.
+                    // A fresh installation. There is nothing to lose, and an archive named
+                    // after a version that never ran would only be misleading.
                     Log.Information("No data files to back up before version {Version}", AppVersion.Current);
                     return;
                 }
 
-                var target = Path.Combine(BackupRoot(folder), previous ?? UnknownVersion);
-                if (Directory.Exists(target))
+                var target = BackupFile(folder, previous ?? UnknownVersion);
+                if (File.Exists(target))
                 {
                     // ALREADY THERE, so leave it alone. A second run of the same update
                     // would otherwise copy the state a failed migration left behind over
@@ -81,11 +123,7 @@ namespace Smurftown.Backend.Gateway
                     return;
                 }
 
-                Directory.CreateDirectory(target);
-                foreach (var file in files)
-                {
-                    File.Copy(file, Path.Combine(target, Path.GetFileName(file)));
-                }
+                WriteArchive(target, files);
 
                 Log.Information("Backed up {Count} file(s) written by {Previous} to {Path} " +
                                 "before running {Current}",
@@ -101,31 +139,94 @@ namespace Smurftown.Backend.Gateway
         ///     Notes the running version as the one that wrote the data. To be called
         ///     <b>after</b> the gateways are up, not before: whoever writes the marker first
         ///     and then fails the migration has no backup left for the second attempt.
+        ///     <para>
+        ///         <b>It takes the file and not a folder</b>, unlike
+        ///         <see cref="BeforeMigrations" /> right above it, and the asymmetry is the
+        ///         point: that one runs before anything exists and may not build an
+        ///         <see cref="AppFile" />, this one runs when everything is up and must use
+        ///         the one that is already there. A second instance on the same path would
+        ///         keep its own picture of the file.
+        ///     </para>
         /// </summary>
-        public static void MarkCurrent(string folder)
+        public static void MarkCurrent(AppFile app)
         {
             try
             {
-                if (ReadMarker(folder) == AppVersion.Current) return;
+                if (app.State.AppVersion == AppVersion.Current) return;
 
-                Directory.CreateDirectory(folder);
-                File.WriteAllText(MarkerFile(folder), AppVersion.Current);
+                app.SaveAppVersion(AppVersion.Current);
                 Log.Information("Data files are now on version {Version}", AppVersion.Current);
             }
             catch (Exception e)
             {
                 // Same stance as above. The cost of a lost marker is one superfluous
                 // backup on the next start, not a lost file.
-                Log.Warning(e, "Could not write the version marker {Path}", MarkerFile(folder));
+                Log.Warning(e, "Could not note the version that wrote the data");
             }
         }
 
-        /// <summary>The version that wrote the current data, or <c>null</c> if nobody noted one.</summary>
-        private static string? ReadMarker(string folder)
+        /// <summary>
+        ///     Writes the given files into one ZIP, each under its own name and without any
+        ///     folder inside the archive.
+        ///     <para>
+        ///         <b>Through a <c>.partial</c> and a move</b>, for the same reason as in
+        ///         <see cref="LogArchive.CompressInto" />: a process that dies mid-write would
+        ///         otherwise leave a truncated archive under the final name, and the
+        ///         "already there, keep it" check above would then protect a broken file
+        ///         forever.
+        ///     </para>
+        /// </summary>
+        private static void WriteArchive(string target, IEnumerable<string> files)
         {
-            if (!File.Exists(MarkerFile(folder))) return null;
-            var text = File.ReadAllText(MarkerFile(folder)).Trim();
-            return text.Length == 0 ? null : text;
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+
+            var partial = target + ".partial";
+            if (File.Exists(partial)) File.Delete(partial);
+
+            using (var zip = ZipFile.Open(partial, ZipArchiveMode.Create))
+            {
+                foreach (var file in files)
+                {
+                    zip.CreateEntryFromFile(file, Path.GetFileName(file), CompressionLevel.Optimal);
+                }
+            }
+
+            File.Move(partial, target, true);
+        }
+
+        /// <summary>
+        ///     Turns the <c>backups/{version}/</c> folders of every installation up to 1.2.0
+        ///     into <c>backups/{version}.zip</c>. Runs on every start and costs a directory
+        ///     listing once there is nothing left to convert.
+        ///     <para>
+        ///         <b>Its own try per folder</b>, and the folder goes only once the archive
+        ///         stands: a conversion that fails halfway must leave the copies where they
+        ///         are. The whole point of these files is to survive the case where something
+        ///         else went wrong.
+        ///     </para>
+        /// </summary>
+        private static void CompressLegacyFolders(string folder)
+        {
+            var root = BackupRoot(folder);
+            if (!Directory.Exists(root)) return;
+
+            foreach (var legacy in Directory.EnumerateDirectories(root))
+            {
+                try
+                {
+                    var target = legacy + ".zip";
+                    var files = Directory.EnumerateFiles(legacy, "*.*", SearchOption.TopDirectoryOnly).ToArray();
+
+                    if (files.Length > 0 && !File.Exists(target)) WriteArchive(target, files);
+
+                    Directory.Delete(legacy, true);
+                    Log.Information("Backup {Name} is now an archive", Path.GetFileName(target));
+                }
+                catch (Exception e)
+                {
+                    Log.Warning(e, "Could not turn the backup folder {Path} into an archive", legacy);
+                }
+            }
         }
 
         /// <summary>

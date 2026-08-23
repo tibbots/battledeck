@@ -124,7 +124,7 @@ namespace Smurftown.Backend.Automation
         private const string ResourceName = "Smurftown.Backend.Automation.screen-map.yaml";
 
         // Two paths used to stand here, both gone since 21.08.2026: GamePath moved to the
-        // settings (SettingsGateway, ~/.smurftown/settings.yaml), BattlenetPath fell away for
+        // settings (SettingsGateway, ~/.smurftown/app.yaml), BattlenetPath fell away for
         // good along with the "Open Battle.net" menu item. This calibration describes what
         // the game looks like, not where it is located. An old entry in a self-made
         // screen-map.yaml does not disturb anything - the deserializer runs with

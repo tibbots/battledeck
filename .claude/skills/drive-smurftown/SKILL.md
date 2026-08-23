@@ -30,7 +30,8 @@ only what you started yourself.
 
 **Start it against a test folder.** `.\tools\test-home.ps1` puts the invented accounts into
 `%TEMP%` and points `SMURFTOWN_HOME` there. Nothing clicked in that instance reaches the real
-`data.yaml` — which the app rewrites whole on every mutation, without a lock.
+`data.yaml` — which the app rewrites whole on every mutation. The lock it holds while doing so
+covers one process, not two.
 
 ## Usage
 

@@ -27,8 +27,9 @@ safeguard which does not depend on somebody remembering. Do not disable it.
 per session; see `CLAUDE.md` → Working practice.
 
 What changed underneath is which danger is left. `data.yaml` is still rewritten whole on every
-mutation, with nothing locking it — but the capture run no longer works in the real folder at all,
-so two instances writing over each other is not the risk here any more. **The drivers are.**
+mutation, and the lock around that covers one process and not two — but the capture run no longer
+works in the real folder at all, so two instances writing over each other is not the risk here any
+more. **The drivers are.**
 `drive-smurftown.ps1` and `capture-window.ps1` take the **first** Smurftown process that owns a
 window: with two of them up, every shot is a coin flip, and one of the two is showing the real list.
 

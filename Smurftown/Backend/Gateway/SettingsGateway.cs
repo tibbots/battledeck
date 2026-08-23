@@ -2,8 +2,6 @@
 using Serilog;
 using Smurftown.Backend.Automation;
 using Smurftown.Backend.Entity;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 // YamlDotNet.Serialization brings its own class named Settings. The alias keeps the
 // entity's name short, without every line here having to carry the full namespace.
 using Settings = Smurftown.Backend.Entity.Settings;
@@ -15,47 +13,53 @@ using Smurftown.Backend.Texts;
 namespace Smurftown.Backend.Gateway
 {
     /// <summary>
-    ///     The settings set by the human, in <c>~/.smurftown/settings.yaml</c>.
-    ///     Hand-written singleton like <see cref="BattlenetAccountGateway" /> - no
-    ///     holder, no container, the same pattern as everywhere here.
+    ///     The settings set by the human - the <c>settings</c> section of
+    ///     <c>~/.smurftown/app.yaml</c>. Hand-written singleton like
+    ///     <see cref="BattlenetAccountGateway" /> - no holder, no container, the same pattern
+    ///     as everywhere here.
+    ///     <para>
+    ///         It owned <c>settings.yaml</c> until 1.3.0. Reading and writing now go through
+    ///         <see cref="AppFile" />, which re-reads the whole file before every write and
+    ///         replaces only this section - so the hourly update check can no longer carry a
+    ///         stale copy of these values back onto disk.
+    ///     </para>
     /// </summary>
     public sealed class SettingsGateway
     {
-        public static readonly SettingsGateway Instance = new(Directories.UserPath);
+        public static SettingsGateway Instance => Singleton.Value;
 
-        private readonly string _configFile;
+        private static readonly Lazy<SettingsGateway> Singleton = new(() => new SettingsGateway(AppFile.Instance));
 
-        private readonly IDeserializer _yamlIn = new DeserializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .IgnoreUnmatchedProperties()
-            .Build();
-
-        private readonly ISerializer _yamlOut = new SerializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .Build();
-
-        private Settings _settings = new();
+        private readonly AppFile _app;
 
         /// <summary>
-        ///     Reads <c>settings.yaml</c> out of <paramref name="folder" />. The folder is a
-        ///     parameter for the reason given at
-        ///     <see cref="BattlenetAccountGateway(string)" />.
+        ///     Reads the settings out of <paramref name="app" />. The file is handed in and
+        ///     not fetched, for the reason given at
+        ///     <see cref="BattlenetAccountGateway(string)" /> - and because two
+        ///     <see cref="AppFile" /> instances on one path would each cache their own picture
+        ///     of it.
         /// </summary>
-        public SettingsGateway(string folder)
+        public SettingsGateway(AppFile app)
         {
-            _configFile = Path.Combine(folder, "settings.yaml");
-            Load();
+            _app = app;
         }
 
-        public InputSpeed InputSpeed => _settings.InputSpeed;
+        /// <summary>
+        ///     The stored values. Always asked of <see cref="AppFile" /> and never kept in a
+        ///     field of this class: the file is re-read on every write, so a copy here would
+        ///     be the stale picture the whole arrangement exists to avoid.
+        /// </summary>
+        private Settings Stored => _app.State.Settings;
 
-        public GameLanguage ClientLanguage => _settings.ClientLanguage;
+        public InputSpeed InputSpeed => Stored.InputSpeed;
+
+        public GameLanguage ClientLanguage => Stored.ClientLanguage;
 
         /// <summary>
         ///     The language of the UI - a different question than
         ///     <see cref="ClientLanguage" /> above, see <see cref="Entity.AppLanguage" />.
         /// </summary>
-        public AppLanguage AppLanguage => _settings.AppLanguage;
+        public AppLanguage AppLanguage => Stored.AppLanguage;
 
         /// <summary>
         ///     The chosen path to the game, or the first of the usual locations if
@@ -71,9 +75,9 @@ namespace Smurftown.Backend.Gateway
         {
             get
             {
-                if (_settings.HotsPath.Length > 0 && File.Exists(_settings.HotsPath))
+                if (Stored.HotsPath.Length > 0 && File.Exists(Stored.HotsPath))
                 {
-                    return _settings.HotsPath;
+                    return Stored.HotsPath;
                 }
 
                 return GameInstallations.Likely().FirstOrDefault() ?? "";
@@ -81,19 +85,18 @@ namespace Smurftown.Backend.Gateway
         }
 
         /// <summary>Did the human set a path themselves - as opposed to "found"?</summary>
-        public bool HotsPathIsExplicit => _settings.HotsPath.Length > 0 && File.Exists(_settings.HotsPath);
+        public bool HotsPathIsExplicit => Stored.HotsPath.Length > 0 && File.Exists(Stored.HotsPath);
 
         public void Save(Settings settings)
         {
-            _settings = settings;
             try
             {
-                File.WriteAllText(_configFile, _yamlOut.Serialize(settings));
-                Log.Information("Settings saved: {Path}", _configFile);
+                _app.SaveSettings(settings);
+                Log.Information("Settings saved");
             }
             catch (Exception e)
             {
-                Log.Error(e, "Settings could not be saved: {Path}", _configFile);
+                Log.Error(e, "Settings could not be saved");
                 throw;
             }
 
@@ -113,10 +116,10 @@ namespace Smurftown.Backend.Gateway
         {
             return new Settings
             {
-                HotsPath = _settings.HotsPath,
-                InputSpeed = _settings.InputSpeed,
-                ClientLanguage = _settings.ClientLanguage,
-                AppLanguage = _settings.AppLanguage
+                HotsPath = Stored.HotsPath,
+                InputSpeed = Stored.InputSpeed,
+                ClientLanguage = Stored.ClientLanguage,
+                AppLanguage = Stored.AppLanguage
             };
         }
 
@@ -132,41 +135,20 @@ namespace Smurftown.Backend.Gateway
         /// </summary>
         public void Apply()
         {
-            InputSender.Pace = _settings.InputSpeed.Factor();
-            GameVocabulary.Current = GameVocabulary.For(_settings.ClientLanguage);
+            InputSender.Pace = Stored.InputSpeed.Factor();
+            GameVocabulary.Current = GameVocabulary.For(Stored.ClientLanguage);
 
             // The language decides not only WHAT it's compared against, but also WITH WHAT
             // it is read. Until 22.08.2026 recognition was fixed on German, and that got
             // by for English - Latin script, and the language model only helps with
             // ambiguities. For French and Spanish many letters carry accents, and there
             // it matters.
-            TextReader.LanguageTag = _settings.ClientLanguage.OcrTag();
+            TextReader.LanguageTag = Stored.ClientLanguage.OcrTag();
 
             // The language of the UI, and that is a different question than the three
             // lines above: those all concern the game - how fast we type in it, what we
             // compare against, with what we read. This one concerns ourselves.
-            Strings.Use(_settings.AppLanguage);
-        }
-
-        private void Load()
-        {
-            if (!File.Exists(_configFile))
-            {
-                Log.Information("No settings.yaml, using the defaults");
-                return;
-            }
-
-            try
-            {
-                _settings = _yamlIn.Deserialize<Settings>(File.ReadAllText(_configFile)) ?? new Settings();
-            }
-            catch (Exception e)
-            {
-                // A broken file must not prevent startup - the defaults carry the app,
-                // and the reason is in the log.
-                Log.Error(e, "settings.yaml unreadable, using the defaults: {Path}", _configFile);
-                _settings = new Settings();
-            }
+            Strings.Use(Stored.AppLanguage);
         }
     }
 }

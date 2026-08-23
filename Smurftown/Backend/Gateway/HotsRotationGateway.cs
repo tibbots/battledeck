@@ -1,8 +1,4 @@
-﻿using System.IO;
-using Serilog;
-using Smurftown.Backend.Entity;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
+﻿using Smurftown.Backend.Entity;
 
 namespace Smurftown.Backend.Gateway
 {
@@ -48,39 +44,31 @@ namespace Smurftown.Backend.Gateway
     /// </summary>
     public class HotsRotationGateway
     {
-        public static readonly HotsRotationGateway Instance = new(Directories.UserPath);
+        public static HotsRotationGateway Instance => Singleton.Value;
+
+        private static readonly Lazy<HotsRotationGateway> Singleton = new(() => new HotsRotationGateway(AppFile.Instance));
+
+        private readonly AppFile _app;
 
         private readonly HotsRotationCalendar _calendar;
 
-        private readonly string _configFile;
-
-        private readonly string _folder;
-
-        // IgnoreUnmatchedProperties like in the account gateway: a file written by a
-        // newer app version should not throw a YamlException here.
-        private readonly IDeserializer _yamlIn = new DeserializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .IgnoreUnmatchedProperties()
-            .Build();
-
-        private readonly ISerializer _yamlOut = new SerializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .Build();
-
-        private HotsRotation _rotation;
-
         /// <summary>
-        ///     Reads <c>rotation.yaml</c> out of <paramref name="folder" />. The folder is a
-        ///     parameter for the reason given at
+        ///     Reads the rotation out of <paramref name="app" /> - the <c>rotation</c> section
+        ///     of <c>app.yaml</c>, which was <c>rotation.yaml</c> until 1.3.0. The file is
+        ///     handed in and not fetched, for the reason given at
         ///     <see cref="BattlenetAccountGateway(string)" />.
         /// </summary>
-        public HotsRotationGateway(string folder)
+        public HotsRotationGateway(AppFile app)
         {
-            _folder = folder;
-            _configFile = Path.Combine(folder, "rotation.yaml");
-            _rotation = ReadFromConfigFile();
+            _app = app;
             _calendar = HotsRotationCalendar.Load();
         }
+
+        /// <summary>
+        ///     The stored entry. Asked of <see cref="AppFile" /> on every access rather than
+        ///     copied into a field - see <see cref="SettingsGateway.Stored" /> for why.
+        /// </summary>
+        private HotsRotation Stored => _app.State.Rotation;
 
         /// <summary>The period running today - calculated, not stored.</summary>
         public DateOnly CurrentPeriod => HotsRotationPeriod.Current();
@@ -114,7 +102,7 @@ namespace Smurftown.Backend.Gateway
         {
             get
             {
-                if (ManualIsCurrent) return _rotation.Heroes;
+                if (ManualIsCurrent) return Stored.Heroes;
                 return _calendar.For(CurrentPeriod);
             }
         }
@@ -126,8 +114,8 @@ namespace Smurftown.Backend.Gateway
         ///     for an entire period.
         /// </summary>
         private bool ManualIsCurrent =>
-            _rotation.Heroes.Count > 0 &&
-            HotsRotationPeriod.Parse(_rotation.PeriodStart) == CurrentPeriod;
+            Stored.Heroes.Count > 0 &&
+            HotsRotationPeriod.Parse(Stored.PeriodStart) == CurrentPeriod;
 
         /// <summary>
         ///     Sets the rotation by hand for the running period. Filtered through the
@@ -136,36 +124,12 @@ namespace Smurftown.Backend.Gateway
         /// </summary>
         public void Save(IEnumerable<string> heroIds)
         {
-            _rotation = new HotsRotation
+            _app.SaveRotation(new HotsRotation
             {
                 PeriodStart = HotsRotationPeriod.ToText(CurrentPeriod),
                 Heroes = HotsHeroCatalog.Resolve(heroIds).Select(hero => hero.Id).ToList()
-            };
-            SaveToConfigFile();
+            });
         }
 
-        private HotsRotation ReadFromConfigFile()
-        {
-            // An unreadable file must not prevent startup: this is read out of a static
-            // field initializer, an exception here would be a TypeInitializationException
-            // across half the app.
-            try
-            {
-                if (!File.Exists(_configFile)) return new HotsRotation();
-                var content = File.ReadAllText(_configFile);
-                return _yamlIn.Deserialize<HotsRotation>(new StringReader(content)) ?? new HotsRotation();
-            }
-            catch (Exception e)
-            {
-                Log.Warning(e, $"rotation.yaml unreadable, starting with an empty rotation: '{_configFile}'");
-                return new HotsRotation();
-            }
-        }
-
-        private void SaveToConfigFile()
-        {
-            Directory.CreateDirectory(_folder);
-            File.WriteAllText(_configFile, _yamlOut.Serialize(_rotation));
-        }
     }
 }

@@ -21,7 +21,12 @@ reasons" without asking, but do not make it worse either:
   nothing. The price for getting at the stored password at all: the app can only type it itself for
   Heroes of the Storm. The error path deliberately logs only the battletag, never the value.
 - **Captures on failure** (`~/.smurftown/shots/`) show the game screen. On the login form the
-  password is masked, but the email address is legible.
+  password is masked, but the email address is legible. The newest 20 are kept and nothing older
+  than 30 days — a bound on how long that address lies around, not a reason it may be shared.
+- **Every backup holds the passwords too.** `backups/{version}.zip` contains a complete
+  `data.yaml`, so up to ten copies of the credential file live beside the current one. The ZIP
+  carries no password and is not meant to: it makes the folder countable, it protects nothing.
+  Whoever treats `~/.smurftown/` as a password store has to treat `backups/` as one as well.
 
 Fell away with the removal of the Windows users: the Windows password equal to the user name, the
 administrator rights (`app.manifest` stands on `asInvoker`), and `psexec` with the password in the
