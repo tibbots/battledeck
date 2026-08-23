@@ -336,12 +336,6 @@ namespace Smurftown.UI.MVVM.ViewModel
                     ? Strings.Current["row.neverRead"]
                     : Strings.Format("row.readAt", $"{data.ReadAt:yyyy-MM-dd HH:mm}");
 
-                // The start menu hangs on the same checkboxes as the strip and is therefore
-                // built along here - not as a computed property, otherwise every change would
-                // have to trigger the notification by hand.
-                StartOptions = BuildStartOptions(hots);
-                HasStartOptions = StartOptions.Count > 0;
-
                 // The strip, then the preselection. Heroes of the Storm first, because only there
                 // is any data at all; if the account doesn't have it, the choice falls back to the
                 // first game it does have.
@@ -596,9 +590,13 @@ namespace Smurftown.UI.MVVM.ViewModel
         }
 
         /// <summary>
-        ///     The entries of the start menu, one per game and use case. Only for
-        ///     games the account has at all - a menu with entries for
-        ///     titles not played would be noise.
+        ///     The entries of the start menu, one per use case.
+        ///     <para>
+        ///         They belong to the game the row is <b>showing</b>, not to the games the account
+        ///         owns. The panel, the tint and this menu therefore always speak about the same
+        ///         title - a row standing on Overwatch that offers "Start Heroes of the Storm"
+        ///         would start something other than what it shows.
+        ///     </para>
         /// </summary>
         public IReadOnlyList<StartOption> StartOptions
         {
@@ -609,10 +607,11 @@ namespace Smurftown.UI.MVVM.ViewModel
         /// <summary>
         ///     Whether the menu has anything to offer at all.
         ///     <para>
-        ///         Since "Open Battle.net" is gone, <c>false</c> really occurs: for Overwatch,
-        ///         WoW and Diablo there is still no path stored, so an account without the
-        ///         HotS checkbox has not a single way to start. This is a transition and not a
-        ///         final state - with the three missing EXE paths, one entry each will return.
+        ///         Since "Open Battle.net" is gone, <c>false</c> really occurs, and it occurs
+        ///         often: for Overwatch, WoW and Diablo there is still no path stored, so every
+        ///         row showing one of those three has not a single way to start - including the
+        ///         rows of accounts that do own HotS. This is a transition and not a final
+        ///         state; with the three missing EXE paths, one entry each will return.
         ///     </para>
         /// </summary>
         public bool HasStartOptions
@@ -773,6 +772,11 @@ namespace Smurftown.UI.MVVM.ViewModel
         ///     Builds the entries of the start menu. All share the same command instance
         ///     and differ only in the parameter.
         ///     <para>
+        ///         The parameter is "is the row showing Heroes of the Storm", and today that is
+        ///         the only case that yields entries at all. The other three get an empty list,
+        ///         which hides the button - see <see cref="StartVisibility" />.
+        ///     </para>
+        ///     <para>
         ///         All four HotS entries have been usable since 20.08.2026; "Open loot chests"
         ///         previously stood there dimmed, because the loot page was calibrated, but the
         ///         flow behind it was still missing.
@@ -891,10 +895,25 @@ namespace Smurftown.UI.MVVM.ViewModel
             return games.Contains(GameVisuals.Hots) ? GameVisuals.Hots : games.FirstOrDefault();
         }
 
-        /// <summary>Switches the panel to a game - or to none at all.</summary>
+        /// <summary>
+        ///     Switches the panel to a game - or to none at all.
+        ///     <para>
+        ///         <b>The start menu switches with it</b>, and that is the whole reason it is built
+        ///         here and not in the <see cref="Row" /> setter. There it hung on
+        ///         "does this account play HotS in this region", which is a different question from
+        ///         "which game is this row showing": an account with Overwatch <i>and</i> HotS
+        ///         offered the four HotS entries while the row stood on Overwatch.
+        ///     </para>
+        /// </summary>
         private void SelectGame(string? game)
         {
             var hots = game == GameVisuals.Hots;
+
+            // Not a computed property: otherwise every switch would have to raise the
+            // notification by hand.
+            StartOptions = BuildStartOptions(hots);
+            HasStartOptions = StartOptions.Count > 0;
+
             HotsPanelVisibility = hots ? Visibility.Visible : Visibility.Collapsed;
             NoDataVisibility = hots || game == null ? Visibility.Collapsed : Visibility.Visible;
             PanelTint = GameVisuals.TintFor(game);

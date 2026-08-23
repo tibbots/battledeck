@@ -21,6 +21,15 @@ nothing else on the line.
 
 ## [Upcoming]
 
+### Fixed
+
+- **The start button no longer offers Heroes of the Storm entries on a row showing another game.**
+  An account playing both Overwatch and Heroes of the Storm kept the four HotS entries — start,
+  start and read, refresh, open chests — while the row stood on Overwatch, and every one of them
+  started HotS. Overwatch, World of Warcraft and Diablo have no start path yet, so a row showing one
+  of them now has no start button at all, the same as it already did for accounts that only play
+  those games.
+
 ### Changed
 
 - **The Master rank medal has been redrawn from Blizzard's official animated medal.** The old
