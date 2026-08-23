@@ -1,0 +1,32 @@
+# Version updates. The file itself switches them on; nothing has to be enabled
+# in the repository settings for it.
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      # Three packages stand on prerelease versions, and CLAUDE.md says lifting
+      # them to stable is its own task with its own test run. Dependabot will
+      # propose it anyway, so it gets its own pull request rather than dragging
+      # every harmless bump down with it when the build goes red.
+      preview-pins:
+        patterns:
+          - "Microsoft.Extensions.Logging"
+          - "Serilog.Extensions.Logging"
+          - "Serilog.Sinks.File"
+      all-deps:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      all-actions:
+        patterns:
+          - "*"
