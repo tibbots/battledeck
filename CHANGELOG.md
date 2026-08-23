@@ -21,6 +21,8 @@ nothing else on the line.
 
 ## [Upcoming]
 
+## [1.2.0] - 2026-08-23
+
 ### Added
 
 - **Behind a dialog the window is now blurred, not only dimmed.** What stands underneath is still
@@ -177,6 +179,7 @@ First public release.
   Run anyway* — the checksum shipped with each release proves that the file matches the release,
   not who built it.
 
-[Upcoming]: https://github.com/tibbots/smurftown/compare/1.1.0...HEAD
+[Upcoming]: https://github.com/tibbots/smurftown/compare/1.2.0...HEAD
+[1.2.0]: https://github.com/tibbots/smurftown/releases/tag/1.2.0
 [1.1.0]: https://github.com/tibbots/smurftown/releases/tag/1.1.0
 [1.0.0]: https://github.com/tibbots/smurftown/releases/tag/1.0.0
