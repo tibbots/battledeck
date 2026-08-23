@@ -8,8 +8,8 @@ divisions 2-5 have to be generated.
 
 27 files are generated:
   {tier}_{1..5}.png     Bronze..Diamond with division (25x)
-  master.png            Master and Grand Master carry no number in the original (2x)
-  grandmaster.png
+  master.png            from the official animated medal, its baked-in score inpainted away
+  grandmaster.png       carries no number in the HIRES source
 
 norank.png has NOT been part of this since 21.08.2026. It used to be the bronze
 medal without a digit and without a title line, desaturated and darkened - which
@@ -18,11 +18,14 @@ the magenta-colored circle from tools/build-placement-icon.py. Whoever adds its
 generation back in here overwrites it on the next run.
 
 Sources (not in the repo, download at run time):
-  TIERS_PNG  Bronze..Diamond, with alpha channel, 800x176
-             https://static.wikia.nocookie.net/allstars_gamepedia/images/7/77/Ranked_Play_Tiers.png/revision/latest?cb=20160617144056&format=original
-  HIRES_JPG  all 7 tiers incl. Master/Grand Master, on a starfield background
-             https://images.squarespace-cdn.com/content/v1/59af2189c534a58c97bd63b3/1520455238475-43375HIMQPZH9QXMYBWG/2018+ranked+season+1+tiers+hots.jpg?format=2500w
-             (send Accept: image/jpeg, otherwise the CDN serves WebP)
+  TIERS_PNG   Bronze..Diamond, with alpha channel, 800x176
+              https://static.wikia.nocookie.net/allstars_gamepedia/images/7/77/Ranked_Play_Tiers.png/revision/latest?cb=20160617144056&format=original
+  HIRES_JPG   Grand Master on a starfield background (shows all 7 tiers)
+              https://images.squarespace-cdn.com/content/v1/59af2189c534a58c97bd63b3/1520455238475-43375HIMQPZH9QXMYBWG/2018+ranked+season+1+tiers+hots.jpg?format=2500w
+              (send Accept: image/jpeg, otherwise the CDN serves WebP)
+  MASTER_GIF  the official animated Master medal, 380x380, 235 frames, with a
+              baked-in "1000" season score
+              https://bnetcmsus-a.akamaihd.net/cms/content_folder_media/5XW63A65ZXGW1462404445716.gif
 
 Approach:
   Bronze..Diamond  The medals in the sheet do NOT sit on a 160px grid -
@@ -37,19 +40,28 @@ Approach:
                    discarded: the former drags ring edges and the title line into
                    the center, the latter brings the digit itself right back into
                    the image.
-  Master/GM        cut out from HIRES_JPG. Flood fill from the edge with a
+  Master           rebuilt from MASTER_GIF. The medal itself stands still across
+                   all 235 frames, only glow and particles animate - a per-pixel
+                   median over the frames therefore removes particles, pulsing
+                   glow and GIF dithering in one step. The baked-in "1000" is
+                   removed with the same diffusion inpainting as the division
+                   digits; the glow halo around it deliberately stays and
+                   diffuses into the hole, where it reads as the galaxy core
+                   above the crown. Then flood-fill cutout as for Grand Master,
+                   no hand masks needed.
+  Grand Master     cut out from HIRES_JPG. Flood fill from the edge with a
                    protective circle around the inner disc - the GM ring has gaps,
                    without the protective circle the fill runs through to the
                    inside. Afterward keep the largest component (removes isolated
-                   stars) and two hand masks against clinging background scraps.
+                   stars) and a hand mask against a clinging background scrap.
 
-Dependency: Pillow.  Call:  python tools/build-rank-assets.py <tiers.png> <hires.jpg>
+Dependency: Pillow.  Call:  python tools/build-rank-assets.py <tiers.png> <hires.jpg> <master.gif>
 """
 import os
 import sys
 from collections import deque
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageSequence
 
 OUT = os.path.join('Smurftown', 'UI', 'Images', 'Ranks')
 CANVAS = (160, 176)
@@ -59,6 +71,11 @@ FONT = 'C:/Windows/Fonts/seguibl.ttf'
 DIGIT_BOX = (65, 61, 95, 102)   # baked-in digit incl. drop shadow, axis-centered
 DIGIT_CX, DIGIT_CY = 80, 82     # center point of the new digit, relative to the symmetry axis
 DIGIT_HEIGHT = 30               # cap height, measured on the original
+
+# master.png - all values measured on the 380x380 median of MASTER_GIF
+MASTER_SCORE_BOX = (124, 162, 252, 220)  # digit core of the "1000" (x 130-246 / y 168-214) + margin
+MASTER_KEEP = (190, 190, 100)            # protective circle around the inner disc
+MASTER_THRESHOLD = 200                   # robust: 140 and 260 yield the same silhouette
 
 
 def largest_component(alpha):
@@ -191,6 +208,32 @@ def cutout(im, threshold, keep_circle):
     return out
 
 
+def median_of_frames(gif):
+    """Per-pixel median over all frames. The medal stands still, only glow and
+    particles animate - the median removes both, plus the GIF dithering."""
+    frames = [f.convert('RGB') for f in ImageSequence.Iterator(gif)]
+    px = [f.load() for f in frames]
+    w, h = frames[0].size
+    mid = len(frames) // 2
+    out = Image.new('RGB', (w, h))
+    op = out.load()
+    for y in range(h):
+        for x in range(w):
+            op[x, y] = tuple(sorted(p[x, y][c] for p in px)[mid] for c in range(3))
+    return out
+
+
+def build_master(gif):
+    base = median_of_frames(gif).convert('RGBA')
+    print(f'  master      median over {gif.n_frames} frames')
+    # The hole covers only the digit core of the "1000". The glow halo around it
+    # stays and diffuses into the hole - it reads as the galaxy core above the
+    # crown; a hole covering the halo too would leave a flat, empty disc.
+    base = inpaint(base, lambda d: d.rounded_rectangle(MASTER_SCORE_BOX, radius=24, fill=255),
+                   iterations=60, radius=6, feather=2.0)
+    return normalise(cutout(base, MASTER_THRESHOLD, MASTER_KEEP))
+
+
 def normalise(im, canvas=CANVAS):
     im = im.crop(im.split()[3].getbbox())
     scale = min(canvas[0] / im.width, canvas[1] / im.height)
@@ -200,7 +243,7 @@ def normalise(im, canvas=CANVAS):
     return out
 
 
-def main(tiers_png, hires_jpg):
+def main(tiers_png, hires_jpg, master_gif):
     os.makedirs(OUT, exist_ok=True)
     sheet = Image.open(tiers_png).convert('RGBA')
     for i, tier in enumerate(TIERS):
@@ -210,23 +253,19 @@ def main(tiers_png, hires_jpg):
         for division in range(1, 6):
             draw_digit(base, str(division)).save(os.path.join(OUT, f'{tier}_{division}.png'))
 
-    hires = Image.open(hires_jpg)
-    # crop, brightness threshold, protective circle, hand masks against background remnants
-    for name, crop, circle, kills in [
-        ('master', (585, 455, 905, 870), (163, 200, 100), [(258, 0, 320, 415)]),
-        ('grandmaster', (925, 450, 1330, 885), (203, 205, 112), [(50, 0, 110, 84)]),
-    ]:
-        im = cutout(hires.crop(crop), 340, circle)
-        alpha = im.split()[3]
-        for rect in kills:
-            ImageDraw.Draw(alpha).rectangle(rect, fill=0)
-        im.putalpha(alpha)
-        normalise(im).save(os.path.join(OUT, f'{name}.png'))
+    build_master(Image.open(master_gif)).save(os.path.join(OUT, 'master.png'))
+
+    # crop, brightness threshold, protective circle, hand mask against a background remnant
+    gm = cutout(Image.open(hires_jpg).crop((925, 450, 1330, 885)), 340, (203, 205, 112))
+    alpha = gm.split()[3]
+    ImageDraw.Draw(alpha).rectangle((50, 0, 110, 84), fill=0)
+    gm.putalpha(alpha)
+    normalise(gm).save(os.path.join(OUT, 'grandmaster.png'))
 
     print(f'{len(os.listdir(OUT))} assets in {OUT}')
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         sys.exit(__doc__)
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], sys.argv[3])

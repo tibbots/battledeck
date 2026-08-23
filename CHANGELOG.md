@@ -21,6 +21,13 @@ nothing else on the line.
 
 ## [Upcoming]
 
+### Changed
+
+- **The Master rank medal has been redrawn from Blizzard's official animated medal.** The old
+  image was cut out of a compressed screenshot and showed it — clipped edges, noise, a smeared
+  crown. The new one is symmetric and clean; its inner glow now sits above the crown, where the
+  original animation carries it.
+
 ## [1.3.0] - 2026-08-23
 
 ### Changed
