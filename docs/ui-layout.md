@@ -1,4 +1,4 @@
-# UI layout budgets
+﻿# UI layout budgets
 
 This page is the measured layout of Smurftown's account list and its dialogs — every width
 below is already spent. It exists so the next person who adds an element does it by subtracting
@@ -206,9 +206,22 @@ strip's separator ring 51 — leaving 6.5 and 20 px of headroom respectively. En
 further means a taller row, and that costs screens: 27 accounts need roughly **3.7** screens at
 91 px versus **2.5** at 60 px.
 
-**No text sits beside the medal anymore.** The 28 medal images carry stage and division in the
-picture, and the medal dims when placement games are pending. The plain-text version survives
-only in the tooltip (`RankName`), now the sole place a rank is ever spelled out.
+**No text sits beside the medal anymore.** The medal carries stage, division **and** the progress
+inside the division, and it dims when placement games are pending. The plain-text version survives
+only in the tooltip (`RankName`), now the sole place a rank is ever spelled out — with the two
+point numbers appended where they were read.
+
+**The progress ring costs no height, and that is why it looks the way it does.** It lies IN the
+medal: the emblem carries two metal rings with a dark groove between them, and the part already
+reached gets light painted into it. A ring drawn AROUND the medal was tried on 23.08.2026 and
+thrown away — 92 points across, the row at 97, a screen more per 27 accounts, and it still read as
+a progress bar parked behind a medal. The one that ships changes no number in this document.
+
+**The medal is drawn, not shown.** `RankMedal` puts three things into the 71×78 box — the tier's
+picture, the lit part of the channel and the division digit — because all three sit on the same
+circle and the numbers that place them are fractions of the same canvas. In XAML they would stand
+once per site, here and in the rank picker, and that pair would drift apart at the next size
+change.
 
 **Three blocks, two of them docked**: the rank medal left (`DockPanel.Dock="Left"`), the four
 currencies right (`DockPanel.Dock="Right"`, fixed 236) — and between them, **centered**, the hero

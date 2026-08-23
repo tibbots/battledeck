@@ -22,7 +22,7 @@ def heroes(n, seed, must=(), never=()):
 
 
 def region(tier, div, hero_list, gold, shards, gems, level, chests, read,
-           penalty=0, placements=False):
+           penalty=0, placements=False, points=None, points_max=None):
     p = '      '
     lines = ['%stier: %s' % (p, tier),
              '%sdivision: %d' % (p, div),
@@ -33,6 +33,13 @@ def region(tier, div, hero_list, gold, shards, gems, level, chests, read,
     else:
         lines.append('%sheroes:' % p)
         lines += ['%s- %s' % (p, h) for h in hero_list]
+    # Both or neither. A single one of the two is a state the app treats as unread, and
+    # demo data whose ring nobody can explain is worse than one without a ring.
+    if (points is None) != (points_max is None):
+        raise SystemExit('rank points need both numbers: %s %d' % (tier, div))
+    if points is not None:
+        lines.append('%srankPoints: %d' % (p, points))
+        lines.append('%srankPointsMax: %d' % (p, points_max))
     for key, val in (('gold', gold), ('shards', shards), ('gems', gems),
                      ('accountLevel', level), ('lootChests', chests)):
         lines.append('%s%s: %s' % (p, key, val))
@@ -77,9 +84,11 @@ account('SMURFKING', '2481', 'smurfking@example.com', 'demo-pass-01',
         (True, True, False, False), ['Europe', 'Americas'],
         notes='Main account. EU ranked, AM for fun.',
         hots_by=[('Europe', region('Platinum', 2, heroes(47, 3, must=['tracer']),
-                                   12480, 1350, 800, 214, 6, '2026-08-21T18:22:00')),
+                                   12480, 1350, 800, 214, 6, '2026-08-21T18:22:00',
+                                   points=640, points_max=1000)),
                  ('Americas', region('Silver', 4, heroes(12, 40),
-                                     3120, 260, 0, 63, 0, '2026-08-20T21:05:00'))])
+                                     3120, 260, 0, 63, 0, '2026-08-20T21:05:00',
+                                     points=95, points_max=1000))])
 
 # 2 - open placement matches: dimmed medal, nearly complete collection
 account('NEXUSNOMAD', '1177', 'nexusnomad@example.com', 'demo-pass-02',
@@ -94,7 +103,7 @@ account('GHOSTLANE', '4092', 'ghostlane@example.com', 'demo-pass-03',
         (False, True, False, False), ['Europe'],
         hots_by=[('Europe', region('Gold', 5, heroes(31, 55, never=['tracer']),
                                    890, 40, 0, 122, 1, '2026-08-19T09:14:00',
-                                   penalty=2))])
+                                   penalty=2, points=310, points_max=1000))])
 
 # 4 - never read: no battletag, email as substitute name, dashes everywhere
 account('', '', 'newcomer@example.com', 'demo-pass-04',
@@ -104,14 +113,16 @@ account('', '', 'newcomer@example.com', 'demo-pass-04',
 account('ARAMANDA', '3311', 'aramanda@example.com', 'demo-pass-05',
         (False, True, False, True), ['Asia'],
         hots_by=[('Asia', region('Bronze', 1, heroes(8, 70),
-                                 450, 0, 0, 24, 0, '2026-08-18T12:30:00'))])
+                                 450, 0, 0, 24, 0, '2026-08-18T12:30:00',
+                                 points=980, points_max=1000))])
 
 # 6 - archived: gives the archive toggle something to show
 account('RETIREDALT', '7754', 'retiredalt@example.com', 'demo-pass-06',
         (False, True, False, False), ['Europe'], inactive=True,
         notes='Season 2 alt, not used any more.',
         hots_by=[('Europe', region('Gold', 2, heroes(22, 25),
-                                   2010, 120, 0, 88, 0, '2026-06-02T14:00:00'))])
+                                   2010, 120, 0, 88, 0, '2026-06-02T14:00:00',
+                                   points=0, points_max=1000))])
 
 # 7 - the top of what this list shows: Diamond 1, the fullest collection and wallet.
 #     THE DEMO DATA STOPS AT DIAMOND, by decision - Master and GrandMaster are not
@@ -122,15 +133,20 @@ account('RETIREDALT', '7754', 'retiredalt@example.com', 'demo-pass-06',
 account('LANEBULLY', '5006', 'lanebully@example.com', 'demo-pass-07',
         (False, True, False, False), ['Europe'],
         hots_by=[('Europe', region('Diamond', 1, heroes(74, 17),
-                                   28900, 4100, 1150, 366, 11, '2026-08-21T16:40:00'))])
+                                   28900, 4100, 1150, 366, 11, '2026-08-21T16:40:00',
+                                   points=1000, points_max=1000))])
 
 # 8 - second leaver-penalty case, so the triangle does not look like a one-off
 account('SILENTPUSH', '9120', 'silentpush@example.com', 'demo-pass-08',
         (True, True, False, False), ['Europe'],
         hots_by=[('Europe', region('Silver', 2, heroes(19, 61),
                                    640, 80, 0, 57, 2, '2026-08-17T20:11:00',
-                                   penalty=1))])
+                                   penalty=1, points=455, points_max=1000))])
 
+# 9 - read, but WITHOUT points: the ring stays empty because the tooltip was never
+#     taken, not because the account is at the start of its division. TOWERDIVE holds
+#     that case, RETIREDALT above holds the other one - the two look the same on the
+#     medal and differ only in the tooltip, so the list has to carry both.
 # 9 - Americas checked but never read: the AM row shows dashes
 account('TOWERDIVE', '6633', 'towerdive@example.com', 'demo-pass-09',
         (False, True, False, False), ['Europe', 'Americas'],

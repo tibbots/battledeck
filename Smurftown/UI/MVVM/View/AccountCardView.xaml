@@ -76,6 +76,12 @@
         91 leaves it the same 6.5 points of slack top and bottom as before. The price shows
         in screens - 27 accounts now need around 3.8 instead of 3.2.
 
+        THE PROGRESS RING COSTS NO HEIGHT, and that is the reason it looks the way it does.
+        It lies IN the medal: the emblem carries its own torus, and the part not reached yet
+        is painted over as dark metal. A ring drawn AROUND the medal was tried on 23.08.2026
+        and thrown away - 92 across, the row at 97, a screen more per 27 accounts, and it
+        still read as a progress bar parked behind a medal.
+
         THE VIEW FOLLOWS THE FILTER
         Which panel is shown is decided solely by GameFocus.Current - set by the exclusive
         game filter of the filter bar. Whoever filters on Overwatch above sees Overwatch in
@@ -441,10 +447,17 @@
                                           Style="{StaticResource RankZoneTheme}"
                                           IsChecked="{Binding RankMenuOpen, Mode=TwoWay}"
                                           ToolTip="{Binding RankHint}">
-                                <Image Source="{Binding RankImageSource}"
-                                       Opacity="{Binding RankOpacity}"
-                                       RenderOptions.BitmapScalingMode="HighQuality"
-                                       Height="78" Width="71" />
+                                <!-- 71x78 as before, because the asset is 160x176 and a
+                                     squashed medal stands out at once. The element draws
+                                     THREE things into that box - picture, unlit ring and the
+                                     division digit - and the numbers that place them sit in
+                                     RankMedal once, not once per call site. -->
+                                <loc:RankMedal Tier="{Binding RankTier}"
+                                               Division="{Binding RankDivision}"
+                                               Progress="{Binding RankProgress}"
+                                               ShowProgress="{Binding RankShowProgress}"
+                                               Opacity="{Binding RankOpacity}"
+                                               Height="78" Width="71" />
                             </ToggleButton>
 
                             <!-- Three levels: columns, rows inside them, medals inside those.
@@ -490,10 +503,13 @@
                                                                                 CommandParameter="{Binding}"
                                                                                 Command="{Binding Command}">
                                                                             <Grid>
-                                                                                <Image Source="{Binding ImageSource}"
+                                                                                <!-- No ShowProgress here: the
+                                                                                     picker answers WHICH rank,
+                                                                                     not how far along. -->
+                                                                                <loc:RankMedal Tier="{Binding Tier}"
+                                                                                       Division="{Binding Division}"
                                                                                        Height="64" Width="58"
-                                                                                       Opacity="{Binding Opacity}"
-                                                                                       RenderOptions.BitmapScalingMode="HighQuality" />
+                                                                                       Opacity="{Binding Opacity}" />
                                                                                 <!-- The frame sits only on the
                                                                                      chosen one. Blue like the
                                                                                      tabs, because a rank has no

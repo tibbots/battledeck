@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using Smurftown.Backend.Entity;
 using Smurftown.Backend.Gateway;
 using Xunit;
@@ -35,6 +35,8 @@ namespace Smurftown.Tests
             var europe = written.HotsFor(BattlenetRegion.Europe);
             europe.Tier = HotsRankTier.Platinum;
             europe.Division = 2;
+            europe.RankPoints = 328;
+            europe.RankPointsMax = 1000;
             europe.Heroes = ["tracer", "muradin"];
             europe.Gold = 12480;
             europe.LootChests = 6;
@@ -54,6 +56,8 @@ namespace Smurftown.Tests
             var back = read.HotsFor(BattlenetRegion.Europe);
             Assert.Equal(HotsRankTier.Platinum, back.Tier);
             Assert.Equal(2, back.Division);
+            Assert.Equal(328, back.RankPoints);
+            Assert.Equal(1000, back.RankPointsMax);
             Assert.Equal(new[] { "muradin", "tracer" }, back.Heroes.Order());
             Assert.Equal(12480, back.Gold);
             Assert.Equal(6, back.LootChests);
@@ -235,6 +239,57 @@ namespace Smurftown.Tests
             File.WriteAllText(Path.Combine(folder, "data.yaml"), "");
 
             Assert.Empty(new BattlenetAccountGateway(folder).BattlenetAccounts);
+        }
+
+        /// <summary>
+        ///     The distinction the ring hangs on: an account at the start of its division
+        ///     has zero points, an unread one has none. Both draw an untouched medal, so the
+        ///     only place the difference survives is the file - and a round trip that turned
+        ///     null into 0 would put a reading on screen that nobody took.
+        /// </summary>
+        [Fact]
+        public void Unread_rank_points_come_back_as_null_and_not_as_zero()
+        {
+            var folder = FreshFolder();
+
+            var written = Mail("nopoints@example.com");
+            var europe = written.HotsFor(BattlenetRegion.Europe);
+            europe.Tier = HotsRankTier.Gold;
+            europe.Division = 3;
+
+            new BattlenetAccountGateway(folder).AddOrUpdate(written);
+
+            var back = Assert.Single(new BattlenetAccountGateway(folder).BattlenetAccounts)
+                .HotsFor(BattlenetRegion.Europe);
+
+            Assert.Null(back.RankPoints);
+            Assert.Null(back.RankPointsMax);
+            Assert.Null(back.RankProgress);
+        }
+
+        /// <summary>
+        ///     Zero points ARE a reading, and one that has to survive - it is what the first
+        ///     game of a new division writes.
+        /// </summary>
+        [Fact]
+        public void Zero_rank_points_survive_as_zero()
+        {
+            var folder = FreshFolder();
+
+            var written = Mail("freshdivision@example.com");
+            var europe = written.HotsFor(BattlenetRegion.Europe);
+            europe.Tier = HotsRankTier.Gold;
+            europe.Division = 3;
+            europe.RankPoints = 0;
+            europe.RankPointsMax = 1000;
+
+            new BattlenetAccountGateway(folder).AddOrUpdate(written);
+
+            var back = Assert.Single(new BattlenetAccountGateway(folder).BattlenetAccounts)
+                .HotsFor(BattlenetRegion.Europe);
+
+            Assert.Equal(0, back.RankPoints);
+            Assert.Equal(0.0, back.RankProgress);
         }
 
         private static string FreshFolder()

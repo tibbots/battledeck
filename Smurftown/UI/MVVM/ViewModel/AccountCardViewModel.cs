@@ -127,11 +127,14 @@ namespace Smurftown.UI.MVVM.ViewModel
         private string _regionHint = "";
         private Visibility _penaltyVisibility = Visibility.Collapsed;
 
-        private string? _rankImageSource;
+        private HotsRankTier _rankTier = HotsRankTier.None;
+        private int _rankDivision;
         private string _rankName = "";
         private string _rankHint = "";
         private double _rankOpacity = 1.0;
         private Visibility _rankVisibility = Visibility.Collapsed;
+        private double _rankProgress;
+        private bool _rankShowProgress;
         private Visibility _wow;
 
 
@@ -273,12 +276,30 @@ namespace Smurftown.UI.MVVM.ViewModel
                 // without a placement, the spot stays empty - the rank is then simply nothing
                 // for the row to say.
                 var placements = hots && data is { PlacementsPending: true };
-                var rank = hots && data != null
-                    ? HotsRankImages.PathFor(data.Tier, data.Division)
-                    : null;
-                RankImageSource = rank ?? (placements ? HotsRankImages.NoRank : null);
-                RankVisibility = RankImageSource == null ? Visibility.Collapsed : Visibility.Visible;
-                RankName = RankLabel(hots, data, placements, rank != null);
+                RankTier = hots && data != null ? data.Tier : HotsRankTier.None;
+                RankDivision = hots && data != null ? data.Division : 0;
+                var hasRank = RankTier != HotsRankTier.None;
+                RankVisibility = hasRank || placements ? Visibility.Visible : Visibility.Collapsed;
+                RankName = RankLabel(hots, data, placements, hasRank);
+
+                // THE RING SHOWS ONLY WHAT WAS READ. Without points the medal stands
+                // untouched - which is also how it looks at zero percent, and that is the
+                // one ambiguity worth naming: the picture cannot tell "at the start of the
+                // division" from "never read". The tooltip can, and does, by saying the two
+                // numbers or nothing at all.
+                //
+                // MASTER AND GRAND MASTER CARRY NO RING, and an unplaced account carries
+                // none either: there is no next division to fill towards. That question is
+                // answered by HasDivisions() - a second list of tiers written out here
+                // would drift apart from it at the next change. Pending placements hide it
+                // too: the medal is dimmed exactly because it does not count.
+                var ranked = hasRank && RankTier.HasDivisions() && !placements;
+                RankShowProgress = ranked && data?.RankProgress != null;
+                RankProgress = RankShowProgress ? data!.RankProgress!.Value : 0;
+                if (RankShowProgress)
+                    RankName = Strings.Format("row.rankProgress",
+                        RankName, data!.RankPoints, data.RankPointsMax);
+
                 RankHint = Hinted(RankName, "row.rankClickHint");
                 RankOpacity = placements ? 0.4 : 1.0;
 
@@ -415,10 +436,27 @@ namespace Smurftown.UI.MVVM.ViewModel
             set { SetProperty(ref _currencyHint, value); }
         }
 
-        public string? RankImageSource
+        /// <summary>
+        ///     Which medal the row shows. <see cref="HotsRankTier.None" /> means the
+        ///     "no rank" disc, which is what an account with open placements and no rank
+        ///     of its own gets.
+        ///     <para>
+        ///         Tier and division instead of a finished picture path, since 24.08.2026:
+        ///         <see cref="RankMedal" /> draws the digit itself, and it needs to know
+        ///         which one rather than getting a bitmap with one baked in.
+        ///     </para>
+        /// </summary>
+        public HotsRankTier RankTier
         {
-            get { return _rankImageSource; }
-            set { SetProperty(ref _rankImageSource, value); }
+            get { return _rankTier; }
+            set { SetProperty(ref _rankTier, value); }
+        }
+
+        /// <summary>Division 5 to 1, or 0 where the tier has none.</summary>
+        public int RankDivision
+        {
+            get { return _rankDivision; }
+            set { SetProperty(ref _rankDivision, value); }
         }
 
         public Visibility RankVisibility
@@ -472,6 +510,35 @@ namespace Smurftown.UI.MVVM.ViewModel
             get { return _rankOpacity; }
             set { SetProperty(ref _rankOpacity, value); }
         }
+
+        /// <summary>
+        ///     How full the ring around the medal stands, 0..1 - the progress inside the
+        ///     current division, the way the game draws it.
+        ///     <para>
+        ///         A fraction and not a pair of numbers, because that is all the ring needs.
+        ///         The pair the game shows on hover ("328 / 1000") belongs in the text, and
+        ///         the text is <see cref="RankName" />.
+        ///     </para>
+        /// </summary>
+        public double RankProgress
+        {
+            get { return _rankProgress; }
+            set { SetProperty(ref _rankProgress, value); }
+        }
+
+        /// <summary>
+        ///     Separate from <see cref="RankVisibility" />: the medal is there in cases the
+        ///     ring is not - Master, Grand Master, and an account whose placement matches
+        ///     are still open. False leaves the ring fully lit, which is the medal as it
+        ///     stands; a ring at zero would claim a progress of nothing instead of saying
+        ///     that the question does not apply.
+        /// </summary>
+        public bool RankShowProgress
+        {
+            get { return _rankShowProgress; }
+            set { SetProperty(ref _rankShowProgress, value); }
+        }
+
 
         /// <summary>
         ///     The rank in plain text - <b>only still</b> as a tooltip on the medal.

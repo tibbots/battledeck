@@ -268,6 +268,13 @@ namespace Smurftown.Backend.Automation
             public Spot ViewProfile { get; set; } = new();
             public Spot Battletag { get; set; } = new();
             public Spot Progress { get; set; } = new();
+
+            /// <summary>Where the pointer has to rest for the rank tooltip to come up.</summary>
+            public Spot RankMedal { get; set; } = new();
+
+            /// <summary>Where that tooltip then stands - it hangs on the medal, not on the pointer.</summary>
+            public Spot RankTooltip { get; set; } = new();
+
             public Spot Close { get; set; } = new();
         }
 

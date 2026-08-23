@@ -1,4 +1,4 @@
-using Smurftown.Backend.Entity;
+﻿using Smurftown.Backend.Entity;
 
 namespace Smurftown.Backend.Automation
 {
@@ -60,7 +60,11 @@ namespace Smurftown.Backend.Automation
                 ["grossmeister"] = HotsRankTier.GrandMaster
             },
             collectionTab: "SAMMLUNG",
-            heroesTab: "HELDEN");
+            heroesTab: "HELDEN",
+            // Measured on 24.08.2026 at BUBU#23555: the tooltip on the rank medal reads
+            // "497 Rangpunkte" and below it "503 Rangpunkte fuer Aufstieg erforderlich".
+            // The word carries both lines, which is why one is enough here.
+            rankPointsWord: "rangpunkte");
 
         /// <summary>
         ///     English. Measured on the running client on 21.08.2026; what could not be
@@ -107,7 +111,12 @@ namespace Smurftown.Backend.Automation
             // Measured: the bar reads "PLAY | COLLECTION | LOOT | WATCH", the
             // collection's sub-tab "HEROES".
             collectionTab: "COLLECTION",
-            heroesTab: "HEROES");
+            heroesTab: "HEROES",
+            // NOT MEASURED - only a German client was available on 24.08.2026. Until
+            // somebody checks this against the running client, the tooltip is not read
+            // on this language and the points stay unwritten. That is the intended
+            // failure: a wrong word costs nothing, a guessed number would be believed.
+            rankPointsWord: "rank points");
 
         /// <summary>
         ///     French. Measured on the running client on 22.08.2026 (account JOKEY, region
@@ -162,6 +171,11 @@ namespace Smurftown.Backend.Automation
             collectionTab: "COLLECTION",
             // "Héros" - and the accent does not matter, the comparison runs through TextNormalisation.
             heroesTab: "Héros",
+            // NOT MEASURED - only a German client was available on 24.08.2026. Until
+            // somebody checks this against the running client, the tooltip is not read
+            // on this language and the points stay unwritten. That is the intended
+            // failure: a wrong word costs nothing, a guessed number would be believed.
+            rankPointsWord: "points de classement",
             heroNames: FrenchHeroNames);
 
         /// <summary>
@@ -243,6 +257,11 @@ namespace Smurftown.Backend.Automation
             SpanishTiers,
             collectionTab: "COLECCIÓN",
             heroesTab: "Héroes",
+            // NOT MEASURED - only a German client was available on 24.08.2026. Until
+            // somebody checks this against the running client, the tooltip is not read
+            // on this language and the points stay unwritten. That is the intended
+            // failure: a wrong word costs nothing, a guessed number would be believed.
+            rankPointsWord: "puntos de clasificacion",
             heroNames: SpanishHeroNames);
 
         /// <summary>
@@ -313,6 +332,11 @@ namespace Smurftown.Backend.Automation
             SpanishTiers,
             collectionTab: "COLECCIÓN",
             heroesTab: "Héroes",
+            // NOT MEASURED - only a German client was available on 24.08.2026. Until
+            // somebody checks this against the running client, the tooltip is not read
+            // on this language and the points stay unwritten. That is the intended
+            // failure: a wrong word costs nothing, a guessed number would be believed.
+            rankPointsWord: "puntos de clasificacion",
             heroNames: SpanishLatinHeroNames);
 
         /// <summary>
@@ -362,7 +386,7 @@ namespace Smurftown.Backend.Automation
         private GameVocabulary(GameLanguage language, string rankLabel, string levelLabel,
             string placementWord, string lootTab, IReadOnlyList<string> notNames,
             IReadOnlyDictionary<string, HotsRankTier> tiers,
-            string collectionTab, string heroesTab,
+            string collectionTab, string heroesTab, string rankPointsWord,
             IReadOnlyDictionary<string, string>? heroNames = null)
         {
             Language = language;
@@ -374,6 +398,7 @@ namespace Smurftown.Backend.Automation
             Tiers = tiers;
             CollectionTab = collectionTab;
             HeroesTab = heroesTab;
+            RankPointsWord = rankPointsWord;
             HeroNames = heroNames ?? new Dictionary<string, string>();
         }
 
@@ -392,6 +417,20 @@ namespace Smurftown.Backend.Automation
 
         /// <summary>The label under which the account level stands in the profile overlay.</summary>
         public string LevelLabel { get; }
+
+        /// <summary>
+        ///     The word for "rank points", as it stands in the tooltip on the rank medal.
+        ///     <para>
+        ///         <b>One word carries both lines</b>, and that is what makes it enough: the
+        ///         German tooltip reads "497 Rangpunkte" and under it "503 Rangpunkte fuer
+        ///         Aufstieg erforderlich". What separates the two is not a second word but
+        ///         their order - the current standing above, what is still missing below.
+        ///     </para>
+        ///     <para>
+        ///         Compared after normalisation, so accents and case do not matter.
+        ///     </para>
+        /// </summary>
+        public string RankPointsWord { get; }
 
         /// <summary>
         ///     The word that stands instead of a rank, while placement matches are open.

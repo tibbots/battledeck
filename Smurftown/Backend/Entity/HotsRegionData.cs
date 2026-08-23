@@ -1,4 +1,4 @@
-using YamlDotNet.Serialization;
+﻿using YamlDotNet.Serialization;
 
 namespace Smurftown.Backend.Entity
 {
@@ -31,6 +31,31 @@ namespace Smurftown.Backend.Entity
         ///     (None, Master, GrandMaster). Normalized when saving in the dialog.
         /// </summary>
         public int Division { get; set; }
+
+        /// <summary>
+        ///     Progress inside the current division, as the game shows it while the pointer
+        ///     rests on the rank: <c>328 / 1000</c>. <see cref="RankPoints" /> is the left
+        ///     number, <see cref="RankPointsMax" /> the right one.
+        ///     <para>
+        ///         <b>Two numbers and not a percentage.</b> A stored share would throw the
+        ///         bound away, and the bound is half of what the game says - the tooltip on
+        ///         the medal names both. It is kept per region for the same reason the rank
+        ///         is: the same battletag stands somewhere else in America than in Europe.
+        ///     </para>
+        ///     <para>
+        ///         <c>null</c> means "never read", exactly as with <see cref="Gold" />, and
+        ///         must not become 0: an account at the start of its division has zero
+        ///         points, and that is a statement, not a gap. The medal shows an untouched
+        ///         ring in both cases - but only the read one may claim it.
+        ///     </para>
+        ///     <para>
+        ///         Master and Grand Master have neither. They have no next division to fill
+        ///         towards, so nothing writes here for them.
+        ///     </para>
+        /// </summary>
+        public int? RankPoints { get; set; }
+
+        public int? RankPointsMax { get; set; }
 
         /// <summary>
         ///     Open penalty games after a disconnect (leaver penalty). 0 means "none".
@@ -113,6 +138,8 @@ namespace Smurftown.Backend.Entity
             {
                 Tier = Tier,
                 Division = Division,
+                RankPoints = RankPoints,
+                RankPointsMax = RankPointsMax,
                 PenaltyGames = PenaltyGames,
                 PlacementsPending = PlacementsPending,
                 Heroes = [.. Heroes],
@@ -124,6 +151,22 @@ namespace Smurftown.Backend.Entity
                 ReadAt = ReadAt
             };
         }
+
+        /// <summary>
+        ///     How far through the division, 0…1 - or <c>null</c> where that question has no
+        ///     answer: nothing read yet, no bound, or a bound of zero.
+        ///     <para>
+        ///         The share is computed and not stored, so that the two numbers stay the
+        ///         truth and this stays a view of them. Clamped, because a game that hands
+        ///         out more points than the division needs is a case for the ring to survive,
+        ///         not to break on.
+        ///     </para>
+        /// </summary>
+        [YamlIgnore]
+        public double? RankProgress =>
+            RankPoints is { } points && RankPointsMax is { } max && max > 0
+                ? Math.Clamp(points / (double)max, 0.0, 1.0)
+                : null;
 
         /// <summary>Display name of the rank, e.g. "Gold 3". Empty if no rank is set.</summary>
         public string RankName()

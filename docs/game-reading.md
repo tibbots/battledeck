@@ -57,12 +57,36 @@ This is one of the reasons the rank screen is no longer read by image comparison
 | Value | Screen | Method |
 |---|---|---|
 | Rank (tier + division) | Profile overlay, PROGRESS block | OCR, `ProfileReader` |
+| Rank points inside the division | Tooltip on the rank medal | hover, then OCR, `ProfileReader` |
 | Placement games pending | same block | the word `Platzierung` stands there instead of a tier |
 | Account level | same block | OCR, `ProfileReader` |
 | Battletag | Header of the overlay | OCR — cross-check **and** source on rename |
 | Heroes | `SAMMLUNG` → `Helden` (Collection → Heroes sub-tab) | OCR per card, `CollectionReader` |
 | Gold, shards, gems | Header bar (everywhere) | OCR, `HeaderReader` |
 | Unopened loot chests | Badge on the `BEUTE` tab (Loot) | OCR across the whole bar, `HeaderReader` |
+
+**The points inside the division stand nowhere on the overlay.** They come up as a tooltip while
+the pointer rests on the medal, and on nothing else — measured on 24.08.2026 at BUBU#23555, where a
+point 113 further right, on the words `Gold 3` themselves, brought up nothing at all. The tooltip
+hangs on the **medal**, not on the pointer: hovering 27 points further left and 22 lower put the box
+in exactly the same place.
+
+It reads three lines — the rank, then `497 Rangpunkte`, then `503 Rangpunkte für Aufstieg
+erforderlich`. **The game names what is missing, not the size of the division**, so the bound is the
+sum of the two; assuming 1000 would be entering a number the game never said. Which line is which
+follows from their order and not from a second word — both carry the same one, the current standing
+above, what is still missing below. Sorted by Y, therefore, and not by how they came out of
+recognition.
+
+The read costs a second capture and happens **after** the rank is already in hand, so a tooltip that
+never appears costs the points and not the reading. Anything unclear — a line count other than two,
+a bound that would not be a bound — writes nothing: this value ends up as a ring somebody reads at a
+glance, and a plausible wrong number is worse there than a gap.
+
+**Only German is measured.** `GameVocabulary.RankPointsWord` carries the word for all five
+variants, four of them marked `NOT MEASURED`; on those clients the tooltip is not read and the
+points stay unwritten. That is the intended failure — a wrong word costs nothing, a guessed number
+would be believed.
 
 **Rank is read via OCR now, not image comparison.** The reason image comparison existed at all
 was the division: on the rank screen it sits as a decorative glyph on the medallion disc, not as

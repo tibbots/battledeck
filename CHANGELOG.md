@@ -21,6 +21,27 @@ nothing else on the line.
 
 ## [Upcoming]
 
+### Added
+
+- **The rank medal shows how far through its division an account stands.** Every medal carries two
+  metal rings with a dark groove between them; that groove now fills with light, the way the game
+  lights it. It shows only what was actually read — an account whose points are unknown keeps the
+  untouched medal it always had, and Master, Grand Master and a pending placement have no groove to
+  fill in the first place. The tooltip on the medal names the two numbers behind it, e.g.
+  `Gold 3 (497 / 1000)`.
+- **Those numbers are read out of the running game.** They stand nowhere on the profile page — the
+  client shows them only while the pointer rests on the rank — so reading the profile now points at
+  the medal and reads the tooltip that comes up. The game names what is still missing rather than
+  the size of the division, so the bound is the sum of the two lines it shows. Only a German client
+  is measured; on the other three the points stay unread rather than guessed.
+
+### Changed
+
+- **The division digit is drawn instead of baked into the picture.** It stays sharp at any window
+  size and any display scaling, where the old bitmap went soft, and it glows the way the emblem
+  does. One consequence is invisible but worth naming: the app ships 13 rank images instead of 27,
+  since a tier no longer needs one file per division.
+
 ### Fixed
 
 - **The start button no longer offers Heroes of the Storm entries on a row showing another game.**

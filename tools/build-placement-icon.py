@@ -58,7 +58,7 @@ REFERENCE = os.path.join(HERE, 'placement-referenz.png')
 # any medal even though its frame is the same size: a medal is a shield and tapers
 # toward the top and bottom to 41 of 158 points, a disc is full at its whole height.
 #
-# Measured in the 71x78 box: gold_3.png renders 70.0 x 72.7, a borderless disc 71 x 71.
+# Measured in the 71x78 box: gold.png renders 70.0 x 72.7, a borderless disc 71 x 71.
 # With CANVAS 320x352 (double the medals' canvas of 160x176) and SIZE 272, it renders
 # 60.3 - roughly 14 percent narrower than the medal and thus visibly subordinate,
 # which is correct for a "no rank" sign.

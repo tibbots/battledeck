@@ -54,7 +54,14 @@ change — the build is no substitute there.
   lie.
 - **New image**: generate it via a script in `tools/` first, then enter it in `Smurftown.csproj` as
   `<Resource Include>` **plus** `<None Remove>`. Without the entry the `pack://` URI loads into
-  nothing at runtime — the build reports nothing.
+  nothing at runtime — the build reports nothing. **`UI\Images\Ranks\*.png` is the one folder
+  already covered by a wildcard**, so a new file there needs no csproj change and a removed one
+  leaves no dangling entry. Everywhere else the two lines are mandatory.
+- **Anything the rank medal shows** goes through `RankMedal`, not into a new element beside it. It
+  draws picture, progress channel and division digit from fractions of the same 160×176 canvas, and
+  the account row and the rank picker both use it. The measured numbers behind those fractions live
+  in `tools/build-rank-assets.py`, which cuts the pictures from the same values — change one and you
+  change both, then re-run the script.
 - **New filter in the bar**: `BattlenetAccountGateway.CreatePredicate` is a pure AND chain of
   conditions of the form "not set ⇒ lets through". Append a new condition by the same pattern and
   "nothing filtered = show everything" stays right by itself. **If the filter belongs to a game, it

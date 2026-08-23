@@ -514,7 +514,12 @@
 
                              The medal is 58x64 and thus as tall as a hero circle one row
                              below; 58 instead of 64 in width, because the asset measures 160x176 and a
-                             squashed image stands out immediately. -->
+                             squashed image stands out immediately.
+
+                             It is a RankMedal and not an Image since 24.08.2026 - the division
+                             digit is drawn rather than baked in, so there is one picture per
+                             tier instead of one per rank. The account row draws the same
+                             element, which is why the grid needs no image path of its own. -->
                         <StackPanel Orientation="Vertical">
                             <TextBlock Text="{loc:Str dialog.rank}" Style="{StaticResource FieldLabelStyle}" />
                             <ItemsControl ItemsSource="{Binding RankColumns}">
@@ -555,11 +560,16 @@
                                                                                     <!-- Not selected means
                                                                                          dimmed - the same
                                                                                          language as in the
-                                                                                         hero grid. -->
-                                                                                    <Image Source="{Binding ImageSource}"
+                                                                                         hero grid.
+
+                                                                                         No ShowProgress: the
+                                                                                         picker answers WHICH
+                                                                                         rank, not how far
+                                                                                         along. -->
+                                                                                    <loc:RankMedal Tier="{Binding Tier}"
+                                                                                           Division="{Binding Division}"
                                                                                            Height="64" Width="58"
-                                                                                           Opacity="{Binding Opacity}"
-                                                                                           RenderOptions.BitmapScalingMode="HighQuality" />
+                                                                                           Opacity="{Binding Opacity}" />
                                                                                     <!-- Border only on the selected one.
                                                                                          Blue like the tabs, because
                                                                                          a rank has no color of its

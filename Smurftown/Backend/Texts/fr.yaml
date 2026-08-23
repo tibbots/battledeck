@@ -1,4 +1,4 @@
-# The texts of the interface - FRENCH.
+﻿# The texts of the interface - FRENCH.
 #
 # Translation of en.yaml. That file holds the rules, the meaning of the placeholders and the
 # length limits; this file holds only the words and whatever is specific to this language.
@@ -50,6 +50,7 @@ row.penaltyMany: "{0} parties de pénalité"
 row.placementsPending: placement en cours
 row.rankPlacements: "{0} - placement en cours"
 row.rankClickHint: Cliquer pour corriger le rang
+row.rankProgress: "{0} ({1} / {2})"
 row.neverRead: jamais lu dans cette région
 row.readAt: lu {0}
 row.heroCount: "{0} héros sur {1}"
@@ -264,6 +265,8 @@ change.levelFirst: Niveau {0}
 change.level: Niveau {0} -> {1}
 change.rankFirst: Rang {0}
 change.rank: Rang {0} -> {1}
+change.rankPointsFirst: Points de rang {0} sur {1}
+change.rankPoints: Points de rang {0} -> {1} sur {2}
 change.placementsPending: placement en cours
 change.placementsDone: placement terminé
 change.penalty: Parties de pénalité {0} -> {1}

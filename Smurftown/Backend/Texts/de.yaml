@@ -1,4 +1,4 @@
-# The texts of the interface - GERMAN.
+﻿# The texts of the interface - GERMAN.
 #
 # Translation of en.yaml. That file holds the rules, the meaning of the placeholders and the
 # length limits; this file holds only the words and whatever is specific to this language.
@@ -47,6 +47,7 @@ row.penaltyMany: "{0} Strafspiele"
 row.placementsPending: Platzierung offen
 row.rankPlacements: "{0} - Platzierung offen"
 row.rankClickHint: Klicken, um den Rang zu korrigieren
+row.rankProgress: "{0} ({1} / {2})"
 row.neverRead: in dieser Region nie gelesen
 row.readAt: gelesen {0}
 row.heroCount: "{0} von {1} Helden"
@@ -261,6 +262,8 @@ change.levelFirst: Stufe {0}
 change.level: Stufe {0} -> {1}
 change.rankFirst: Rang {0}
 change.rank: Rang {0} -> {1}
+change.rankPointsFirst: Rangpunkte {0} von {1}
+change.rankPoints: Rangpunkte {0} -> {1} von {2}
 change.placementsPending: Platzierung offen
 change.placementsDone: Platzierung abgeschlossen
 change.penalty: Strafspiele {0} -> {1}

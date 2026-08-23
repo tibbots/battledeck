@@ -61,7 +61,7 @@ internal static class HotsRankGrid
                  division >= HotsRankTiers.HighestDivision;
                  division--)
                 // Tier AND division must match - otherwise the whole row would light up.
-                row.Add(new HotsRankChoice(tier, division, HotsRankImages.Display(tier, division),
+                row.Add(new HotsRankChoice(tier, division,
                     tier == current && division == currentDivision, command));
             rows.Add(row);
         }
@@ -70,11 +70,9 @@ internal static class HotsRankGrid
         // tier counts: Master and Grand Master have no division, and "no rank" even less so.
         rows.Add(new List<HotsRankChoice>
         {
-            new(HotsRankTier.Master, 0, HotsRankImages.Display(HotsRankTier.Master, 0),
-                current == HotsRankTier.Master, command),
-            new(HotsRankTier.GrandMaster, 0, HotsRankImages.Display(HotsRankTier.GrandMaster, 0),
-                current == HotsRankTier.GrandMaster, command),
-            new(HotsRankTier.None, 0, HotsRankImages.NoRank, current == HotsRankTier.None, command)
+            new(HotsRankTier.Master, 0, current == HotsRankTier.Master, command),
+            new(HotsRankTier.GrandMaster, 0, current == HotsRankTier.GrandMaster, command),
+            new(HotsRankTier.None, 0, current == HotsRankTier.None, command)
         });
 
         return rows;
@@ -83,6 +81,12 @@ internal static class HotsRankGrid
 
 /// <summary>
 ///     A selectable rank in the grid. Division is 0 where the tier does not know one.
+///     <para>
+///         <b>It carries no picture path any more</b> since 24.08.2026, only tier and
+///         division - <see cref="RankMedal" /> makes a medal out of those two, the same
+///         way the account row does. There used to be a third field with a finished path
+///         in it, from the days when every rank was its own file.
+///     </para>
 ///     <para>
 ///         <c>IsSelected</c> carries the highlight. It sits in the record and not as a
 ///         comparison in the XAML, because there two values must match at once (tier AND
@@ -100,7 +104,7 @@ internal static class HotsRankGrid
 ///     </para>
 /// </summary>
 public sealed record HotsRankChoice(
-    HotsRankTier Tier, int Division, string ImageSource, bool IsSelected, ICommand Command)
+    HotsRankTier Tier, int Division, bool IsSelected, ICommand Command)
 {
     /// <summary>Not chosen means dimmed - the same language as in the hero grid.</summary>
     public double Opacity => IsSelected ? 1.0 : 0.35;

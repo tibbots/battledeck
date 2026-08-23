@@ -32,12 +32,29 @@ namespace Smurftown.Backend.Automation
     ///         was compared against a medal and foreign values were written.
     ///     </para>
     /// </param>
+    /// <param name="RankPoints">
+    ///     Progress inside the division, as the tooltip on the rank shows it - the left of
+    ///     the two numbers in <c>328 / 1000</c>, with <paramref name="RankPointsMax" /> the
+    ///     right one.
+    ///     <para>
+    ///         <b>Both or neither.</b> A tooltip read as half a line would put a share on
+    ///         screen that nothing supports, and it is a value nobody would look at twice.
+    ///     </para>
+    ///     <para>
+    ///         They stay <c>null</c> where there is nothing to fill towards: Master, Grand
+    ///         Master and an open placement. And they stay null where the tooltip was not
+    ///         reached at all - the rank itself is read without it, so a missing tooltip
+    ///         costs the points and not the reading.
+    ///     </para>
+    /// </param>
     public sealed record ProfileReading(
         int? AccountLevel,
         HotsRankTier? Tier,
         int Division,
         bool? PlacementsPending,
         string Note,
+        int? RankPoints = null,
+        int? RankPointsMax = null,
         string? SeenBattletag = null,
         bool Matches = true);
 
@@ -104,6 +121,9 @@ namespace Smurftown.Backend.Automation
         /// </summary>
         private static string PlacementWord => GameVocabulary.Current.PlacementWord;
 
+        /// <summary>The word for "rank points" in the tooltip on the medal.</summary>
+        private static string RankPointsWord => GameVocabulary.Current.RankPointsWord;
+
         /// <summary>
         ///     How long to wait for the overlay, and how often it is opened. Two attempts,
         ///     because the game occasionally swallows a click - then the overlay simply never
@@ -112,6 +132,23 @@ namespace Smurftown.Backend.Automation
         private static readonly TimeSpan ReadTimeout = TimeSpan.FromSeconds(8);
 
         private const int OpenAttempts = 2;
+
+        /// <summary>
+        ///     How long to wait for the tooltip on the rank medal. Shorter than
+        ///     <see cref="ReadTimeout" /> on purpose: the overlay is already standing at this
+        ///     point, the pointer is already on the medal, and if nothing has appeared after
+        ///     four seconds it is not going to. What is lost then is the points, not the
+        ///     reading - the rank itself was read without the tooltip.
+        /// </summary>
+        private static readonly TimeSpan TooltipTimeout = TimeSpan.FromSeconds(4);
+
+        /// <summary>
+        ///     Both lines of the tooltip start with their number: "497 Rangpunkte" and
+        ///     "503 Rangpunkte fuer Aufstieg erforderlich". Built per read rather than held
+        ///     as a field, because the client language can change at runtime.
+        /// </summary>
+        private static Regex PointsPattern =>
+            new($@"^(\d+)\s+{Regex.Escape(RankPointsWord)}", RegexOptions.CultureInvariant);
 
         /// <summary>
         ///     The tier words of the set client language. Until 21.08.2026 they stood here as
@@ -217,13 +254,25 @@ namespace Smurftown.Backend.Automation
                     // the same misreading - the guard would be theatre. What actually guards this
                     // path is on the other side: the tag has to match exactly one stored account,
                     // and the realistic slips (I/l, 0/O, 5/S) produce a string that matches none.
-                    if (expected == null)
-                        return Evaluate(block, seen) with { SeenBattletag = seen, Matches = false };
+                    var reading = expected == null || !string.Equals(seen, expected, StringComparison.OrdinalIgnoreCase)
+                        ? Evaluate(block, seen) with { SeenBattletag = seen, Matches = false }
+                        : Evaluate(block, expected);
 
-                    if (!string.Equals(seen, expected, StringComparison.OrdinalIgnoreCase))
-                        return Evaluate(block, seen) with { SeenBattletag = seen, Matches = false };
+                    // THE POINTS COME LAST, and only where there is a division to fill. They
+                    // cost a second capture and a wait, and they are the one value here that
+                    // is not on the overlay at all - see ReadRankPoints. Whatever they cost
+                    // is spent after the rank is already in hand, so a tooltip that never
+                    // comes up costs the points and not the reading.
+                    if (reading.Tier is { } tier && tier.HasDivisions())
+                    {
+                        if (await ReadRankPoints(session, map, token) is { } points)
+                            reading = reading with
+                            {
+                                RankPoints = points.Points, RankPointsMax = points.Max
+                            };
+                    }
 
-                    return Evaluate(block, expected);
+                    return reading;
                 }
                 finally
                 {
@@ -334,6 +383,72 @@ namespace Smurftown.Backend.Automation
                 battletag, tier, division, level);
             var text = tier.HasDivisions() ? $"{tier.DisplayName()} {division}" : tier.DisplayName();
             return new ProfileReading(level, tier, division, false, Join(text, notes));
+        }
+
+        /// <summary>
+        ///     The two numbers behind the rank, out of the tooltip that only comes up while
+        ///     the pointer rests on the medal.
+        ///     <para>
+        ///         <b>The game does not name the bound, it names what is missing.</b> The
+        ///         tooltip reads "497 Rangpunkte" and below it "503 Rangpunkte fuer Aufstieg
+        ///         erforderlich" - so the size of the division is the SUM of the two, and
+        ///         that is better than a constant: whoever assumed 1000 would be entering a
+        ///         number the game never said, and would be wrong the day Blizzard changes it.
+        ///     </para>
+        ///     <para>
+        ///         <b>Which line is which is decided by their order, not by a second word.</b>
+        ///         Both start with a number and carry the same word; the current standing
+        ///         stands above, what is still missing below. Sorted by Y, therefore, and not
+        ///         by how they came out of text recognition.
+        ///     </para>
+        ///     <para>
+        ///         Returns <c>null</c> on anything unclear - a tooltip that did not appear, a
+        ///         line count other than two, a bound that would not be a bound. The caller
+        ///         then writes nothing, and nothing is worth more here than a plausible
+        ///         number: this one ends up as a ring somebody reads at a glance.
+        ///     </para>
+        /// </summary>
+        private static async Task<(int Points, int Max)?> ReadRankPoints(GameSession session,
+            ScreenMap.ProfileSection map, CancellationToken token)
+        {
+            var (x, y) = session.Layout.Point(map.RankMedal);
+            session.HoverAt(x, y);
+
+            // Magnified twofold, unlike the block above: the tooltip's lines are visibly
+            // smaller than the overlay's, and at 1 the three-digit numbers came back with
+            // a missing digit often enough to matter.
+            var (lines, last) = await session.RetryAsync<IReadOnlyList<TextLine>>(async shot =>
+            {
+                var (ax, ay, width, height) = session.Layout.Area(map.RankTooltip);
+                var read = await TextReader.ReadAsync(shot, ax, ay, width, height, 2);
+                var numbered = read.Where(line => PointsPattern.IsMatch(Normalise(line.Text)))
+                    .OrderBy(line => line.Y).ToList();
+                return numbered.Count == 2 ? numbered : null;
+            }, TooltipTimeout, "rank tooltip", token);
+
+            if (lines == null)
+            {
+                var path = GameSession.SaveDiagnostic(last, "rank-tooltip-not-recognised");
+                Log.Information("Rank tooltip not read - the two lines with '{Word}' did not " +
+                                "appear. Screenshot: {Path}", RankPointsWord, path);
+                return null;
+            }
+
+            var current = int.Parse(PointsPattern.Match(Normalise(lines[0].Text)).Groups[1].Value);
+            var missing = int.Parse(PointsPattern.Match(Normalise(lines[1].Text)).Groups[1].Value);
+            var bound = current + missing;
+
+            // A division of zero points is no division, and a standing above its own bound
+            // cannot come out of an addition - both would mean the two lines were not the
+            // two lines. Better unread than a ring at a value nobody can explain.
+            if (bound <= 0 || current > bound)
+            {
+                Log.Information("Rank tooltip implausible: {Current} + {Missing}", current, missing);
+                return null;
+            }
+
+            Log.Information("Rank points {Current} of {Bound}", current, bound);
+            return (current, bound);
         }
 
         /// <summary>

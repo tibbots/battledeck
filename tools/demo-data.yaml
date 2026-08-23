@@ -124,6 +124,8 @@ accounts:
       - zarya
       - zeratul
       - zuljin
+      rankPoints: 640
+      rankPointsMax: 1000
       gold: 12480
       shards: 1350
       gems: 800
@@ -148,6 +150,8 @@ accounts:
       - tracer
       - varian
       - zuljin
+      rankPoints: 95
+      rankPointsMax: 1000
       gold: 3120
       shards: 260
       gems: 0
@@ -316,6 +320,8 @@ accounts:
       - whitemane
       - xul
       - yrel
+      rankPoints: 310
+      rankPointsMax: 1000
       gold: 890
       shards: 40
       gems: 0
@@ -360,6 +366,8 @@ accounts:
       - sylvanas
       - tyrael
       - xul
+      rankPoints: 980
+      rankPointsMax: 1000
       gold: 450
       shards: 0
       gems: 0
@@ -405,6 +413,8 @@ accounts:
       - valla
       - varian
       - zeratul
+      rankPoints: 0
+      rankPointsMax: 1000
       gold: 2010
       shards: 120
       gems: 0
@@ -502,6 +512,8 @@ accounts:
       - zarya
       - zeratul
       - zuljin
+      rankPoints: 1000
+      rankPointsMax: 1000
       gold: 28900
       shards: 4100
       gems: 1150
@@ -546,6 +558,8 @@ accounts:
       - varian
       - whitemane
       - zuljin
+      rankPoints: 455
+      rankPointsMax: 1000
       gold: 640
       shards: 80
       gems: 0

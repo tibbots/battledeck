@@ -1,4 +1,4 @@
-# Calibration of the game interface: what sits where, and how to tell which screen is showing.
+﻿# Calibration of the game interface: what sits where, and how to tell which screen is showing.
 #
 # This file is the only place where coordinates stand. If Blizzard changes the
 # interface, this file changes - not the code. It ships with the app, but can be replaced
@@ -164,6 +164,19 @@ profile:
   # down by a good dozen points depending on content, which a narrow crop doesn't
   # keep up with. It's still readable large, without magnification, at both resolutions.
   progress: { anchor: topCenter, x: 300, y: 380, width: 600, height: 320 }
+  # THE RANK MEDAL, and the only reason to point at it: the points inside the division
+  # stand nowhere on the overlay. They come up as a tooltip while the pointer rests on
+  # the medal, and on nothing else - measured on 24.08.2026 at BUBU#23555, where a point
+  # 113 further right, on the words "Gold 3" themselves, brought up nothing at all.
+  rankMedal: { anchor: topCenter, x: 367, y: 633 }
+  # Where that tooltip appears. It hangs on the MEDAL, not on the pointer: hovering 27
+  # points further left and 22 lower put the box in exactly the same place.
+  #
+  # Deliberately wider than the box measured (x 435..892, y 431..563 at the reference).
+  # The box is as wide as its longest LINE, so it grows with a four-digit number and with
+  # every language whose word for "rank points" is longer than the German one - and a
+  # crop cutting off the last digit is the one error text recognition does not report.
+  rankTooltip: { anchor: topCenter, x: 420, y: 396, width: 620, height: 190 }
   # The cross at the top right of the overlay. Not the Esc key: whether that works here is not
   # measured.
   close: { anchor: topCenter, x: 845, y: 186 }

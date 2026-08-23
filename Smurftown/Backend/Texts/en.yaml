@@ -1,4 +1,4 @@
-# The texts of the interface - ENGLISH, and thus the source.
+﻿# The texts of the interface - ENGLISH, and thus the source.
 #
 # This file is not a translation, but the original: the texts stood word for word like
 # this in the XAML and in the ViewModels until 22.08.2026. Every other language is its
@@ -98,6 +98,7 @@ row.penaltyMany: "{0} penalty games"
 row.placementsPending: placements pending
 row.rankPlacements: "{0} - placements pending"           # 0 = previous season rank
 row.rankClickHint: Click to correct the rank
+row.rankProgress: "{0} ({1} / {2})"                          # 0 = rank, 1 = points, 2 = bound
 row.neverRead: never read in this region
 row.readAt: read {0}                                     # 0 = timestamp, language-neutral
 row.heroCount: "{0} of {1} heroes"                       # 0 = owned, 1 = all
@@ -333,6 +334,8 @@ change.levelFirst: Level {0}
 change.level: Level {0} -> {1}
 change.rankFirst: Rank {0}
 change.rank: Rank {0} -> {1}
+change.rankPointsFirst: Rank points {0} of {1}                # 0 = points, 1 = bound
+change.rankPoints: Rank points {0} -> {1} of {2}              # 0 = before, 1 = now, 2 = bound
 change.placementsPending: placements pending
 change.placementsDone: placements done
 change.penalty: Penalty games {0} -> {1}

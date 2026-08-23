@@ -1,4 +1,4 @@
-# The data model
+﻿# The data model
 
 What `data.yaml` holds, and at which of the three levels. The first section is the one everything
 else follows from: the game state hangs off the region, and the region hangs off the game — the
@@ -117,11 +117,13 @@ the file would be a start that changes data nobody asked it to change.
 
 ## HotS ranks
 
-Storm League rank per account and region, two fields on `HotsRegionData`:
+Storm League rank per account and region, four fields on `HotsRegionData`:
 
 ```yaml
 tier: Gold        # HotsRankTier: None | Bronze | Silver | Gold | Platinum | Diamond | Master | GrandMaster
 division: 3       # 5 (lowest) to 1 (highest); 0 for None, Master, GrandMaster
+rankPoints: 497   # progress inside the division; null = never read, and 0 is a reading
+rankPointsMax: 1000
 ```
 
 - **Only Bronze–Diamond have divisions** — `HotsRankTiers.HasDivisions()` is the only place that
@@ -131,11 +133,23 @@ division: 3       # 5 (lowest) to 1 (highest); 0 for None, Master, GrandMaster
   `AddOrEditAccountViewModel.EffectiveTier`/`EffectiveDivision`. Without the HotS checkbox the
   rank falls to `None`, division-less tiers get 0. Setter validation would be wrong here — during
   deserialisation the order of property assignments is not guaranteed.
+- **The points are two numbers, not a percentage.** The game does not name the size of a
+  division; it names what is still missing (`497 Rangpunkte` / `503 Rangpunkte für Aufstieg
+  erforderlich`), so the bound is the **sum** of the two. A stored share would throw that bound
+  away, and the tooltip on the medal is the place that shows it. The share itself is computed —
+  `HotsRegionData.RankProgress`, clamped, `null` unless both numbers are there.
+- **`null` is not `0`.** An account at the start of its division has zero points, an unread one
+  has none, and the medal looks identical in both cases: an untouched ring. Only the tooltip tells
+  them apart, which is why the pair must survive the round trip as null rather than as zero —
+  guarded by `BattlenetAccountGatewayTests`.
+- **Master and Grand Master carry neither**, and the read clears the pair the moment a rank
+  reaches them: points left standing there would fill a ring that no longer exists.
 - **Image paths only via `HotsRankImages.PathFor()`.** Do not assemble them at a second place —
   that exact duplication already happened once with the battletag→Windows-user derivation.
-- **Display**: only the medal in the HotS panel of the row — it carries tier and division in the
-  image. The plain text lives in the tooltip (`RankName`) and nowhere else. Deliberately no rank
-  filter and no rank sorting.
+- **Display**: only the medal in the HotS panel of the row. It carries the tier as a picture and
+  draws division and progress on top — `RankMedal`, one element for the row and the picker. The
+  plain text lives in the tooltip (`RankName`, with the two numbers appended) and nowhere else.
+  Deliberately no rank filter and no rank sorting.
 - **In the dialog the rank grid is always visible** — no overlay, no popup, no button, and no
   second medal beside it showing the current state. Both would be a second answer to the same
   question. The selected rank is highlighted: not selected means dimmed (0.35), plus a border on
@@ -147,11 +161,13 @@ division: 3       # 5 (lowest) to 1 (highest); 0 for None, Master, GrandMaster
   would be shared between several open dialogs — one would move the other's selection. Rebuilding
   28 records costs nothing.
 
-**The 27 medals and the "no rank" disc are generated**, not hand-drawn - by
-`tools/build-rank-assets.py` and `tools/build-placement-icon.py`. `HotsRankImages.NoRank` points
-at `Ranks/norank.png`, which `build-rank-assets.py` deliberately does not emit, or the next run
-would overwrite it. Sizes, the measured geometry and the source-sheet trap that puts the division
-digit visibly off-centre are in [`assets.md`](assets.md).
+**The 12 medal files and the "no rank" disc are generated**, not hand-drawn - by
+`tools/build-rank-assets.py` and `tools/build-placement-icon.py`. There is **one picture per
+tier**, not one per rank: the division digit is drawn by the app, and so is the progress in the
+medal's own channel. `HotsRankImages.NoRank` points at `Ranks/norank.png`, which
+`build-rank-assets.py` deliberately does not emit, or the next run would overwrite it. Sizes, the
+measured geometry and the source-sheet trap that puts the division digit visibly off-centre are in
+[`assets.md`](assets.md).
 
 ## Penalty games (leaver penalty)
 

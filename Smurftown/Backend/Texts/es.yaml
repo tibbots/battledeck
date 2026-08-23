@@ -1,4 +1,4 @@
-# The texts of the interface - SPANISH.
+﻿# The texts of the interface - SPANISH.
 #
 # Translation of en.yaml. That file holds the rules, the meaning of the placeholders and the
 # length limits; this file holds only the words and whatever is specific to this language.
@@ -52,6 +52,7 @@ row.penaltyMany: "{0} partidas de penalización"
 row.placementsPending: clasificación pendiente
 row.rankPlacements: "{0} - clasificación pendiente"
 row.rankClickHint: Haz clic para corregir el rango
+row.rankProgress: "{0} ({1} / {2})"
 row.neverRead: nunca leído en esta región
 row.readAt: leído {0}
 row.heroCount: "{0} de {1} héroes"
@@ -266,6 +267,8 @@ change.levelFirst: Nivel {0}
 change.level: Nivel {0} -> {1}
 change.rankFirst: Rango {0}
 change.rank: Rango {0} -> {1}
+change.rankPointsFirst: Puntos de rango {0} de {1}
+change.rankPoints: Puntos de rango {0} -> {1} de {2}
 change.placementsPending: clasificación pendiente
 change.placementsDone: clasificación completada
 change.penalty: Partidas de penalización {0} -> {1}

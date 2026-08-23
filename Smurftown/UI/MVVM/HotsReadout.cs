@@ -296,22 +296,62 @@ namespace Smurftown.UI.MVVM
                     : "change.placementsDone"]);
             }
 
+            // NO EARLY RETURN in here, and that is not cosmetic: until 24.08.2026 an
+            // unchanged rank left the whole method, and everything below would have been
+            // skipped - which was invisible for as long as nothing stood below it.
             if (reading.Tier is { } tier)
             {
-                if (data.Tier == tier && data.Division == reading.Division) return;
-
-                var before = data.RankName();
-                data.Tier = tier;
-                data.Division = reading.Division;
-                var now = data.RankName();
-                changes.Add(before.Length == 0
-                    ? Strings.Format("change.rankFirst", now)
-                    : Strings.Format("change.rank", before, now));
+                if (data.Tier != tier || data.Division != reading.Division)
+                {
+                    var before = data.RankName();
+                    data.Tier = tier;
+                    data.Division = reading.Division;
+                    var now = data.RankName();
+                    changes.Add(before.Length == 0
+                        ? Strings.Format("change.rankFirst", now)
+                        : Strings.Format("change.rank", before, now));
+                }
             }
             else if (reading.PlacementsPending != true)
             {
                 problems.Add(reading.Note);
             }
+
+            ApplyRankPoints(reading, data, changes);
+        }
+
+        /// <summary>
+        ///     Adopts the points inside the division. Both numbers or neither - see
+        ///     <see cref="ProfileReading.RankPoints" />.
+        ///     <para>
+        ///         <b>Nothing is cleared here.</b> A tooltip that did not come up leaves the
+        ///         reading at null, and null then means "not read this time", not "gone".
+        ///         The one place the pair really has to go is where the rank stops having a
+        ///         next division - Master, Grand Master - because points left standing there
+        ///         would fill a ring that no longer exists.
+        ///     </para>
+        /// </summary>
+        private static void ApplyRankPoints(ProfileReading reading, HotsRegionData data,
+            List<string> changes)
+        {
+            if (!data.Tier.HasDivisions())
+            {
+                if (data.RankPoints == null && data.RankPointsMax == null) return;
+
+                data.RankPoints = null;
+                data.RankPointsMax = null;
+                return;
+            }
+
+            if (reading.RankPoints is not { } points || reading.RankPointsMax is not { } max) return;
+            if (data.RankPoints == points && data.RankPointsMax == max) return;
+
+            var before = data.RankPoints;
+            data.RankPoints = points;
+            data.RankPointsMax = max;
+            changes.Add(before == null
+                ? Strings.Format("change.rankPointsFirst", points, max)
+                : Strings.Format("change.rankPoints", before, points, max));
         }
 
         /// <summary>
