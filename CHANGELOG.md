@@ -21,6 +21,30 @@ nothing else on the line.
 
 ## [Upcoming]
 
+### Added
+
+- **The chip for a running client now offers to open the loot chests as well.** Clicking it opens a
+  small menu with two entries: *refresh data*, as before, or *open the loot chests and refresh*,
+  which empties every unopened chest first and reads afterwards — so shards, gold and any hero out
+  of a chest are already in the numbers that get stored. It was the one thing the chip could not do
+  while an account row could; both now offer it, and neither signs the client out for it.
+
+### Changed
+
+- **The update check runs once an hour instead of once a day, and it keeps running while the
+  application is open.** Until now it happened at start and nowhere else, so a window left open
+  since the morning showed the state it had at the moment it opened. Nothing else about it changed:
+  it is still one anonymous request to `api.github.com`, still carries nothing about you or your
+  accounts, and still cannot be switched off. A version found in the middle of a session changes
+  the chip in the header and says nothing else — no message, no dialog.
+
+### Fixed
+
+- **The password in the account dialog came out backwards.** The cursor jumped back to the front
+  after every keystroke, so a password typed as `secret` was stored as `terces` — and there is no
+  way to read it back on screen, so it was noticed at the login that failed with it. Whoever has an
+  account whose password was typed in that dialog should check it.
+
 ## [1.1.0] - 2026-08-23
 
 ### Added

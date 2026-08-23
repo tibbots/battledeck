@@ -56,8 +56,12 @@ namespace Smurftown.UI.MVVM.ViewModel
 
         private readonly DispatcherTimer _timer;
         private INotifyPropertyChanged? _dialogOwner;
+        private RelayCommand? _openMenuCommand;
+        private RelayCommand? _closeMenuCommand;
         private RelayCommand? _refreshCommand;
+        private RelayCommand? _chestsCommand;
         private bool _busy;
+        private bool _menuOpen;
         private bool _polling;
         private bool _running;
 
@@ -83,7 +87,12 @@ namespace Smurftown.UI.MVVM.ViewModel
             {
                 if (!SetProperty(ref _running, value)) return;
                 OnPropertyChanged(nameof(Visibility));
-                _refreshCommand?.NotifyCanExecuteChanged();
+                NotifyCommands();
+
+                // The client went away with the menu open - somebody closed the game while
+                // deciding. The menu hangs under a chip that is no longer there, so it goes
+                // with it.
+                if (!value) MenuOpen = false;
             }
         }
 
@@ -111,19 +120,79 @@ namespace Smurftown.UI.MVVM.ViewModel
             {
                 if (!SetProperty(ref _busy, value)) return;
                 OnPropertyChanged(nameof(Label));
-                _refreshCommand?.NotifyCanExecuteChanged();
+                NotifyCommands();
             }
         }
 
         /// <summary>Hidden while no client is running - there is nothing to offer then.</summary>
         public Visibility Visibility => Running ? Visibility.Visible : Visibility.Collapsed;
 
+        /// <summary>
+        ///     Whether the menu under the chip is open.
+        ///     <para>
+        ///         <b>The chip opens a menu since 23.08.2026 and no longer starts the run
+        ///         itself.</b> It had exactly one thing to offer - read - and now has two, since
+        ///         the loot chests can be opened from a client that is already running. The
+        ///         second one could not have been a second chip: the header has room for one,
+        ///         and two side by side would be two ways of saying the same sentence.
+        ///     </para>
+        ///     <para>
+        ///         State in the ViewModel and not in the XAML, for the same reason as the two
+        ///         menus of an account row: an entry that was picked has to close the menu, and
+        ///         both commands below therefore reset this first thing.
+        ///     </para>
+        /// </summary>
+        public bool MenuOpen
+        {
+            get => _menuOpen;
+            set
+            {
+                if (!SetProperty(ref _menuOpen, value)) return;
+                OnPropertyChanged(nameof(MenuVisibility));
+            }
+        }
+
+        public Visibility MenuVisibility => MenuOpen ? Visibility.Visible : Visibility.Collapsed;
+
         public string Label => Strings.Current[Busy ? "running.busy" : "running.chip"];
 
         public string Hint => Strings.Current["running.hint"];
 
+        public string MenuRefresh => Strings.Current["running.menuRefresh"];
+
+        public string MenuRefreshHint => Strings.Current["running.menuRefreshHint"];
+
+        public string MenuChests => Strings.Current["running.menuChests"];
+
+        public string MenuChestsHint => Strings.Current["running.menuChestsHint"];
+
+        /// <summary>
+        ///     The chip itself. It opens the menu and does nothing else - which is why it is
+        ///     gated on <see cref="Busy" /> too: a menu whose two entries both refuse would
+        ///     be a menu that opens to say no.
+        /// </summary>
+        public ICommand OpenMenuCommand =>
+            _openMenuCommand ??= new RelayCommand(() => MenuOpen = true, () => Running && !Busy);
+
+        /// <summary>The backdrop behind the menu - see the panel in <c>MainWindow.xaml</c>.</summary>
+        public ICommand CloseMenuCommand =>
+            _closeMenuCommand ??= new RelayCommand(() => MenuOpen = false);
+
+        /// <summary>Read rank, heroes and currencies out of the running client.</summary>
         public ICommand RefreshCommand =>
-            _refreshCommand ??= new RelayCommand(Refresh, () => Running && !Busy);
+            _refreshCommand ??= new RelayCommand(() => Refresh(false), () => Running && !Busy);
+
+        /// <summary>
+        ///     Open every unopened loot chest first, then read.
+        ///     <para>
+        ///         <b>The order is the point</b>, and it is the same one the account rows use
+        ///         with <c>SessionPlan.Chests</c>: a chest drops shards, gold and occasionally a
+        ///         hero. Read first, and what lands in <c>data.yaml</c> is the state from before
+        ///         the opening - wrong from the first chest onwards.
+        ///     </para>
+        /// </summary>
+        public ICommand RefreshWithChestsCommand =>
+            _chestsCommand ??= new RelayCommand(() => Refresh(true), () => Running && !Busy);
 
         /// <summary>
         ///     Starts the polling, and takes the owner for the region dialog along with it.
@@ -208,8 +277,17 @@ namespace Smurftown.UI.MVVM.ViewModel
         ///         so the claim covers exactly the run and not a moment longer.
         ///     </para>
         /// </summary>
-        private void Refresh()
+        /// <param name="openChests">
+        ///     Whether every unopened loot chest is emptied before the reading - the difference
+        ///     between the two entries of the menu, and the only one.
+        /// </param>
+        private void Refresh(bool openChests)
         {
+            // FIRST, before anything can go wrong below: StaysOpen has no meaning for this
+            // menu - it is an overlay and not a popup - so nothing closes it except the
+            // command that was picked and the backdrop.
+            MenuOpen = false;
+
             if (!TryBegin())
             {
                 Dialogs.Toast.ShowWarning(Strings.Current["problem.runBusy"]);
@@ -218,12 +296,24 @@ namespace Smurftown.UI.MVVM.ViewModel
 
             try
             {
-                Dialogs.DialogService.ShowDialog(_dialogOwner!, new RunGuideViewModel());
+                Dialogs.DialogService.ShowDialog(_dialogOwner!, new RunGuideViewModel(openChests));
             }
             finally
             {
                 End();
             }
+        }
+
+        /// <summary>
+        ///     All four commands hang on the same two flags, so they are told together. A list
+        ///     of individual names is incomplete by the next addition - the same reasoning as
+        ///     behind the empty name in <c>OnPropertyChanged</c>.
+        /// </summary>
+        private void NotifyCommands()
+        {
+            _openMenuCommand?.NotifyCanExecuteChanged();
+            _refreshCommand?.NotifyCanExecuteChanged();
+            _chestsCommand?.NotifyCanExecuteChanged();
         }
     }
 }

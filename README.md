@@ -8,7 +8,7 @@ game.
 
 Windows only. No account, no telemetry, no data about you anywhere but on your machine:
 everything lives in `C:\Users\YOUR_USER\.smurftown`. The app makes **exactly one** request,
-once a day — it asks GitHub whether a newer version exists. [What that is, and what it is
+once an hour — it asks GitHub whether a newer version exists. [What that is, and what it is
 not](#updates).
 
 ![The account list](docs/images/overview.png)
@@ -169,10 +169,10 @@ not the one the game runs on, and every measurement comes out wrong.
 
 ## Updates
 
-Once a day, on start, Smurftown asks GitHub whether a newer release exists. The request is
-anonymous and carries nothing about you, your accounts or what you did with them — it is the
-same question anyone can put to a public repository. If there is something newer, the version
-chip in the top right corner says so; a click opens this:
+Once an hour, for as long as it is open, Smurftown asks GitHub whether a newer release exists.
+The request is anonymous and carries nothing about you, your accounts or what you did with
+them — it is the same question anyone can put to a public repository. If there is something
+newer, the version chip in the top right corner says so; a click opens this:
 
 ![The update offer](docs/images/update-offer.png)
 
@@ -232,7 +232,7 @@ Requirements:
 From [Releases](https://github.com/tibbots/smurftown/releases).
 
 ### Is this app sending or receiving data from a server on the internet?
-Once a day it asks `api.github.com` whether a newer release exists — anonymously, with nothing
+Once an hour it asks `api.github.com` whether a newer release exists — anonymously, with nothing
 about you or your accounts in the request. Say yes to the offer and it downloads that release
 from GitHub as well. That is the whole of the traffic this app produces on its own; see
 [Updates](#updates). Everything else happens on this machine, and the only other thing that

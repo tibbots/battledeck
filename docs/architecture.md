@@ -31,9 +31,9 @@ Smurftown/
       HotsRotationCalendar.cs loads it, looks up by month and day
     Gateway/             BattlenetAccountGateway, HotsRotationGateway, SettingsGateway
       DataBackup.cs        copies the YAML files to backups/{version}/ before a migration
-    Update/              the daily update check - see self-update.md
+    Update/              the hourly update check - see self-update.md
       GithubReleases.cs    asks api.github.com for the newest release; the app's ONLY request
-      UpdateGateway.cs     owns update.yaml, decides whether a day has passed
+      UpdateGateway.cs     owns update.yaml, decides whether an hour has passed
       UpdateInstaller.cs   downloads, verifies the checksum, swaps the .exe, restarts
     Automation/          reading from the running game
       GameInstallations.cs finds HeroesSwitcher_x64.exe

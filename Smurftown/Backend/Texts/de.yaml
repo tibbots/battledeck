@@ -71,6 +71,14 @@ running.chip: Aktualisieren
 running.busy: Lese...
 running.hint: Heroes of the Storm läuft. Liest das Konto, das angemeldet ist - ohne es abzumelden und ohne den Client zu schließen.
 
+# The two entries of the menu under the chip. The chip carried one action until 23.08.2026
+# and has two since; the hints say what each of them costs in time, because that is the
+# difference somebody weighs before clicking.
+running.menuRefresh: Daten holen
+running.menuRefreshHint: Rang, Helden und Währungen lesen - ein paar Sekunden
+running.menuChests: Beutetruhen öffnen
+running.menuChestsHint: erst alle Truhen leeren, dann lesen - dauert Minuten
+
 # =========================================================== Run guide ============
 run.title: Aktualisieren
 run.explain: "Heroes of the Storm nimmt Klicks nur an, solange es im Vordergrund ist. Hol es mit Alt+Tab nach vorn - dieses Fenster wartet, das Auslesen startet von allein."
@@ -208,7 +216,7 @@ update.latest: Neueste Version
 update.upToDate: Die neueste.
 update.lastCheck: Zuletzt geprüft
 update.lastCheckLine: "Zuletzt geprüft: {0}"
-update.lastCheckHint: "Smurftown fragt einmal am Tag bei GitHub nach, ob es eine neuere Version gibt - anonym, und ohne etwas über dich oder deine Konten zu senden. Das ist die einzige Anfrage, die diese Anwendung stellt. Abschalten lässt sie sich nicht; 'Jetzt prüfen' zieht die tägliche Prüfung nur vor."
+update.lastCheckHint: "Smurftown fragt einmal pro Stunde bei GitHub nach, ob es eine neuere Version gibt - anonym, und ohne etwas über dich oder deine Konten zu senden. Das ist die einzige Anfrage, die diese Anwendung stellt. Abschalten lässt sie sich nicht; 'Jetzt prüfen' zieht die stündliche Prüfung nur vor."
 update.never: noch nie
 update.today: "heute, {0}"
 update.checkNow: Jetzt prüfen

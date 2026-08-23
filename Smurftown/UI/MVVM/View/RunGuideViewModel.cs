@@ -164,6 +164,20 @@ namespace Smurftown.UI.MVVM.View
 
         private readonly CancellationTokenSource _cancel = new();
 
+        /// <summary>
+        ///     Whether the loot chests are emptied before the reading. Picked in the menu under
+        ///     the header chip and carried through unchanged - see
+        ///     <see cref="ViewModel.RunningGame.RefreshWithChestsCommand" />.
+        ///     <para>
+        ///         <b>No step of its own in the funnel</b>, and that is a decision rather than an
+        ///         omission: the opening reports through the same <c>IProgress&lt;string&gt;</c>
+        ///         as everything else, so it writes into the detail line of "read the values" -
+        ///         chest by chest, with the counter it stops on. A sixth step would stand there
+        ///         greyed out on every run that opens nothing.
+        ///     </para>
+        /// </summary>
+        private readonly bool _openChests;
+
         private bool? _dialogResult;
         private bool _finished;
         private int _current = StepFront;
@@ -172,8 +186,10 @@ namespace Smurftown.UI.MVVM.View
         private IReadOnlyList<RegionChoice> _regionChoices = [];
         private TaskCompletionSource<BattlenetRegion?>? _regionAnswer;
 
-        public RunGuideViewModel()
+        public RunGuideViewModel(bool openChests = false)
         {
+            _openChests = openChests;
+
             Steps =
             [
                 new RunStep(Strings.Current["run.stepFront"], RunStepState.Pending, ""),
@@ -329,7 +345,8 @@ namespace Smurftown.UI.MVVM.View
             // first place. ApplyProfile refuses anything else, and that refusal is the last
             // floor before data.yaml.
             await Task.Run(() => HotsReadout.ReadAll(session, account, data,
-                reading with { Matches = true }, false, progress, changes, problems), _cancel.Token);
+                reading with { Matches = true }, _openChests, progress, changes, problems),
+                _cancel.Token);
 
             data.ReadAt = DateTime.Now;
 

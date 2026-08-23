@@ -336,7 +336,7 @@ clientLanguage: German    # German | English | French | SpanishSpain | SpanishLa
 appLanguage: German       # English | German | French | Spanish
 ```
 
-**The update check is deliberately not among them.** It runs daily and has no switch; the reasoning
+**The update check is deliberately not among them.** It runs hourly and has no switch; the reasoning
 is in [self-update.md](self-update.md#there-is-no-setting). A `checkForUpdates` key in an existing
 file is a leftover and is ignored. The `ABOUT & UPDATES` card at the foot of the tab *shows* the
 check — version, date of the last one, whether this build may replace itself — and its `Check now`

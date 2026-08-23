@@ -32,10 +32,12 @@ namespace Smurftown.UI.MVVM.ViewModel
             // same reason: a list of individual names is incomplete by the next addition.
             Strings.Changed += () => OnPropertyChanged(string.Empty);
 
-            // NOT awaited, and that is the point: the window must not wait for a network
-            // request. What can be shown without one - the version the last run found - is
-            // already on screen when this returns, the rest arrives a moment later.
-            _ = UpdateOffer.Instance.Look();
+            // Looks now and keeps looking - the check runs hourly and this window is one
+            // people leave open, so a start-only look would show the state of the morning.
+            // Nothing is awaited here, and that is the point: the window must not wait for a
+            // network request. What can be shown without one - the version the last run found
+            // - is already on screen when this returns, the rest arrives a moment later.
+            UpdateOffer.Instance.Watch();
 
             // Starts the poll for a running game client, and hands over the dialog owner in
             // the same call: the region question needs a ViewModel whose view carries

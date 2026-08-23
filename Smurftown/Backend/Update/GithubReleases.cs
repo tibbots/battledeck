@@ -62,7 +62,8 @@ namespace Smurftown.Backend.Update
     ///         public repository, so the releases API answers without a token - no secret on
     ///         any machine, nothing that expires, nothing that could leak out of a shipped
     ///         binary. The price is the unauthenticated rate limit of 60 requests per hour and
-    ///         IP address, which a check running once a day does not come close to.
+    ///         IP address, which a check running once an hour does not come close to - it
+    ///         spends one of the sixty, and only while the application is open.
     ///     </para>
     ///     <para>
     ///         <b>This is the only outbound traffic the application has.</b> It sends a URL and

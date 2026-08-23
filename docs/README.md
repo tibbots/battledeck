@@ -20,7 +20,7 @@ the rest.
 | [ui-layout.md](ui-layout.md) | the pixel budgets: window and modals, filter bar, account row, dialogs |
 | [localisation.md](localisation.md) | the four languages the UI speaks and the five vocabularies the OCR compares against |
 | [game-integration.md](game-integration.md) | starting the game, logging in, and reading rank, heroes and currencies back out |
-| [self-update.md](self-update.md) | the daily check, when the app may replace itself, and what the checksum does and does not prove |
+| [self-update.md](self-update.md) | the hourly check, when the app may replace itself, and what the checksum does and does not prove |
 | [security.md](security.md) | the deliberate trade-offs — and why no screenshot may show the real account list |
 
 ## Knowledge that stays true elsewhere too

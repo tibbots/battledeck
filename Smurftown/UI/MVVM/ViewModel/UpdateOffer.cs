@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Serilog;
@@ -54,7 +55,24 @@ namespace Smurftown.UI.MVVM.ViewModel
     /// </summary>
     public sealed class UpdateOffer : ObservableObject
     {
+        /// <summary>
+        ///     How often the clock is asked - <b>not</b> how often GitHub is asked. That
+        ///     interval is <see cref="UpdateGateway.Interval" /> and is an hour; this tick only
+        ///     compares two time stamps and returns.
+        ///     <para>
+        ///         <b>Ten minutes and not sixty, and the difference is the whole reason the
+        ///         number is not the interval.</b> A tick every hour lands against an hourly
+        ///         deadline it misses by whatever the start-up took - the check then comes due
+        ///         seconds after the tick that just decided against it, and the next answer is
+        ///         an hour late. At ten minutes the worst case is ten minutes late, and the
+        ///         five ticks in between cost a subtraction each.
+        ///     </para>
+        /// </summary>
+        private static readonly TimeSpan Tick = TimeSpan.FromMinutes(10);
+
         public static readonly UpdateOffer Instance = new();
+
+        private DispatcherTimer? _timer;
 
         private UpdateDisplay _display = UpdateDisplay.None;
         private string _offered = "";
@@ -281,10 +299,52 @@ namespace Smurftown.UI.MVVM.ViewModel
         }
 
         /// <summary>
-        ///     Looks for a newer version - first in what the last run noted, then, if the day
-        ///     is up, on the network. Called once at startup and never awaited: the window
-        ///     must not wait for a request.
+        ///     Looks for a newer version - first in what the last run noted, then, if the hour
+        ///     is up, on the network. Called at startup and by <see cref="Watch" /> afterwards,
+        ///     never awaited: the window must not wait for a request.
+        ///     <para>
+        ///         <b>Callable as often as one likes.</b> Whether it costs a request is decided
+        ///         by <see cref="UpdateGateway.Due" />, and a run in progress is safe from it -
+        ///         <see cref="ShowOffer" /> refuses to touch the display while the state is
+        ///         <see cref="UpdateDisplay.Busy" /> or <see cref="UpdateDisplay.Failed" />.
+        ///     </para>
         /// </summary>
+        /// <summary>
+        ///     Looks once now and keeps looking for as long as the application is open.
+        ///     <para>
+        ///         <b>Why this exists at all</b>: until 23.08.2026 the check ran at start and
+        ///         nowhere else, on the reasoning that a session rarely lasts long enough for a
+        ///         timer to fire. That reasoning held for a daily interval and stopped holding
+        ///         for an hourly one - a window that has been open since morning would
+        ///         otherwise show the state it had at the moment it opened, and this
+        ///         application is one people leave open.
+        ///     </para>
+        ///     <para>
+        ///         <b>It says nothing when it finds something</b>, deliberately: the chip in the
+        ///         header changes and that is all. A toast in the middle of somebody's afternoon
+        ///         would be the application interrupting them over a version they can install
+        ///         whenever they like.
+        ///     </para>
+        ///     <para>
+        ///         <c>DispatcherTimer</c> like <see cref="RunningGame" />: the tick continues on
+        ///         the UI thread, which is where the properties behind the chip are read from.
+        ///         Started once - a second call is ignored rather than opening a second timer,
+        ///         because this is a singleton with two callers' worth of temptation.
+        ///     </para>
+        /// </summary>
+        public void Watch()
+        {
+            // The first look is not the timer's - it has to happen now, so the chip carries
+            // the version the last run noted before the first frame is drawn.
+            _ = Look();
+
+            if (_timer != null) return;
+
+            _timer = new DispatcherTimer { Interval = Tick };
+            _timer.Tick += (_, _) => _ = Look();
+            _timer.Start();
+        }
+
         public async Task Look()
         {
             try

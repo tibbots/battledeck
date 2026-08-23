@@ -28,6 +28,14 @@ One flow, four exits: start → log in → **stop here**, or read and then leave
 **open**, **close** it, or first **open the loot chests**, then read and close. Which one applies
 is chosen in the start menu of the row (see the button column in [`ui-layout.md`](ui-layout.md)).
 
+**The chip offers two of the four**, and it has to offer a choice at all for the same reason the
+row does: opening the chests is the expensive half. Reading takes seconds, emptying a stack of
+chests takes minutes of space bar, and a chip that always did both would make the cheap case
+unusable. So it opens a menu — *refresh data*, or *open the loot chests and refresh* — and hands
+the answer through `RunGuideViewModel` to the `openChests` flag of `HotsReadout.ReadAll`. The two
+exits that **start** the game are not among them: the client is already running, and the two that
+**close** it would sign out a human who is sitting in front of it.
+
 **Only one run at a time**, whichever entrance it came through. Two flows clicking into the same
 client take turns bringing the window to the front, and every click then lands on whatever screen
 the other one just opened. `RunningGame.TryBegin` is the one flag both take; a second run is

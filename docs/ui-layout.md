@@ -596,6 +596,16 @@ The main window has two tabs, **ACCOUNTS** and **SETTINGS**, top left beside the
   below it. It is an overlay inside the window and not a `Popup`: a popup opens a window of its own,
   which in a `WindowStyle="None"` window is placed against the screen rather than against the
   frame. Whoever changes the two row heights recalculates the 74.
+- **Left of the version sits the chip for a running game client**, and its menu is the second
+  overlay of this window — same 74 from the top, same 10 from the right, **360** wide. It hangs off
+  the window's right edge and not off its own chip: the version chip beside it is as wide as its
+  text, so any offset computed here would stop being true at a version with more digits. At 360 it
+  covers the chip regardless — that one ends about 105 from the right edge and is 90 wide.
+- **Its 360 is the start menu's 360, and for the same reason.** Two entries with an icon (22), a
+  gap (10) and margins (32) leave the subtitle `surface − 64`. Measured with `FormattedText`,
+  Segoe UI 11: German **280.7**, French 278.4, Spanish 278.1, English 238.9. At 300 wide the 236
+  available carried none of them. The hints additionally wrap instead of truncating — a cut-off
+  subtitle says nothing about being cut off.
 
 ### The settings tab
 

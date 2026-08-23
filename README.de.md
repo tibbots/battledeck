@@ -8,7 +8,7 @@ auslesen.
 
 Nur für Windows. Kein Konto, keine Telemetrie, keine Daten über dich irgendwo außer auf deinem
 Rechner: Alles liegt in `C:\Users\YOUR_USER\.smurftown`. Die App stellt **genau eine** Anfrage,
-einmal am Tag — sie fragt GitHub, ob es eine neuere Version gibt. [Was das ist und was es nicht
+einmal pro Stunde — sie fragt GitHub, ob es eine neuere Version gibt. [Was das ist und was es nicht
 ist](#updates).
 
 ![Die Kontenliste](docs/images/overview.png)
@@ -185,10 +185,11 @@ falsch heraus.
 
 ## Updates
 
-Einmal am Tag fragt Smurftown beim Start bei GitHub nach, ob es einen neueren Release gibt. Die
-Anfrage ist anonym und enthält nichts über dich, deine Konten oder das, was du damit gemacht hast
-— es ist dieselbe Frage, die jeder an ein öffentliches Repository stellen kann. Gibt es etwas
-Neueres, sagt das der Versions-Chip oben rechts; ein Klick öffnet dies:
+Einmal pro Stunde, solange sie geöffnet ist, fragt Smurftown bei GitHub nach, ob es einen
+neueren Release gibt. Die Anfrage ist anonym und enthält nichts über dich, deine Konten oder
+das, was du damit gemacht hast — es ist dieselbe Frage, die jeder an ein öffentliches
+Repository stellen kann. Gibt es etwas Neueres, sagt das der Versions-Chip oben rechts; ein
+Klick öffnet dies:
 
 ![Das Update-Angebot](docs/images/update-offer.png)
 
@@ -250,7 +251,7 @@ Voraussetzungen:
 Von [Releases](https://github.com/tibbots/smurftown/releases).
 
 ### Sendet oder empfängt diese App Daten von einem Server im Internet?
-Einmal am Tag fragt sie bei `api.github.com` nach, ob es einen neueren Release gibt — anonym und
+Einmal pro Stunde fragt sie bei `api.github.com` nach, ob es einen neueren Release gibt — anonym und
 ohne irgendetwas über dich oder deine Konten in der Anfrage. Nimmst du das Angebot an, lädt sie
 diesen Release ebenfalls von GitHub. Das ist der gesamte Verkehr, den diese App von sich aus
 erzeugt; siehe [Updates](#updates). Alles andere passiert auf diesem Rechner, und das Einzige, was

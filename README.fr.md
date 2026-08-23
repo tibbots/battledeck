@@ -8,7 +8,7 @@ depuis la partie en cours.
 
 Windows uniquement. Pas de compte, pas de télémétrie, aucune donnée vous concernant ailleurs que
 sur votre machine : tout est conservé dans `C:\Users\YOUR_USER\.smurftown`. L'application émet
-**exactement une** requête, une fois par jour — elle demande à GitHub s'il existe une version plus
+**exactement une** requête, une fois par heure — elle demande à GitHub s'il existe une version plus
 récente. [Ce que c'est, et ce que ce n'est pas](#updates).
 
 ![La liste des comptes](docs/images/overview.png)
@@ -183,10 +183,11 @@ le jeu, et chaque mesure devient fausse.
 
 ## Updates
 
-Une fois par jour, au démarrage, Smurftown demande à GitHub s'il existe une version plus récente.
-La requête est anonyme et ne transporte rien vous concernant, ni vos comptes, ni ce que vous en
-avez fait — c'est la même question que n'importe qui peut poser à un dépôt public. S'il y a du
-nouveau, la pastille de version en haut à droite le signale ; un clic ouvre ceci :
+Une fois par heure, tant qu'elle est ouverte, Smurftown demande à GitHub s'il existe une
+version plus récente. La requête est anonyme et ne transporte rien vous concernant, ni vos
+comptes, ni ce que vous en avez fait — c'est la même question que n'importe qui peut poser à
+un dépôt public. S'il y a du nouveau, la pastille de version en haut à droite le signale ; un
+clic ouvre ceci :
 
 ![La proposition de mise à jour](docs/images/update-offer.png)
 
@@ -252,7 +253,7 @@ Prérequis :
 Depuis [Releases](https://github.com/tibbots/smurftown/releases).
 
 ### Cette application envoie-t-elle ou reçoit-elle des données depuis un serveur sur internet ?
-Une fois par jour, elle demande à `api.github.com` s'il existe une version plus récente — de
+Une fois par heure, elle demande à `api.github.com` s'il existe une version plus récente — de
 façon anonyme, sans rien sur vous ni sur vos comptes dans la requête. Si vous acceptez la
 proposition, elle télécharge également cette version depuis GitHub. C'est tout le trafic que
 cette application produit d'elle-même ; voir [Updates](#updates). Tout le reste se passe sur

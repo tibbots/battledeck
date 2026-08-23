@@ -8,7 +8,7 @@ directamente del juego en marcha.
 
 Solo para Windows. Sin cuenta, sin telemetría, sin ningún dato sobre ti fuera de tu propia
 máquina: todo se guarda en `C:\Users\YOUR_USER\.smurftown`. La aplicación hace **exactamente
-una** petición, una vez al día: le pregunta a GitHub si existe una versión más reciente. [Qué es
+una** petición, una vez a la hora: le pregunta a GitHub si existe una versión más reciente. [Qué es
 eso, y qué no es](#updates).
 
 ![La lista de cuentas](docs/images/overview.png)
@@ -181,11 +181,11 @@ las medidas salen mal.
 
 ## Updates
 
-Una vez al día, al arrancar, Smurftown le pregunta a GitHub si existe una versión más reciente.
-La petición es anónima y no lleva nada sobre ti, sobre tus cuentas ni sobre lo que hayas hecho
-con ellas: es la misma pregunta que cualquiera puede hacerle a un repositorio público. Si hay
-algo más nuevo, la insignia de versión de la esquina superior derecha lo indica; un clic abre
-esto:
+Una vez a la hora, mientras está abierta, Smurftown le pregunta a GitHub si existe una versión
+más reciente. La petición es anónima y no lleva nada sobre ti, sobre tus cuentas ni sobre lo
+que hayas hecho con ellas: es la misma pregunta que cualquiera puede hacerle a un repositorio
+público. Si hay algo más nuevo, la insignia de versión de la esquina superior derecha lo
+indica; un clic abre esto:
 
 ![La oferta de actualización](docs/images/update-offer.png)
 
@@ -249,7 +249,7 @@ Requisitos:
 Desde [Releases](https://github.com/tibbots/smurftown/releases).
 
 ### ¿Esta aplicación envía o recibe datos de algún servidor en internet?
-Una vez al día le pregunta a `api.github.com` si existe una versión más reciente, de forma
+Una vez a la hora le pregunta a `api.github.com` si existe una versión más reciente, de forma
 anónima y sin nada sobre ti ni sobre tus cuentas en la petición. Si aceptas la oferta, también
 descarga esa versión desde GitHub. Ese es todo el tráfico que esta aplicación genera por su
 cuenta; véase [Updates](#updates). Todo lo demás ocurre en esta máquina, y lo único que sale

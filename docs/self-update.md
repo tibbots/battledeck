@@ -1,6 +1,6 @@
 # The update check
 
-Smurftown asks GitHub once a day whether a newer release exists, and can put it in place itself.
+Smurftown asks GitHub once an hour whether a newer release exists, and can put it in place itself.
 This is the **only** thing the application ever sends anywhere — everything else it does happens on
 this machine. What that costs and what it does not is in [security.md](security.md#the-update-check);
 this file is about how it works.
@@ -12,15 +12,19 @@ App.OnStartup
   │
   ├─ UpdateInstaller.CleanUpPrevious()     delete Smurftown.exe.old, if it is free by now
   │
-  └─ MainWindow  ──►  UpdateOffer.Look()
+  └─ MainWindow  ──►  UpdateOffer.Watch()
                         │
-                        ├─ ShowOffer(update.yaml : latestVersion)   ← no network, first frame
+                        ├─ Look()                          once, now
+                        │    │
+                        │    ├─ ShowOffer(update.yaml : latestVersion)  ← no network, first frame
+                        │    │
+                        │    └─ await UpdateGateway.CheckIfDue()   ← only if an hour has passed
+                        │         │
+                        │         └─ GithubReleases.Latest()   api.github.com, anonymous
+                        │              │
+                        │              └─ ShowOffer(...)  again, from the same place
                         │
-                        └─ await UpdateGateway.CheckIfDue()         ← only if a day has passed
-                             │
-                             └─ GithubReleases.Latest()   api.github.com, anonymous
-                                  │
-                                  └─ ShowOffer(...)  again, from the same place
+                        └─ DispatcherTimer, every 10 min  ──►  Look()   for as long as the app is open
 ```
 
 **Two places show this, and they are the same object.** The version chip sits in the top right
@@ -42,17 +46,35 @@ the human reads *why* they have to do it by hand instead of finding out after a 
 | Actor | What it is | Its part here |
 |---|---|---|
 | `GithubReleases` | a static class in `Backend/Update/` | asks the releases API, returns the release or null |
-| `UpdateGateway` | hand-written singleton, same pattern as the other gateways | owns `update.yaml`, decides whether a day has passed |
+| `UpdateGateway` | hand-written singleton, same pattern as the other gateways | owns `update.yaml`, decides whether an hour has passed |
 | `UpdateInstaller` | a static class beside them | downloads, verifies, swaps the `.exe`, cleans up afterwards |
 | `UpdateOffer` | one ViewModel object, used by two views | holds the four display states and runs the install |
 
 ## Why the clock lives in a file
 
-A timer is the obvious way to read "once a day" and is the wrong one here. Smurftown is opened,
-used and closed again; a session rarely lasts long enough to reach the hour at which a timer would
-fire, and where it does, it fires at somebody clicking through their accounts. So the clock runs
-**across** starts: `~/.smurftown/update.yaml` holds the time of the last request, and a start that
-finds it more than a day old does the check.
+**A timer alone would be wrong, and a file alone is no longer enough.** Both exist, and each covers
+what the other cannot.
+
+The file is the clock: `~/.smurftown/update.yaml` holds the time of the last request, and any look
+that finds it more than an hour old does the check. That is what makes the interval survive a
+restart — Smurftown is opened, used and closed again, and an interval that lived in a timer would
+start over on every one of those, so an application opened five times in an afternoon would ask
+five times.
+
+The timer is what keeps a **long** session honest. `UpdateOffer.Watch()` looks once at start and
+then ticks every ten minutes, and every tick does nothing but ask the file whether an hour is up.
+Without it, a window that has been open since the morning would still show the answer from the
+morning.
+
+**Ten minutes, and the number is not the interval.** A tick every hour lands against an hourly
+deadline it misses by whatever the start-up took: the check comes due seconds after the tick that
+just decided against it, and the answer arrives an hour late. At ten minutes the worst case is ten
+minutes late, and the five ticks in between cost one subtraction each — no request, no file access,
+nothing that reaches the network.
+
+**Nothing is said when something is found mid-session.** The chip in the header changes and that is
+all: no toast, no dialog. A version that appeared at two in the afternoon can be installed at any
+time, and interrupting somebody over it would buy nothing.
 
 ```yaml
 lastCheck: 2026-08-22T09:14:03.0000000+00:00
@@ -173,7 +195,7 @@ not `x.y.z` is not a tag this repository produces and is therefore not an update
 
 ## There is no setting
 
-The check runs every day and the human cannot switch it off. That is a decision, and it was taken
+The check runs every hour and the human cannot switch it off. That is a decision, and it was taken
 after building the switch and looking at it:
 
 - **The delivery has no other way of reaching anybody.** What ships is a ZIP without an installer
@@ -195,7 +217,7 @@ installation that briefly carried a `checkForUpdates` key keeps it harmlessly �
 runs with `IgnoreUnmatchedProperties()`.
 
 **`Check now` in the settings is not that switch coming back.** It calls `UpdateGateway.Check()`,
-which asks regardless of the clock and writes the same stamp the daily check writes — so it brings
+which asks regardless of the clock and writes the same stamp the hourly check writes — so it brings
 the next check *forward* and cannot postpone or suppress one. What it is really for is the answer
 beside it: `Last checked` is the first thing that ever showed the value in `update.yaml`, and a
 date without a way to refresh it invites the question whether the check still runs at all.
@@ -215,5 +237,6 @@ Two things to know before doing that:
 - **`SMURFTOWN_HOME` survives the restart** (see above), so a run started through
   `tools/test-home.ps1` stays on the test folder across the update.
 
-The rate limit is 60 requests per hour and IP address, unauthenticated. Repeated manual testing
-gets nowhere near it, but a loop would.
+The rate limit is 60 requests per hour and IP address, unauthenticated. The check itself spends one
+of those sixty in the hour it falls into, and only while the application is open; repeated manual
+testing gets nowhere near it either, but a loop would.

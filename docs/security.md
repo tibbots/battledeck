@@ -32,7 +32,7 @@ decided.
 
 ## The update check
 
-**This application makes exactly one request, and it used to make none.** Once a day it asks
+**This application makes exactly one request, and it used to make none.** Once an hour it asks
 `api.github.com` for the newest release of the public repository; if one is newer than what is
 running, it can download and install it. How that works is in
 [self-update.md](self-update.md) — what it costs is here.

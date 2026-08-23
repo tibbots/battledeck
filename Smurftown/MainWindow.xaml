@@ -356,7 +356,7 @@
                  tooltip carries the whole promise - reads the account that is signed in,
                  signs nobody out. -->
             <Button Style="{StaticResource RunningChipTheme}"
-                    Command="{Binding Running.RefreshCommand}"
+                    Command="{Binding Running.OpenMenuCommand}"
                     Visibility="{Binding Running.Visibility}"
                     ToolTip="{Binding Running.Hint}" />
 
@@ -429,7 +429,95 @@
             </Border>
         </Grid>
 
+        <!-- The menu under the RUNNING-CLIENT chip. Same construction as the update panel
+             above, and for the same reasons - an overlay and not a Popup, spanning all three
+             rows so the backdrop covers the window. Whoever changes one of the two changes
+             both; the comment above carries the reasoning.
 
+             THE TWO CANNOT BE OPEN AT ONCE, and nothing enforces it: the backdrop of
+             whichever is open swallows the click on the other chip, so that click closes a
+             panel instead of opening one.
+
+             IT IS RIGHT-ALIGNED TO THE WINDOW and not to the chip, which sits a little
+             further left - the version chip beside it is as wide as its text, and there is no
+             number in this file that would stay true after a version with more digits. At 360
+             wide the menu covers the chip anyway: the chip ends about 105 from the right edge
+             and is 90 wide, so it sits inside the span the menu occupies.
+
+             360 AND NOT 300, for the same reason as the start menu of an account row: after
+             icon (22), spacing (10) and margins (32) the subtitle has exactly surface minus
+             64. Measured with FormattedText, Segoe UI 11, in all four languages:
+
+                 German     280.7   "Rang, Helden und Waehrungen lesen - ein paar Sekunden"
+                 Spanish    278.1
+                 French     278.4
+                 English    238.9
+
+             236 points at 300 wide carried none of them; 296 at 360 carries the longest with
+             15 of reserve. The hints wrap rather than truncate on top of that - a truncated
+             subtitle is silent, it simply stands shorter and nothing reports it. -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" Visibility="{Binding Running.MenuVisibility}">
+            <Button Command="{Binding Running.CloseMenuCommand}">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" />
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- 74 from the top and 10 from the right: the same two numbers as the update
+                 panel, because it hangs off the same 26-point chip row. -->
+            <Border Style="{StaticResource BattlenetMenuSurfaceTheme}"
+                    Width="360" Margin="0,74,10,0"
+                    HorizontalAlignment="Right" VerticalAlignment="Top">
+                <StackPanel>
+                    <!-- The order is not taste: the case somebody wants most often stands on
+                         top. Reading is the everyday one - opening chests happens after a
+                         handful of matches, and it takes minutes rather than seconds. -->
+                    <Button Style="{StaticResource BattlenetMenuItemTheme}"
+                            Command="{Binding Running.RefreshCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Image Grid.Column="0"
+                                   Source="pack://application:,,,/UI/Images/hots.png"
+                                   Width="22" Height="22" Margin="0,0,10,0"
+                                   VerticalAlignment="Center"
+                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Running.MenuRefresh}" Foreground="White"
+                                           FontWeight="DemiBold" FontSize="13" />
+                                <TextBlock Text="{Binding Running.MenuRefreshHint}" Foreground="#8F93A0"
+                                           FontSize="11" Margin="0,1,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+
+                    <Button Style="{StaticResource BattlenetMenuItemTheme}"
+                            Command="{Binding Running.RefreshWithChestsCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Image Grid.Column="0"
+                                   Source="pack://application:,,,/UI/Images/hots.png"
+                                   Width="22" Height="22" Margin="0,0,10,0"
+                                   VerticalAlignment="Center"
+                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Running.MenuChests}" Foreground="White"
+                                           FontWeight="DemiBold" FontSize="13" />
+                                <TextBlock Text="{Binding Running.MenuChestsHint}" Foreground="#8F93A0"
+                                           FontSize="11" Margin="0,1,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
 
     </Grid>
 </Window>

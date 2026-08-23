@@ -14,7 +14,7 @@ Repo: `git@github.com:tibbots/smurftown.git` · default branch `main`.
 
 Local app: no server, no account, no telemetry. All data lives in the user's home directory.
 
-**It makes exactly one request, and it is worth knowing which.** Once a day the app asks
+**It makes exactly one request, and it is worth knowing which.** Once an hour the app asks
 `api.github.com` whether a newer release exists, anonymously and without sending anything about the
 human or their accounts; if one does, it can download and install it itself. That is the whole of
 the outbound traffic, and it is the reason this paragraph no longer reads "no network traffic" —
@@ -66,7 +66,7 @@ rest.
 | [`docs/ui-layout.md`](docs/ui-layout.md) | the pixel budgets: window, filter bar, account row, dialogs |
 | [`docs/localisation.md`](docs/localisation.md) | the four languages the UI speaks and the five vocabularies the OCR compares against |
 | [`docs/game-integration.md`](docs/game-integration.md) | starting the game, logging in, and reading rank, heroes and currencies back out |
-| [`docs/self-update.md`](docs/self-update.md) | the daily check, when the app may replace itself, and what the checksum does and does not prove |
+| [`docs/self-update.md`](docs/self-update.md) | the hourly check, when the app may replace itself, and what the checksum does and does not prove |
 | [`docs/security.md`](docs/security.md) | the deliberate trade-offs — and why no screenshot may show the real account list |
 
 **Knowledge that stays true elsewhere too**, i.e. for the next application that has to drive a game

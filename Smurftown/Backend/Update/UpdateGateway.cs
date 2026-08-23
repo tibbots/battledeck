@@ -12,7 +12,7 @@ namespace Smurftown.Backend.Update
     ///     Reads and writes a <see cref="DateTimeOffset" /> as ONE scalar in round-trip
     ///     format (<c>2026-08-22T18:38:03.0000000+00:00</c>).
     ///     <para>
-    ///         <b>Without it the daily check is not daily.</b> YamlDotNet has no built-in
+    ///         <b>Without it the hourly check is not hourly.</b> YamlDotNet has no built-in
     ///         emitter for this type and falls back to walking its properties, so
     ///         <c>lastCheck</c> came out as a mapping of twenty - <c>dateTime</c>, <c>day</c>,
     ///         <c>dayOfWeek</c>, <c>ticks</c> and the rest. Reading that back produced no
@@ -87,28 +87,44 @@ namespace Smurftown.Backend.Update
     }
 
     /// <summary>
-    ///     Asks once a day whether there is a newer release, and remembers the answer.
+    ///     Asks once an hour whether there is a newer release, and remembers the answer.
     ///     <para>
     ///         Hand-written singleton like <see cref="Gateway.SettingsGateway" /> and
     ///         <see cref="Gateway.BattlenetAccountGateway" /> - no holder, no container, the
     ///         same pattern as everywhere here.
     ///     </para>
     ///     <para>
-    ///         <b>At startup and not on a timer.</b> A timer would be the obvious way to read
-    ///         "once a day" and is the wrong one for this application: Smurftown is opened,
-    ///         used and closed again, so a session rarely reaches the hour at which a timer
-    ///         would fire - and where it does, it fires at a human clicking through their
-    ///         accounts. The clock therefore runs across starts, in the file, and the check
-    ///         happens when a start finds it due.
+    ///         <b>The clock lives in the file and not in a timer</b>, and that stays true even
+    ///         though a timer now exists: <see cref="ViewModel.UpdateOffer" /> asks this
+    ///         gateway every few minutes whether something is due, and the answer comes out of
+    ///         <c>lastCheck</c> in <c>update.yaml</c>. So a session that is closed and reopened
+    ///         does not start the hour over, and one that stays open all afternoon still asks
+    ///         once per hour rather than once at nine in the morning.
+    ///     </para>
+    ///     <para>
+    ///         That split is the reason nothing here knows about a timer. Whoever ticks calls
+    ///         <see cref="CheckIfDue" />; whether that costs a request is decided in
+    ///         <see cref="Due" /> and nowhere else.
     ///     </para>
     /// </summary>
     public sealed class UpdateGateway
     {
         /// <summary>
-        ///     Once a day, as asked for. Any shorter would be pointless - a release does not
-        ///     appear more often than that - and would spend somebody's rate limit on nothing.
+        ///     Once an hour, as asked for.
+        ///     <para>
+        ///         It was a day until 23.08.2026, on the argument that a release does not appear
+        ///         more often than that. True, and beside the point: the cost of the longer
+        ///         interval is not paid by the release, it is paid by the human sitting in front
+        ///         of an application that has been open since morning and shows a version that
+        ///         went stale at noon.
+        ///     </para>
+        ///     <para>
+        ///         An hour is still nothing against the rate limit - see
+        ///         <see cref="GithubReleases" />: 60 requests per hour and IP address,
+        ///         unauthenticated, and this spends one of them.
+        ///     </para>
         /// </summary>
-        public static readonly TimeSpan Interval = TimeSpan.FromDays(1);
+        public static readonly TimeSpan Interval = TimeSpan.FromHours(1);
 
         public static readonly UpdateGateway Instance = new();
 
@@ -159,7 +175,7 @@ namespace Smurftown.Backend.Update
         /// <summary>
         ///     Is a check due?
         ///     <para>
-        ///         <b>There is no switch in front of this.</b> The check runs, every day, and
+        ///         <b>There is no switch in front of this.</b> The check runs, every hour, and
         ///         the human cannot turn it off - a decision taken deliberately, because the
         ///         delivery has no other way of reaching anybody: what ships is a ZIP without an
         ///         installer and without a start menu entry, so nothing else would tell them
