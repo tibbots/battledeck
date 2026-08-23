@@ -49,14 +49,18 @@ def account(name, disc, email, pw, games, regions, notes='', inactive=False, hot
          '  discriminator: "%s"' % disc,
          '  email: %s' % email,
          '  password: %s' % pw,
-         '  overwatch: %s' % str(ow).lower(),
-         '  hots: %s' % str(ho).lower(),
-         '  wow: %s' % str(wo).lower(),
-         '  diablo: %s' % str(di).lower(),
          '  notes: "%s"' % notes,
          '  latestInteractionAt: 2026-08-21T19:40:00',
-         '  regions:']
-    b += ['  - %s' % r for r in regions]
+         '  regionsByGame:']
+    # The regions hang off the game, not off the account - every ticked game gets the
+    # regions of the account, in the display order. An account without a single entry
+    # here has no row at all, so `games` must tick at least one.
+    assert any(games), 'account %s ticks no game' % name
+    for game, ticked in (('hots', ho), ('overwatch', ow), ('wow', wo), ('diablo', di)):
+        if not ticked:
+            continue
+        b.append('    %s:' % game)
+        b += ['    - %s' % r for r in regions]
     b.append('  inactive: %s' % str(inactive).lower())
     if hots_by:
         b.append('  hotsByRegion:')

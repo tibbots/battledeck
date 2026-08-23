@@ -15,9 +15,8 @@ Which of these fields the read from the running game writes is in
 rank, different heroes and different gold in Europe than in the Americas — that is the one fact
 everything below follows from.
 
-**And the region hangs off the game, not off the account** — since 22.08.2026, and that is the
-second fact. Heroes of the Storm can be played in Europe and the Americas while everything else
-runs in Europe only.
+**And the region hangs off the game, not off the account**, and that is the second fact. Heroes of
+the Storm can be played in Europe and the Americas while everything else runs in Europe only.
 
 ```yaml
 regionsByGame:            # key = game id, value = its regions; at least one entry mandatory
@@ -105,56 +104,16 @@ by the predicate.
   `BringToFront` once beforehand.
 - **After every sign-out the region falls back to `Amerika`** — not only after a start.
 
-### The migration of the old file
+### Every account needs a game in a region
 
-It runs **once**, on the first start after the rebuild, and its marker is the empty game map: a
-migrated or newly written file always has at least one game with at least one region.
+An account whose `regionsByGame` is empty produces **no row at all** — and can then no longer be
+repaired either, because the edit button sits in the row that does not exist. The account dialog
+rules that state out; a hand-edited file can still hold it.
 
-**It covers two past states in one pass.** Before 21.08.2026 an account carried a single
-`defaultRegion` plus eleven flat HotS fields; between then and 22.08.2026 a `regions` list plus
-`hotsByRegion`. Both carried the four game booleans.
-
-```
-data.yaml ──► read as BattlenetAccount   ──► the old keys fall away
-     │                                        (IgnoreUnmatchedProperties)
-     └──────► read as LegacyAccount      ──► exactly the old keys
-                        │
-                        ▼
-        regionsByGame = {every ticked game: regions ?? [defaultRegion]}
-        plus, for the older state, hotsByRegion[defaultRegion] = the eleven fields
-                        │
-                        ▼               (the backup already happened at startup,
-              rewrite data.yaml          per version — see Persistence)
-                        │
-                        ▼
-              READ BACK and compare ──deviation──► restore the old state
-                                                   and abort the start
-```
-
-- **The cross product is the honest translation and not the true one.** The old file simply did not
-  know which game was played where. An account with Europe and the Americas and both HotS and WoW
-  therefore ends up with an American WoW entry it may never have had. That is the direction to err
-  in: too much is visible and can be unticked in the dialog, whereas too little would be a row
-  nobody can reach. **Measured against the real file: nothing was invented** — all 28 accounts had
-  exactly one region, so the product is exact for them.
-- **Two reads of the same file, and the second is the point.** The old keys no longer exist on
-  `BattlenetAccount`; `IgnoreUnmatchedProperties` discards them on the first read without comment.
-  Without the `LegacyAccount` pass, rank, heroes and currencies of all 28 accounts would have
-  vanished on the next save — silently, because an empty list looks exactly like a never-read one.
-- **The self-check is not a ritual.** The dangerous failure is not the exception, that one shows.
-  It is the silent round trip: if YamlDotNet wrote the game state but did not recognise it on
-  reading, everything would be gone — and the migration would not run again on the next start,
-  since the game map is populated by then. `VerifyMigration` therefore re-reads the file just
-  written and compares the games and their region counts, plus tier and hero count per region; on
-  deviation the old state is written back and the start aborted.
-- **Migration goes to `defaultRegion`**, not hard-coded to Europe. In practice that was the same
-  thing — all 28 accounts stood on `Europe` — but an account on `Americas` would otherwise have
-  found its rank in the wrong region.
-- **An account with no game ticked gets Heroes of the Storm**, with a warning. The dialog has ruled
-  that state out for a while, but a hand-edited file can still hold it — and without a fallback the
-  account would lose its last row exactly here.
-- **An account without a single read value gets no game state.** "Played" and "has data" are two
-  things, and an empty record in the file would claim the second.
+`BattlenetAccountGateway` therefore repairs it while reading: such an account is set to Heroes of
+the Storm in Europe, and the fallback goes into the log. **Nothing is written for it** — the repair
+stands in memory until the next change to that account saves the file anyway. A read that rewrote
+the file would be a start that changes data nobody asked it to change.
 
 ## HotS ranks
 

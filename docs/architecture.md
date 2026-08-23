@@ -201,8 +201,8 @@ App.OnStartup
   │        └─ yes ──► *.yaml  ──►  backups/{the version in the file, else "unknown"}/
   │                                (an existing folder is NOT overwritten)
   ├─ SettingsGateway.Apply()
-  ├─ BattlenetAccountGateway.Instance    ← forced here, so the migration runs at the start
-  │                                        of the app and not halfway into a window
+  ├─ BattlenetAccountGateway.Instance    ← forced here, so an unreadable data.yaml stops
+  │                                        the start and not the first window
   └─ DataBackup.MarkCurrent()            writes version.txt
 ```
 

@@ -111,8 +111,9 @@ change — the build is no substitute there.
   in CI — the release builds and uploads fine. The full contract is in
   [self-update.md](self-update.md#what-the-release-has-to-look-like). The ZIP's *name* is
   deliberately not part of it: it is searched, not constructed.
-- **New migration**: the backup is already there, per version. What a migration owes is its marker
-  (a state that cannot occur after it ran), a read-back check in the manner of `VerifyMigration`,
+- **New migration**: there is no migration in the code today, so a new one brings its own
+  mechanism with it. The backup is already there, per version. What a migration owes is a marker
+  (a state that cannot occur after it ran), a read-back check before the previous file is let go,
   and a fallback for the account it cannot place — an account without a row cannot be repaired,
   because the edit button sits in the row.
 - **New point in `screen-map.yaml`**: measure at **two** resolutions, otherwise the anchor is guessed.

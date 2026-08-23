@@ -54,15 +54,15 @@
   discriminator: "2481"
   email: smurfking@example.com
   password: demo-pass-01
-  overwatch: true
-  hots: true
-  wow: false
-  diablo: false
   notes: "Main account. EU ranked, AM for fun."
   latestInteractionAt: 2026-08-21T19:40:00
-  regions:
-  - Europe
-  - Americas
+  regionsByGame:
+    hots:
+    - Europe
+    - Americas
+    overwatch:
+    - Europe
+    - Americas
   inactive: false
   hotsByRegion:
     Europe:
@@ -152,14 +152,13 @@
   discriminator: "1177"
   email: nexusnomad@example.com
   password: demo-pass-02
-  overwatch: false
-  hots: true
-  wow: true
-  diablo: false
   notes: ""
   latestInteractionAt: 2026-08-21T19:40:00
-  regions:
-  - Europe
+  regionsByGame:
+    hots:
+    - Europe
+    wow:
+    - Europe
   inactive: false
   hotsByRegion:
     Europe:
@@ -267,14 +266,11 @@
   discriminator: "4092"
   email: ghostlane@example.com
   password: demo-pass-03
-  overwatch: false
-  hots: true
-  wow: false
-  diablo: false
   notes: ""
   latestInteractionAt: 2026-08-21T19:40:00
-  regions:
-  - Europe
+  regionsByGame:
+    hots:
+    - Europe
   inactive: false
   hotsByRegion:
     Europe:
@@ -324,28 +320,24 @@
   discriminator: ""
   email: newcomer@example.com
   password: demo-pass-04
-  overwatch: false
-  hots: true
-  wow: false
-  diablo: false
   notes: ""
   latestInteractionAt: 2026-08-21T19:40:00
-  regions:
-  - Europe
+  regionsByGame:
+    hots:
+    - Europe
   inactive: false
   hotsByRegion: {}
 - name: ARAMANDA
   discriminator: "3311"
   email: aramanda@example.com
   password: demo-pass-05
-  overwatch: false
-  hots: true
-  wow: false
-  diablo: true
   notes: ""
   latestInteractionAt: 2026-08-21T19:40:00
-  regions:
-  - Asia
+  regionsByGame:
+    hots:
+    - Asia
+    diablo:
+    - Asia
   inactive: false
   hotsByRegion:
     Asia:
@@ -372,14 +364,11 @@
   discriminator: "7754"
   email: retiredalt@example.com
   password: demo-pass-06
-  overwatch: false
-  hots: true
-  wow: false
-  diablo: false
   notes: "Season 2 alt, not used any more."
   latestInteractionAt: 2026-08-21T19:40:00
-  regions:
-  - Europe
+  regionsByGame:
+    hots:
+    - Europe
   inactive: true
   hotsByRegion:
     Europe:
@@ -420,14 +409,11 @@
   discriminator: "5006"
   email: lanebully@example.com
   password: demo-pass-07
-  overwatch: false
-  hots: true
-  wow: false
-  diablo: false
   notes: ""
   latestInteractionAt: 2026-08-21T19:40:00
-  regions:
-  - Europe
+  regionsByGame:
+    hots:
+    - Europe
   inactive: false
   hotsByRegion:
     Europe:
@@ -520,14 +506,13 @@
   discriminator: "9120"
   email: silentpush@example.com
   password: demo-pass-08
-  overwatch: true
-  hots: true
-  wow: false
-  diablo: false
   notes: ""
   latestInteractionAt: 2026-08-21T19:40:00
-  regions:
-  - Europe
+  regionsByGame:
+    hots:
+    - Europe
+    overwatch:
+    - Europe
   inactive: false
   hotsByRegion:
     Europe:
@@ -565,15 +550,12 @@
   discriminator: "6633"
   email: towerdive@example.com
   password: demo-pass-09
-  overwatch: false
-  hots: true
-  wow: false
-  diablo: false
   notes: ""
   latestInteractionAt: 2026-08-21T19:40:00
-  regions:
-  - Europe
-  - Americas
+  regionsByGame:
+    hots:
+    - Europe
+    - Americas
   inactive: false
   hotsByRegion:
     Europe:
@@ -630,13 +612,10 @@
   discriminator: "3078"
   email: payloadonly@example.com
   password: demo-pass-10
-  overwatch: true
-  hots: false
-  wow: false
-  diablo: false
   notes: ""
   latestInteractionAt: 2026-08-21T19:40:00
-  regions:
-  - Europe
+  regionsByGame:
+    overwatch:
+    - Europe
   inactive: false
   hotsByRegion: {}

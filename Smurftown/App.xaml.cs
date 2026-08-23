@@ -69,10 +69,10 @@ namespace Smurftown
             // base.OnStartup, which creates the main window.
             SettingsGateway.Instance.Apply();
 
-            // Forces the account file to be read and migrated HERE, rather than whenever the
-            // first view happens to ask for it. Two reasons: the marker below may only be
-            // written once the migration has survived, and a migration that aborts should do
-            // so at the start of the application and not halfway into building a window.
+            // Forces the account file to be read HERE, rather than whenever the first view
+            // happens to ask for it. Two reasons: the marker below may only be written once
+            // the read has survived, and a data.yaml that cannot be read should stop the
+            // application at its start and not halfway into building a window.
             _ = BattlenetAccountGateway.Instance;
 
             // Only now - see DataBackup.MarkCurrent. Everything above may still throw, and
