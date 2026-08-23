@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 
 namespace Smurftown.UI.MVVM
 {
@@ -14,8 +14,8 @@ namespace Smurftown.UI.MVVM
     ///     <para>
     ///         <b>Why the margin:</b> a dialog that fills the window exactly covers it
     ///         completely - the connection between the two is lost. While a dialog is
-    ///         open, the main window is on opacity 0.4 anyway (see
-    ///         <c>AccountsViewModel.ShowDialog</c>); the 24 points make it into a visible
+    ///         open, the main window is dimmed and blurred anyway (see
+    ///         <c>Dialogs.Backdrop</c>); the 24 points make it into a visible
     ///         frame instead of an invisible one.
     ///     </para>
     ///     <para>

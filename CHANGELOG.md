@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 Everything a user of Smurftown would notice from one release to the next.
 
@@ -23,6 +23,11 @@ nothing else on the line.
 
 ### Added
 
+- **Behind a dialog the window is now blurred, not only dimmed.** What stands underneath is still
+  recognisable as your list, but no longer readable — so the eye stays on the dialog that is asking
+  you something. The window comes back the moment the dialog closes, and it does so even when the
+  dialog closes because something went wrong: until now an error inside a dialog left the window
+  dimmed for the rest of the session, with nothing to click that would restore it.
 - **The chip for a running client now offers to open the loot chests as well.** Clicking it opens a
   small menu with two entries: *refresh data*, as before, or *open the loot chests and refresh*,
   which empties every unopened chest first and reads afterwards — so shards, gold and any hero out
@@ -40,6 +45,24 @@ nothing else on the line.
 
 ### Fixed
 
+- **Unopened loot chests were counted as none, and opening them stopped early while reporting
+  success.** The badge on the loot tab is small, and it was the one place read without
+  magnification — which the text recognition does not manage at that size. Three digits it still
+  managed, so the fault appeared only once the number had fallen below a hundred, and from then on
+  it stayed: the count read 0, and opening therefore had nothing left to do.
+- **A count between one and nine is now recognised as "some", even when the number itself cannot
+  be read.** A single digit is something the text recognition does not return at all — not at any
+  magnification, and not from any crop. Smurftown therefore no longer asks it whether the badge
+  shows a number, but whether the badge is there: present means chests are waiting, absent means
+  none are. The number is still read whenever it can be, and the account keeps its previous value
+  instead of dropping to zero when it cannot. Opening runs to the end either way, because it now
+  stops when the badge disappears rather than when the counter reads nothing.
+
+  **Whoever ran the opener and saw it finish early should let it run once more** — the chests it
+  skipped are still there, and the stored count corrects itself with them.
+- **A chest run that loses track now stops and says so.** One round opens one chest, so a counter
+  that drops by more is a misreading and not progress. Until now such a jump was booked as chests
+  opened, which is how a run that opened 21 of 65 could report all 65.
 - **The password in the account dialog came out backwards.** The cursor jumped back to the front
   after every keystroke, so a password typed as `secret` was stored as `terces` — and there is no
   way to read it back on screen, so it was noticed at the login that failed with it. Whoever has an

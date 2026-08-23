@@ -1364,11 +1364,14 @@ namespace Smurftown.UI.MVVM.ViewModel
         /// </summary>
         private void ShowDialog(bool hotsTab = false)
         {
-            Application.Current.MainWindow!.Opacity = 0.4;
             var dialogViewModel = new AddOrEditAccountViewModel(Account!, _row?.Region, hotsTab);
 
-            var success = Dialogs.DialogService.ShowDialog(this, dialogViewModel);
-            Application.Current.MainWindow!.Opacity = 100;
+            bool? success;
+            using (Dialogs.Backdrop())
+            {
+                success = Dialogs.DialogService.ShowDialog(this, dialogViewModel);
+            }
+
             dialogViewModel.Execute(success);
         }
     }

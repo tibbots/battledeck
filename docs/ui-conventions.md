@@ -99,6 +99,21 @@ constructor, right after `InitializeComponent()`.
 - **A new modal calls `FitToMainWindow` too.** Without the call the rule does not apply there, and
   that would only surface when somebody looks.
 
+**Behind a modal the main window steps back** — dimmed to 0.4 and blurred with a radius of 8. Both
+come from one place, `Dialogs.Backdrop()`, and both are taken back when the returned scope is
+disposed.
+
+- **A scope and not two lines per call site.** The same pair of lines stood at four places, two of
+  them restoring with `Opacity = 100` instead of `1.0`, one modal had no treatment at all, and not
+  one of them sat in a `finally`. An exception inside a dialog therefore left the window dimmed for
+  the rest of the session, with nothing left to click that would bring it back.
+- **It restores what it found, not a fixed `1.0`.** A modal opened out of a modal hands back the
+  state of the one underneath instead of resetting it.
+- **The effect sits on the `Window` itself**, which works here because `WindowStyle="None"` leaves
+  no chrome for it to render around.
+- **A new modal opens the scope at its call site** — the same kind of obligation as the
+  `FitToMainWindow` call in its constructor. Two rules, two places, neither of them automatic.
+
 The concrete sizes, the padding reasoning and the scrolling mechanics of the account dialog are in
 [`ui-layout.md`](ui-layout.md).
 

@@ -68,6 +68,15 @@ namespace Smurftown.Backend.Automation
 
         private static readonly TimeSpan CountPause = TimeSpan.FromMilliseconds(800);
 
+        /// <summary>
+        ///     How many rounds a run may take when the starting count could not be read. That
+        ///     happens exactly when the badge shows a lone digit, which text recognition does
+        ///     not return - so at most nine chests are standing there, and fifteen rounds
+        ///     leave room for a swallowed key on several of them without letting a run that
+        ///     never finishes go on for ever.
+        /// </summary>
+        private const int UnknownCeiling = 15;
+
         public static async Task<LootResult> OpenAllAsync(GameSession session,
             IProgress<string>? progress = null, CancellationToken token = default)
         {
@@ -89,54 +98,96 @@ namespace Smurftown.Backend.Automation
 
             await Task.Delay(3000, token);
 
-            var count = await CountWithRetry(session, token);
-            if (count == null)
+            var state = await CountWithRetry(session, token);
+            if (state == null)
             {
                 var path = GameSession.SaveDiagnostic(session.Capture(), "chest-counter-unreadable");
                 return new LootResult(0, null,
                     $"Chest counter unreadable - nothing was opened. Screenshot: {path}");
             }
 
-            if (count == 0) return new LootResult(0, 0, "No unopened chests.");
+            if (!state.AnyLeft) return new LootResult(0, 0, "No unopened chests.");
 
-            var start = count.Value;
+            var start = state.Number;
             var opened = 0;
-            Log.Information("Loot: {Count} unopened chests", start);
+            Log.Information("Loot: {Count} unopened chests", Describe(start));
 
             // The ceiling is the count from the start. No chests are added in the meantime,
-            // so every further round is a sign that something is wrong.
-            while (count > 0 && opened < start)
+            // so every further round is a sign that something is wrong. If the start itself
+            // could not be read, the badge was showing a lone digit - at most nine, see
+            // HeaderReader.HasBadgeBox - and UnknownCeiling leaves room for a swallowed key
+            // on each of them.
+            var ceiling = start ?? UnknownCeiling;
+
+            while (state.AnyLeft && opened < ceiling)
             {
                 token.ThrowIfCancellationRequested();
-                progress?.Report(Strings.FormatForLog("progress.chest", opened + 1, start));
+                progress?.Report(Strings.FormatForLog("progress.chest", opened + 1, ceiling));
 
-                var before = count.Value;
+                var before = state;
                 var after = await OpenOne(session, before, token);
 
-                if (after == null || after >= before)
+                if (after == null)
                 {
                     var path = GameSession.SaveDiagnostic(session.Capture(), "chest-not-opened");
-                    return new LootResult(opened, before,
-                        $"{opened} of {start} chests opened, then the counter stayed at " +
-                        $"{before} - aborted. Screenshot: {path}");
+                    return new LootResult(opened, before.Number,
+                        $"{opened} of {Describe(start)} chests opened, then the counter stayed " +
+                        $"at {Describe(before.Number)} - aborted. Screenshot: {path}");
                 }
 
-                opened += before - after.Value;
-                count = after;
+                if (before.Number is { } was && after.Number is { } now)
+                {
+                    // A ROUND OPENS ONE CHEST, at most two - OpenOne presses again when the
+                    // game swallowed a key, and that retry can carry a second one along. A
+                    // bigger drop is not a faster run, it is a misread counter. Measured on
+                    // 23.08.2026: the badge went unread, came back as 0, and the 44 chests
+                    // still standing were booked as opened in a single round - the run then
+                    // reported "65 chests opened" while 21 had been. There was a guard for a
+                    // counter that does not move and none for one that jumps.
+                    var dropped = was - now;
+                    if (dropped > Attempts)
+                    {
+                        var path = GameSession.SaveDiagnostic(session.Capture(), "chest-counter-jumped");
+                        return new LootResult(opened, before.Number,
+                            $"{opened} of {Describe(start)} chests opened, then the counter " +
+                            $"jumped from {was} to {now} in one round - aborted. " +
+                            $"Screenshot: {path}");
+                    }
+
+                    opened += dropped;
+                }
+                else
+                {
+                    // One of the two sides has no number - the badge is showing a lone digit,
+                    // and text recognition does not return those. The round is then counted
+                    // rather than subtracted, and the badge alone decides when to stop.
+                    opened++;
+                }
+
+                state = after;
             }
 
-            Log.Information("Loot: {Opened} chests opened, {Remaining} left", opened, count);
-            return new LootResult(opened, count,
-                count == 0
+            Log.Information("Loot: {Opened} chests opened, {Remaining} left",
+                opened, Describe(state.Number));
+
+            return new LootResult(opened, state.Number,
+                !state.AnyLeft
                     ? $"{opened} chests opened."
-                    : $"{opened} of {start} chests opened, {count} left.");
+                    : $"{opened} of {Describe(start)} chests opened, {Describe(state.Number)} left.");
+        }
+
+        /// <summary>A count for a message - or a phrase, where none could be read.</summary>
+        private static string Describe(int? count)
+        {
+            return count?.ToString() ?? "an unreadable number of";
         }
 
         /// <summary>
         ///     One chest: open, reveal, accept - the same key three times. Returns the new
-        ///     counter or <c>null</c> if it has not dropped after all attempts.
+        ///     state, or <c>null</c> if nothing moved after all attempts.
         /// </summary>
-        private static async Task<int?> OpenOne(GameSession session, int before, CancellationToken token)
+        private static async Task<LootCount?> OpenOne(GameSession session, LootCount before,
+            CancellationToken token)
         {
             for (var attempt = 1; attempt <= Attempts; attempt++)
             {
@@ -150,16 +201,26 @@ namespace Smurftown.Backend.Automation
                 await Task.Delay(AcceptDelay, token);
 
                 var now = await CountWithRetry(session, token);
-                if (now != null && now < before) return now;
+                if (now == null) continue;
+
+                // Progress shows itself in two ways: the counter dropped, or the badge is
+                // gone altogether. In the range where the number cannot be read at all,
+                // neither side carries one - and then the round counts as done. The badge is
+                // the stop condition there, and the ceiling in the caller bounds how often we
+                // may come back here.
+                if (!now.AnyLeft) return now;
+                if (before.Number is { } was && now.Number is { } left && left < was) return now;
+                if (before.Number == null && now.Number == null) return now;
 
                 Log.Warning("Loot: counter still at {Before} after attempt {Attempt}",
-                    attempt, before);
+                    Describe(before.Number), attempt);
             }
 
             return null;
         }
 
-        private static async Task<int?> CountWithRetry(GameSession session, CancellationToken token)
+        private static async Task<LootCount?> CountWithRetry(GameSession session,
+            CancellationToken token)
         {
             for (var attempt = 1; attempt <= CountAttempts; attempt++)
             {

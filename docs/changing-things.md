@@ -150,7 +150,6 @@ Known, not yet fixed. Do not touch these as drive-by cleanup — each is its own
 | `Backend/ObservableHashSet.cs` | ~490 lines copied from EF Core, **completely unused**. |
 | `UI/MVVM/Controls/BindableRichTextBox.cs`, `View/RichTextBoxHelper.cs` | unused — the notes are written into the ViewModel via a code-behind `TextChanged` instead. |
 | `ErrorBox` / `ErrorBoxViewModel` | reachable only via the commented-out `ShowErrorDialog` route in `MainViewModel`. Effectively dead, errors go out as toasts. |
-| `AccountsViewModel.ShowDialog` and others | `MainWindow.Opacity = 100` instead of `1.0`. WPF clamps it to 1.0, so it works — but it is wrong. |
 | `AddOrEditAccount.xaml` | the `PasswordBox` has both the `PasswordBoxHelper.BoundPassword` attached property **and** a `PasswordChanged` code-behind handler. Two mechanisms for the same thing. |
 | `AccountCardView`, `AccountCardViewModel`, `BattlenetAccountToCardViewModelConverter` | named after a card that no longer exists — it is a row. Deliberately not renamed along: the three names hang off `AccountsView.xaml`, the `x:Class`, the code-behind file and the converter key; a rename is its own task with its own build run. |
 | `AccountCardViewModel.ImageSource` | sets a path to `overwatchhots_full.png` / `overwatch_full.png` / `hots_full.png` that **nobody binds**. Also falls back to the HotS image for accounts with neither Overwatch nor HotS. With it, `overwatchhots_full.png` (3 MB) hangs unused in the build. |

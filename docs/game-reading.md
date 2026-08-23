@@ -1,4 +1,4 @@
-# Reading values out of the running game
+﻿# Reading values out of the running game
 
 These are the procedures behind `GameSession`'s read steps — how rank, heroes, currencies, and
 loot-chest counts actually get pulled out of a running Heroes of the Storm client. Each of them
@@ -129,6 +129,12 @@ next chest — the carousel advances on its own
 - **Two attempts per chest, then abort.** The game occasionally swallows a keypress; a second
   pass catches up and brings a shifted flow back into step. How many chests actually got opened
   is answered afterward by the counter, not by counting keypresses.
+- **A round opens one chest, at most two — a bigger drop is a misread, not progress.** The
+  per-chest retry above means one round can lower the counter by at most `Attempts` (2).
+  `LootOpener` checks that after every round and aborts with a diagnostic capture rather than
+  crediting a larger drop as chests opened. Measured 23.08.2026: an unmagnified badge read came
+  back as 0, the 44 chests still standing were booked as opened in that single round, and the
+  run reported "65 chests opened" while only 21 had actually been.
 - **While a chest is opening, the navigation bar disappears** along with the badge. Reading at
   that moment returns "no BEUTE found" and thus `null` — which here would mean "abort", although
   it was only looked at too early. The counter is therefore read up to three times at 800 ms
@@ -141,10 +147,52 @@ next chest — the carousel advances on its own
   `HeaderReader.CountLootChestsAsync` therefore looks for the line `BEUTE` and, next to it, the
   next pure-digit line within 120 points. `SAMMLUNG`'s badge drops out of consideration because
   it sits to the **left** of `BEUTE`.
-- **Three possible answers, and the last two are not the same**: a number — **0**, when `BEUTE`
-  stands there without a badge (cross-checked against BUBU, where it's absent entirely without
-  chests) — and **null**, when not even the word was read. In that case the screen is a
-  different one, and "no chests" would be a claim we don't actually have.
+- **The badge is read magnified — at magnification 1 it was silently absent, not misread.**
+  `CountLootChestsAsync` reads the capture at `BadgeUpscale` (3), escalating to
+  `BadgeUpscaleRetry` (4) on the same capture if that still finds nothing — the same
+  retry-at-a-different-magnification trick used for cards (see
+  [Per-cell OCR and the second attempt](#per-cell-ocr-and-the-second-attempt)). Measured
+  23.08.2026, German client, 3440×1440, an account with 44 unopened chests, nav-bar crop
+  `{x:0, y:0, width:1300, height:80}`:
+
+  | Magnification | Result |
+  |---|---|
+  | 1 | absent from the result — not misread, simply not returned |
+  | 2 | absent |
+  | 3 | `X=737 W=24 H=15` → `44` |
+  | 4 | `X=736 W=24 H=14` → `44` |
+
+  The `SAMMLUNG` badge in the same reading (`129`, three digits, 33 points wide) is found
+  already at magnification 1; the loot badge (two digits, 24 points wide) is not — two narrow
+  digits sit right on the edge of what unmagnified OCR resolves, three do not. This was the
+  only reading site in `HeaderReader` that skipped magnification.
+- **From one to nine the number cannot be read at all, and no magnification changes that.**
+  `Windows.Media.Ocr` does not return a character standing on its own. Measured 23.08.2026 on a
+  badge reading `9`: absent at magnifications 1, 2, 3, 4, 5, 6 and 12, absent from a crop of the
+  box alone, absent from a crop of the box with its border — and absent from a crop holding
+  `BEUTE`, the badge and `REPLAYS` at once, which returns **the two words and skips the digit
+  between them**. The carousel on the loot page shows the same behaviour from the other side:
+  `Beutetruhe 8` reads as label plus number, while the `8` cropped on its own reads as nothing.
+  What isolates the badge digit is its bright box.
+
+  Ten readings in a row on that badge returned the number three times. So the three attempts in
+  `LootOpener.CountWithRetry` usually get it — and when they do not, the answer below is what
+  keeps that from becoming a zero.
+- **Whether a badge is there at all is decided on pixels, not on text.** `HasBadgeBox` counts the
+  bright violet of the badge border in the window between the end of the word and the start of
+  the next recognised line, at most `badgeReach` beyond it. Measured: **379** such pixels of 6640
+  with a badge showing `9`, and **0** of 3680 with none — the latter with `BEUTE` as the active
+  tab, glow included, and the divider inside the window. The threshold sits at one percent.
+
+  **The window closes at the next line, and that is what makes it survive the reflow.** With the
+  badge gone, `REPLAYS` moved from 799 to 762 in the same measurement. Both edges come out of the
+  same reading, so the window follows.
+- **Four answers, and the two in the middle are the point**: a **number**, when it was read —
+  **"some, but unread"**, when no digits came back and the badge box is there — **0**, when
+  neither is there — and **null**, when not even the word `BEUTE` was read. In that last case the
+  screen is a different one, and "no chests" would be a claim we don't actually have. Only the
+  first and the third ever reach `data.yaml`; "some, but unread" leaves the stored value alone
+  rather than replacing it with a wrong zero.
 - **Opened before reading.** A chest drops shards, gold, and occasionally a hero. Reading first
   would leave the previous state in `data.yaml` — and that state is wrong from the very first
   chest opened onward.

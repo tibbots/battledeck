@@ -452,9 +452,12 @@ namespace Smurftown.UI.MVVM.ViewModel
         private void OpenHeroFilter()
         {
             var picker = new HeroPickerViewModel(_heroFilter, HeroPickerMode.Filter);
-            Application.Current.MainWindow!.Opacity = 0.4;
-            Dialogs.DialogService.ShowDialog(this, picker);
-            Application.Current.MainWindow!.Opacity = 1.0;
+
+            using (Dialogs.Backdrop())
+            {
+                Dialogs.DialogService.ShowDialog(this, picker);
+            }
+
             HeroFilter = picker.SelectedIds;
         }
 
@@ -474,9 +477,11 @@ namespace Smurftown.UI.MVVM.ViewModel
         {
             var picker = new HeroPickerViewModel(_rotationGateway.Free, HeroPickerMode.Rotation,
                 HotsRotationPeriod.Label(_rotationGateway.CurrentPeriod));
-            Application.Current.MainWindow!.Opacity = 0.4;
-            Dialogs.DialogService.ShowDialog(this, picker);
-            Application.Current.MainWindow!.Opacity = 1.0;
+            using (Dialogs.Backdrop())
+            {
+                Dialogs.DialogService.ShowDialog(this, picker);
+            }
+
             _rotationGateway.Save(picker.SelectedIds);
             RefreshRotation();
         }
@@ -491,11 +496,14 @@ namespace Smurftown.UI.MVVM.ViewModel
 
         private void ShowDialog(Func<AddOrEditAccountViewModel, bool?> showDialog)
         {
-            Application.Current.MainWindow!.Opacity = 0.4;
             var dialogViewModel = new AddOrEditAccountViewModel(null);
 
-            var success = showDialog(dialogViewModel);
-            Application.Current.MainWindow!.Opacity = 100;
+            bool? success;
+            using (Dialogs.Backdrop())
+            {
+                success = showDialog(dialogViewModel);
+            }
+
             dialogViewModel.Execute(success);
         }
 

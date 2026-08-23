@@ -296,7 +296,10 @@ namespace Smurftown.UI.MVVM.ViewModel
 
             try
             {
-                Dialogs.DialogService.ShowDialog(_dialogOwner!, new RunGuideViewModel(openChests));
+                using (Dialogs.Backdrop())
+                {
+                    Dialogs.DialogService.ShowDialog(_dialogOwner!, new RunGuideViewModel(openChests));
+                }
             }
             finally
             {
