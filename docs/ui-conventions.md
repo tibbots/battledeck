@@ -1,4 +1,4 @@
-# MVVM conventions (as they are actually done here)
+﻿# MVVM conventions (as they are actually done here)
 
 The code is not textbook MVVM. Stick to the existing pattern rather than "correcting" individual
 places — partial migrations make the codebase less consistent than it is.
@@ -350,7 +350,7 @@ four dropdowns scrolled.
 
 - **The explanations are unchanged and hang on an info sign** beside the label (`ContentControl`
   with `BattlenetInfoIconTheme`, the text as its `ToolTip`). They are the same `settings.*Hint`
-  keys as before, so nothing was rewritten and `check-texts.py` stays green.
+  keys as before, so nothing was rewritten and `TextsTests` stays green.
 - **What stays on screen is what changes with the choice**: `Measured against the running client`
   beside the client language, `Half the pauses` beside the speed, the warning about a path that no
   longer exists, the progress of a running scan. Those belong next to the control, not at the end

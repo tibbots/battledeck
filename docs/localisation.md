@@ -1,4 +1,4 @@
-# Language
+﻿# Language
 
 Which language Smurftown speaks, and which words the text recognition compares against. Two
 questions, and the whole point of this file is that they are not one.
@@ -74,17 +74,21 @@ Latin America, ten names diverge. A word like "Guardar" does not separate the tw
 second file would be the same file twice.
 
 **A missing key does not surface at build time.** XAML does not know the keys, C# sees only a
-string, and `Strings` falls back to English silently. Against that stands
-`python tools/check-texts.py`: it verifies that every used key exists, that no orphans lie
-around, that all four files have the same keys — and that **each key has the same placeholders**
+string, and `Strings` falls back to English silently. Against that stands `TextsTests` in
+`Smurftown.Tests`, run by `./dev test` and by both CI workflows: it verifies that every used key
+exists, that all four files have the same keys — and that **each key has the same placeholders**
 in every file. The last point is the important one: a `{2}` in a text that gets only two values
 would otherwise be permanently broken in exactly one language. `Strings.Format` does catch the
-`FormatException` and fall back to English, but nobody would have noticed.
+`FormatException` and falls back to English, but nobody would have noticed.
+
+It also watches the other direction: **visible text in a view that never went through
+`{loc:Str}`** — as an attribute and as element content, both of which have slipped through before
+and were found only by looking at the running application in a language where it stood out.
 
 > **And a `: ` in an unquoted value breaks the whole file.** YAML turns it into a nested mapping;
 > measured on `settings.inputSpeedHint`, whose English text contains "…is not affected: a shorter
-> wait…". Our own check script is more forgiving here than YamlDotNet — the cross-check therefore
-> ran with a real YAML parser.
+> wait…". The test reads the files with **YamlDotNet**, the same parser the application uses, so
+> it breaks on that too rather than quietly reading past it.
 
 **Five labels sit in fixed widths** and get truncated when a translation grows longer, without
 anything being reported anywhere. The limits are tabulated at the top of `en.yaml`. The most

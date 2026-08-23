@@ -12,7 +12,7 @@ Two rules that used to open this list are not change steps but working practice,
 change — the build is no substitute there.
 
 - **New text for humans: a key in all four language files** — `Backend/Texts/*.yaml`, English wording
-  into `en.yaml`, then `python tools/check-texts.py`. In XAML `{loc:Str key}` fetches it, in C#
+  into `en.yaml`, then `./dev test`. In XAML `{loc:Str key}` fetches it, in C#
   `Strings.Current["key"]` or `Strings.Format(...)` for placeholders. A missing line does **not**
   surface at build time.
 - **New output to the log: English, and without the detour via `Strings`** — see

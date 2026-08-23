@@ -123,7 +123,6 @@ tools/                   not part of the solution - asset generators and drivers
   gen-demo-data.py         generates tools/demo-data.yaml
   demo-data.yaml           ten invented accounts held in reserve - NEVER photograph the real
                            list, the repo is public
-  check-texts.py           the same checks as TextsTests, runnable without a build
   smurftown-home.ps1       resolves the data folder the way Directories.cs does - the one
                            place the other scripts ask
   test-home.ps1            demo data into a throwaway folder, SMURFTOWN_HOME set, app started
