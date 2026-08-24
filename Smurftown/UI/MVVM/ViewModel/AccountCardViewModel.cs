@@ -107,11 +107,11 @@ namespace Smurftown.UI.MVVM.ViewModel
         private string _hotsHint = "";
         private Visibility _hots;
 
-        private string _imageSource;
+        private string _imageSource = "";
 
 
         private RelayCommand<string>? _runStartOptionCommand;
-        private RelayCommand _openSettingsCommand;
+        private RelayCommand? _openSettingsCommand;
 
         private bool _startMenuOpen;
         private bool _actionsMenuOpen;

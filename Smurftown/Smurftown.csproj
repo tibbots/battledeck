@@ -52,8 +52,12 @@
       <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.1-dev-10391"/>
       <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
       <PackageReference Include="Serilog.Sinks.File" Version="5.0.1-dev-00972"/>
-    <PackageReference Include="ToastNotifications" Version="2.5.1" />
-    <PackageReference Include="ToastNotifications.Messages" Version="2.5.1" />
+    <!-- NU1701: both packages are .NET-Framework-only (net461-net481) and restore with a
+         compatibility warning under net8.0-windows - a known, accepted mismatch (see the
+         Stack table in CLAUDE.md), not something to fix by swapping the package. Suppressed
+         narrowly per package, not project-wide. -->
+    <PackageReference Include="ToastNotifications" Version="2.5.1" NoWarn="NU1701" />
+    <PackageReference Include="ToastNotifications.Messages" Version="2.5.1" NoWarn="NU1701" />
     <PackageReference Include="YamlDotNet" Version="15.1.6" />
   </ItemGroup>
 

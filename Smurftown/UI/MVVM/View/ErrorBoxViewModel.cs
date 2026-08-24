@@ -13,7 +13,7 @@ namespace Smurftown.UI.MVVM.View
     public class ErrorBoxViewModel: ObservableObject, IModalDialogViewModel
     {
 
-		private string _errorMessage;
+		private string _errorMessage = "";
         private bool? _dialogResult;
 
         public string ErrorMessage

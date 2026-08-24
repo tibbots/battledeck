@@ -11,7 +11,7 @@ namespace Smurftown.UI.MVVM.Controls
                 typeof(Uri), typeof(BindableRichTextBox),
                 new PropertyMetadata(OnSourceChanged));
 
-        public Uri Source
+        public Uri? Source
         {
             get => GetValue(SourceProperty) as Uri;
             set => SetValue(SourceProperty, value);

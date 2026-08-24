@@ -5,7 +5,7 @@ namespace Smurftown.Backend.Entity
     public class BattlenetAccount : IComparable<BattlenetAccount>
     {
         private string _discriminator = "";
-        private string _email;
+        private string _email = "";
         private string _name = "";
         private Dictionary<string, List<BattlenetRegion>> _regionsByGame = new();
 

@@ -19,19 +19,19 @@ namespace Smurftown.UI.MVVM.ViewModel
         private static readonly HotsRotationGateway _rotationGateway = HotsRotationGateway.Instance;
         private ICollectionView _accountRows;
         private BattlenetRegion _regionFilter = BattlenetRegion.Europe;
-        private RelayCommand _clearHeroFilterCommand;
-        private RelayCommand _createAccountCommand;
-        private RelayCommand _editRotationCommand;
+        private RelayCommand? _clearHeroFilterCommand;
+        private RelayCommand? _createAccountCommand;
+        private RelayCommand? _editRotationCommand;
         private string? _gameFilter;
         private List<string> _heroFilter = [];
-        private RelayCommand _openHeroFilterCommand;
-        private string _searchQuery;
+        private RelayCommand? _openHeroFilterCommand;
+        private string _searchQuery = "";
         private bool _showArchived;
 
         public AccountsViewModel()
         {
             _battlenetAccountGateway.Reload();
-            AccountRows = _battlenetAccountGateway.AccountRegionsFiltered;
+            _accountRows = _battlenetAccountGateway.AccountRegionsFiltered;
 
             // The same applies to the region: always exactly one, at start Europe - the
             // normal case, and until 21.08.2026 the only one that existed.

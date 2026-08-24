@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -31,7 +32,7 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
     private List<string> _hotsHeroes = [];
     private int _hotsPenaltyGames;
     private HotsRankTier _hotsTier;
-    private string _notes;
+    private string _notes = "";
     private bool _placementsPending;
 
     /// <summary>
@@ -458,6 +459,7 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
     ///     the hero selection: <see cref="HeroPickerViewModel" /> keeps its own selection, a
     ///     mere re-set of the list would not reach it.
     /// </summary>
+    [MemberNotNull(nameof(_heroPicker))]
     private void LoadRegion(BattlenetRegion region)
     {
         _editRegion = region;
@@ -478,7 +480,13 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
         // The same area as in the hero filter, just embedded: HeroPickerView hangs in the
         // HotS tab. The ViewModel lives as long as the region being edited and IS the source
         // of the selection - it is only read when stashing, exactly like with the rank.
-        HeroPicker = new HeroPickerViewModel(_hotsHeroes, HeroPickerMode.Owned, "", true);
+        //
+        // Assigned to the field directly, not through the HeroPicker property: this is always
+        // a freshly constructed instance, so the property setter's equality check would never
+        // skip the notification anyway - and the direct assignment is what lets the compiler
+        // see that [MemberNotNull] below actually holds.
+        _heroPicker = new HeroPickerViewModel(_hotsHeroes, HeroPickerMode.Owned, "", true);
+        OnPropertyChanged(nameof(HeroPicker));
     }
 
     /// <summary>The working state of a region, created as soon as someone needs it.</summary>
