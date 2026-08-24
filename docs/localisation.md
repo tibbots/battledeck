@@ -40,10 +40,20 @@ the log one line above, and a log in four wordings is no longer searchable. The 
 would be an error-code system across 21 `throw` sites — its own task with its own cost/benefit,
 not a drive-by step.
 
-**Progress messages are translated even though they arise inside an automation run.** They are
-the borderline case one can argue about, and the decision is: they go exclusively to the human,
-never into a file — unlike an exception text they have no counterpart in the log that would need
-to stay searchable.
+**Progress messages are translated, and unlike exception texts they don't have to compromise.**
+They arise inside an automation run (`GameSession`, `CollectionReader`, `LootOpener`) and travel
+as a `ProgressStep` — a key and its arguments, not a rendered string — precisely so two readers
+can render the same step two different ways: `smurftown.log` renders it in English via
+`Strings.ForLog`, the run and reuse funnel (`RunGuideViewModel`, `ReuseGuideViewModel`) renders
+the identical step in the human's language via `Strings.Format`. An exception text cannot do
+that — the same rendered string goes to both places, which is why it stays English throughout,
+see the paragraph above. A progress step avoids that trade-off only because what travels the
+channel is a key, not text.
+
+Until 24.08.2026 this was not so: the channel carried a string rendered once, in English, and a
+German installation saw `25 von 31 Karten gelesen` — never in the run guide, which did not exist
+yet, but in the log, against the rule that a log stays English. Read for the fix rather than
+repeated: [`Backend/Texts/ProgressStep.cs`](../Smurftown/Backend/Texts/ProgressStep.cs).
 
 **The mechanics** live in `Backend/Texts/Strings.cs` and are word for word those of
 `GameVocabulary`: a static `Current` instance, set from outside (`SettingsGateway.Apply`), read

@@ -60,7 +60,7 @@ namespace Smurftown.UI.MVVM
         /// </param>
         public static async Task ReadAll(GameSession session, BattlenetAccount account,
             HotsRegionData data, ProfileReading? resolved, bool openChests,
-            IProgress<string> progress, List<string> changes, List<string> problems)
+            IProgress<ProgressStep> progress, List<string> changes, List<string> problems)
         {
             // Chests FIRST: they change shards, gold and occasionally the hero list.
             // Read afterwards the stored state is correct, read before it would be stale immediately.
@@ -83,7 +83,7 @@ namespace Smurftown.UI.MVVM
         ///     </para>
         /// </summary>
         private static async Task OpenChests(GameSession session, BattlenetAccount account,
-            IProgress<string> progress, List<string> changes, List<string> problems)
+            IProgress<ProgressStep> progress, List<string> changes, List<string> problems)
         {
             try
             {
@@ -470,7 +470,7 @@ namespace Smurftown.UI.MVVM
         ///     </para>
         /// </summary>
         private static async Task ReadHeroes(GameSession session, BattlenetAccount account,
-            HotsRegionData data, IProgress<string> progress, List<string> changes,
+            HotsRegionData data, IProgress<ProgressStep> progress, List<string> changes,
             List<string> problems)
         {
             try

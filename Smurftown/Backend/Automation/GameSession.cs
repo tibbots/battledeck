@@ -124,7 +124,7 @@ namespace Smurftown.Backend.Automation
         ///     right direction here. Same direction as with the game path.
         /// </param>
         public static async Task<GameSession> StartAndLogin(BattlenetAccount account, string gamePath,
-            BattlenetRegion region, IProgress<string>? progress = null,
+            BattlenetRegion region, IProgress<ProgressStep>? progress = null,
             CancellationToken token = default)
         {
             var map = ScreenMap.Load();
@@ -137,7 +137,7 @@ namespace Smurftown.Backend.Automation
             var running = GameWindow.Find();
             if (running != null)
             {
-                progress?.Report(Strings.ForLog("progress.reusing"));
+                progress?.Report(ProgressStep.Of("progress.reusing"));
                 session = await TakeOver(running, map, token);
                 session.SignOut(progress);
             }
@@ -151,7 +151,7 @@ namespace Smurftown.Backend.Automation
                     throw new FileNotFoundException(
                         $"Game not found: {gamePath}. Adjust the path in the settings.", gamePath);
 
-                progress?.Report(Strings.ForLog("progress.starting"));
+                progress?.Report(ProgressStep.Of("progress.starting"));
                 Log.Information("{Battletag}: starting {Path}", account.Battletag(), gamePath);
                 Process.Start(new ProcessStartInfo { FileName = gamePath, UseShellExecute = true });
 
@@ -164,30 +164,30 @@ namespace Smurftown.Backend.Automation
             // checks via the brightness of the header bar that the game has left the
             // loading screen at all. The second searches for the form itself - and that comes noticeably
             // later, because a loading spinner stands in its place first.
-            progress?.Report(Strings.ForLog("progress.waitLogin"));
+            progress?.Report(ProgressStep.Of("progress.waitLogin"));
             await session.WaitForScreen(GameScreen.Login, LoginScreenTimeout, token);
 
             var form = await session.LocateLogin("before the region change", token);
-            progress?.Report(Strings.FormatForLog("progress.region", region.DisplayName()));
+            progress?.Report(ProgressStep.Of("progress.region", region.DisplayName()));
             session.SelectRegion(form, region);
 
             // The region change rebuilds the form. Without this wait, the first
             // keystrokes land in nothing - observed: the email stayed empty, the password arrived, because
             // enough time had passed by then.
-            progress?.Report(Strings.ForLog("progress.waitSettle"));
+            progress?.Report(ProgressStep.Of("progress.waitSettle"));
             await session.WaitForStableForm(form, token);
 
             // Search again afterward: the form is rebuilt after the region change, and whether it
             // ends up in the same place is an assumption that can be cheaply avoided.
             form = await session.LocateLogin("after the region change", token);
 
-            progress?.Report(Strings.FormatForLog("progress.signingIn", account.Battletag()));
+            progress?.Report(ProgressStep.Of("progress.signingIn", account.Battletag()));
             session.FillCredentials(account, form);
 
-            progress?.Report(Strings.ForLog("progress.waitMenu"));
+            progress?.Report(ProgressStep.Of("progress.waitMenu"));
             await session.WaitForScreen(GameScreen.Menu, MenuTimeout, token);
 
-            progress?.Report(Strings.ForLog("progress.signedIn"));
+            progress?.Report(ProgressStep.Of("progress.signedIn"));
             Log.Information("{Battletag}: signed in", account.Battletag());
             return session;
         }
@@ -283,14 +283,14 @@ namespace Smurftown.Backend.Automation
         ///         human the match.
         ///     </para>
         /// </summary>
-        public static async Task<GameSession> AttachToRunning(IProgress<string>? progress = null,
+        public static async Task<GameSession> AttachToRunning(IProgress<ProgressStep>? progress = null,
             CancellationToken token = default)
         {
             var running = GameWindow.Find()
                           ?? throw new InvalidOperationException(
                               "No Heroes of the Storm client is running - there is nothing to read.");
 
-            progress?.Report(Strings.ForLog("progress.attaching"));
+            progress?.Report(ProgressStep.Of("progress.attaching"));
             var session = await TakeOver(running, ScreenMap.Load(), token);
 
             var screen = session.ScreenOf(session.Capture());
@@ -574,7 +574,7 @@ namespace Smurftown.Backend.Automation
         ///         special case - the caller sets it anew at every sign-in anyway.
         ///     </para>
         /// </summary>
-        private void SignOut(IProgress<string>? progress)
+        private void SignOut(IProgress<ProgressStep>? progress)
         {
             var screen = ScreenOf(Capture());
             if (screen == GameScreen.Login)
@@ -588,7 +588,7 @@ namespace Smurftown.Backend.Automation
                     $"A Heroes of the Storm instance is running, but it shows {screen} instead of " +
                     "the main menu. Sign out or close it yourself.");
 
-            progress?.Report(Strings.ForLog("progress.signingOut"));
+            progress?.Report(ProgressStep.Of("progress.signingOut"));
             Log.Information("Reusing the running client - signing out");
 
             Window.BringToFront();

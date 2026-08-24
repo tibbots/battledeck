@@ -120,7 +120,7 @@ namespace Smurftown.Backend.Automation
         private sealed record PageResult(int Recognised, IReadOnlyList<Cell> Empty, Screenshot Shot);
 
         public static async Task<CollectionReading> ReadAsync(GameSession session,
-            IProgress<string>? progress = null, CancellationToken token = default)
+            IProgress<ProgressStep>? progress = null, CancellationToken token = default)
         {
             if (!TextReader.Available)
                 return new CollectionReading([], 0, 0, false,
@@ -128,13 +128,13 @@ namespace Smurftown.Backend.Automation
 
             var map = session.Map.Collection;
 
-            progress?.Report(Strings.ForLog("progress.openCollection"));
+            progress?.Report(ProgressStep.Of("progress.openCollection"));
             if (!await OpenHeroCollection(session, map, token))
                 return new CollectionReading([], 0, 0, false,
                     "The collection could not be opened - the tab was not found. Check that the " +
                     "client language matches the one set in Smurftown.");
 
-            progress?.Report(Strings.ForLog("progress.setFilter"));
+            progress?.Report(ProgressStep.Of("progress.setFilter"));
             await ChooseFromDropdown(session, map, map.OwnedFilter, map.OwnedItem, token);
             await ChooseFromDropdown(session, map, map.SortFilter, map.AlphabeticalItem, token);
 
@@ -144,7 +144,7 @@ namespace Smurftown.Backend.Automation
             session.Click(map.AllRoles);
             await Task.Delay(500, token);
             var (expected, total) = await ReadExpectedCount(session, map, token);
-            if (expected > 0) progress?.Report(Strings.FormatForLog("progress.owned", expected, total));
+            if (expected > 0) progress?.Report(ProgressStep.Of("progress.owned", expected, total));
 
             var found = new List<string>();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -206,8 +206,8 @@ namespace Smurftown.Backend.Automation
                 else dry = 0;
 
                 progress?.Report(expected > 0
-                    ? Strings.FormatForLog("progress.cardsOf", cards.Count, expected)
-                    : Strings.FormatForLog("progress.cards", cards.Count));
+                    ? ProgressStep.Of("progress.cardsOf", cards.Count, expected)
+                    : ProgressStep.Of("progress.cards", cards.Count));
 
                 if (expected > 0 && cards.Count >= expected) break;
 

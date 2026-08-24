@@ -78,7 +78,7 @@ namespace Smurftown.Backend.Automation
         private const int UnknownCeiling = 15;
 
         public static async Task<LootResult> OpenAllAsync(GameSession session,
-            IProgress<string>? progress = null, CancellationToken token = default)
+            IProgress<ProgressStep>? progress = null, CancellationToken token = default)
         {
             if (!TextReader.Available)
                 return new LootResult(0, null,
@@ -122,7 +122,7 @@ namespace Smurftown.Backend.Automation
             while (state.AnyLeft && opened < ceiling)
             {
                 token.ThrowIfCancellationRequested();
-                progress?.Report(Strings.FormatForLog("progress.chest", opened + 1, ceiling));
+                progress?.Report(ProgressStep.Of("progress.chest", opened + 1, ceiling));
 
                 var before = state;
                 var after = await OpenOne(session, before, token);

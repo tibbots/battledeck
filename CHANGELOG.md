@@ -21,6 +21,14 @@ nothing else on the line.
 
 ## [Upcoming]
 
+### Fixed
+
+- **The progress line in "Refresh data" and "Switch account" now speaks the app's language.**
+  The step labels above it ("Identify the account", "Read the values" …) were always translated;
+  the sentence that updates live underneath while a step runs — "25 of 31 cards read", "Signing
+  in …" — stayed in English no matter what language was set in Settings. It now follows the same
+  language as the rest of the window.
+
 ## [1.5.0] - 2026-08-24
 
 ### Changed

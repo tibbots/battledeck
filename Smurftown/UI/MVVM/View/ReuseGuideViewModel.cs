@@ -112,10 +112,15 @@ namespace Smurftown.UI.MVVM.View
             // whoever is there now and the sign-in of the wanted account through the same
             // stream - both belong to "switching the account", so both land on StepSwitch via
             // Current without a second channel to keep in step with the funnel.
-            var progress = new Progress<string>(step =>
+            //
+            // EACH STEP CARRIES A KEY, NOT A FINISHED STRING - see ProgressStep. The log wants
+            // it in English regardless of the UI language, this window wants it in the human's
+            // language; a string, once rendered, cannot answer both.
+            var progress = new Progress<ProgressStep>(step =>
             {
-                Log.Information("{Battletag}: {Step}", _account.Battletag(), step);
-                Detail(Current, step);
+                Log.Information("{Battletag}: {Step}", _account.Battletag(),
+                    Strings.FormatForLog(step.Key, step.Args));
+                Detail(Current, Strings.Format(step.Key, step.Args));
             });
 
             if (!await WaitForClient(StepFront, "run.bringToFront")) return;

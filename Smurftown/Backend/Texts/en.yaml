@@ -300,16 +300,18 @@ update.selfUpdateYes: possible
 update.selfUpdateNo: "not possible - {0}"                # 0 = the reason from update.reason*
 
 # =========================================================== Progress ==============
-# THEY DO NOT CURRENTLY REACH ANY HUMAN, and until 23.08.2026 this comment claimed the
-# opposite ("never into a file"). The IProgress<string> they travel on has exactly one
-# subscriber, and it writes into smurftown.log - so on a German installation the log read
-# "25 von 31 Karten gelesen", against the rule that a log stays English in every language.
+# THE RUN AND REUSE FUNNEL render these, live, in the detail line under the active step -
+# see RunGuideViewModel and ReuseGuideViewModel. Until 24.08.2026 the IProgress<string> they
+# travelled on had exactly one subscriber, smurftown.log, so GameSession, CollectionReader
+# and LootOpener rendered them once, in English, via Strings.ForLog - on a German
+# installation the log read "25 von 31 Karten gelesen", against the rule that a log stays
+# English in every language.
 #
-# The automation therefore renders them through Strings.ForLog, which always takes the
-# English line. The translations below are KEPT rather than deleted: they are correct, a
-# progress display for a flow that runs for a minute is a plausible thing to build, and
-# deleting is the one irreversible move here. Whoever builds that display switches the call
-# sites in GameSession, CollectionReader and LootOpener back to Strings.Current.
+# THE FIX WAS NOT TO SWITCH THOSE THREE CLASSES TO Strings.Current: the log is still a
+# subscriber - AccountCardViewModel.RunSession logs the same steps when no funnel window is
+# open - and it must stay English. Instead the three classes now report a ProgressStep, the
+# key below plus its arguments, and each reader renders it its own way: the funnel through
+# Strings.Format, the log through Strings.ForLog off the same key.
 progress.reusing: Reusing the running client
 progress.attaching: Taking over the running client
 progress.starting: Starting Heroes of the Storm

@@ -46,10 +46,12 @@ namespace Smurftown.UI.MVVM.View
     ///         won.
     ///     </para>
     ///     <para>
-    ///         <b>It shows the progress it already had.</b> The run reports its steps through an
-    ///         <c>IProgress&lt;string&gt;</c> whose only subscriber used to be the log - which is
-    ///         why those texts are translated and why <c>Strings.ForLog</c> had to exist to keep
-    ///         them out of it. Here they finally have the reader they were written for.
+    ///         <b>It shows the progress it already had.</b> The run reports its steps as a
+    ///         <see cref="ProgressStep" /> - a key and its arguments, not a finished string -
+    ///         because this window is no longer the only reader: <c>smurftown.log</c> still
+    ///         wants the same step in English, via <c>Strings.ForLog</c>, while this window
+    ///         renders it through <c>Strings.Format</c>. Until 24.08.2026 there was no reader
+    ///         here, so the step rendered once, in English, straight into the log.
     ///     </para>
     ///     <para>
     ///         <b>The region question is a step and not a second dialog.</b> It used to open
@@ -135,13 +137,17 @@ namespace Smurftown.UI.MVVM.View
 
         protected override async Task RunAsync()
         {
-            // The progress channel of the run, finally pointed at something that is not the
-            // log. It writes into whichever step is active, so the detail line follows the
+            // The progress channel of the run, finally pointed at something that is not only
+            // the log. It writes into whichever step is active, so the detail line follows the
             // funnel without the backend knowing there is one.
-            var progress = new Progress<string>(step =>
+            //
+            // EACH STEP CARRIES A KEY, NOT A FINISHED STRING - see ProgressStep. The log wants
+            // it in English regardless of the UI language, this window wants it in the human's
+            // language; a string, once rendered, cannot answer both.
+            var progress = new Progress<ProgressStep>(step =>
             {
-                Log.Information("Running client: {Step}", step);
-                Detail(Current, step);
+                Log.Information("Running client: {Step}", Strings.FormatForLog(step.Key, step.Args));
+                Detail(Current, Strings.Format(step.Key, step.Args));
             });
 
             if (!await WaitForClient(StepFront, "run.bringToFront")) return;

@@ -1402,8 +1402,9 @@ namespace Smurftown.UI.MVVM.ViewModel
         /// </summary>
         private async Task RunSession(BattlenetAccount account, SessionPlan plan)
         {
-            var progress = new Progress<string>(step =>
-                Log.Information("{Battletag}: {Step}", account.Battletag(), step));
+            var progress = new Progress<ProgressStep>(step =>
+                Log.Information("{Battletag}: {Step}", account.Battletag(),
+                    Strings.FormatForLog(step.Key, step.Args)));
 
             // The UI fetches the path AND the region and hands them in: Backend/Automation doesn't
             // know the gateways, and that direction is meant to stay that way.
