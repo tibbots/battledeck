@@ -22,14 +22,22 @@
 .PARAMETER Delay
     Seconds of lead time per shot. Default 15.
 
+.PARAMETER Lang
+    Which README the run is for: 'de', 'fr' or 'es'. Passed through to capture-window.ps1 -
+    shots land under docs/images/<Lang>/ instead of docs/images/. Omit it for English. Set
+    Smurftown's own UI language to match BEFORE starting it - this script only captures,
+    it does not switch the app's language.
+
 .EXAMPLE
     .\tools\capture-run.ps1
     .\tools\capture-run.ps1 -Only rotation,archive -Delay 20
+    .\tools\capture-run.ps1 -Lang de
 #>
 [CmdletBinding()]
 param(
     [string[]] $Only,
-    [ValidateRange(3, 60)] [int] $Delay = 15
+    [ValidateRange(3, 60)] [int] $Delay = 15,
+    [ValidateSet('de', 'fr', 'es')] [string] $Lang
 )
 
 Set-StrictMode -Version Latest
@@ -51,7 +59,7 @@ $SHOTS = @(
     @{ name = 'filter-region'; title = 'Region rows'
        steps = @('Game filter back to HEROES OF THE STORM',
                  'Region filter to AM',
-                 '5 rows, among them HALFMOONBAY with nothing but dashes') },
+                 '4 rows, among them HALFMOONBAY with nothing but dashes') },
 
     @{ name = 'hero-filter'; title = 'Hero filter - the selection'
        steps = @('Region filter back to EU',
@@ -61,7 +69,7 @@ $SHOTS = @(
 
     @{ name = 'hero-filter-result'; title = 'Hero filter - the result'
        steps = @('Close the hero picker (Esc)',
-                 'the list now shows 7 of 25 rows, the button says ANY OF 2') },
+                 'the list now shows 4 of 8 rows, the button says ANY OF 2') },
 
     @{ name = 'rotation'; title = 'Free rotation'
        steps = @('Clear the hero filter (clear cross on the button)',
@@ -71,11 +79,16 @@ $SHOTS = @(
 
     @{ name = 'archive'; title = 'Archive'
        steps = @('Close the rotation window (Esc)',
-                 'Archive toggle on - the other half of the list, GLASSFERN') },
+                 'Archive toggle on - the other half of the list, GLASSFERN and RETIREDALT') },
+
+    @{ name = 'actions-menu'; title = 'The row action menu'
+       steps = @('Archive off again',
+                 'DURING THE COUNTDOWN: three-dot menu on a row',
+                 'CAUTION - the menu closes on any click elsewhere. So open it last',
+                 'and do not touch anything after that') },
 
     @{ name = 'start-menu'; title = 'Starting and reading'
-       steps = @('Archive off again',
-                 'DURING THE COUNTDOWN: click the round blue start button on a row',
+       steps = @('DURING THE COUNTDOWN: click the round blue start button on a row',
                  'CAUTION - the menu closes on any click elsewhere. So open it last',
                  'and do not touch anything after that') },
 
@@ -126,12 +139,14 @@ foreach ($shot in $queue) {
     Write-Host ('=' * 78) -ForegroundColor DarkGray
     foreach ($s in $shot.steps) { Write-Host "   - $s" }
 
-    & $capture -Name $shot.name -Delay $Delay
+    if ($Lang) { & $capture -Name $shot.name -Delay $Delay -Lang $Lang }
+    else       { & $capture -Name $shot.name -Delay $Delay }
     $done += $shot.name
 }
 
+$targetDir = if ($Lang) { "docs/images/$Lang/" } else { 'docs/images/' }
 Write-Host ''
-Write-Host ("Done: {0} shots in docs/images/" -f $done.Count) -ForegroundColor Green
+Write-Host ("Done: {0} shots in $targetDir" -f $done.Count) -ForegroundColor Green
 Write-Host ('  ' + ($done -join ', ')) -ForegroundColor DarkGray
 Write-Host ''
 if ($stHome -eq (Join-Path $env:USERPROFILE '.smurftown')) {

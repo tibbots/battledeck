@@ -41,6 +41,10 @@
 #                "has something in it"
 #   PAYLOADONLY  without the HotS checkbox: invisible under the HotS filter, present
 #                under Overwatch
+#   MARBLEFOX    two regions, penalty games AND an open placement on the same region -
+#                the account dialog needs all three at once
+#   HALFMOONBAY  Americas ticked, never read - the AM filter's own dashed row
+#   GLASSFERN    archived, second such account, on Europe
 #
 # THE FREE ROTATION DOES NOT COME FROM THIS FILE, but from the embedded calendar
 # (Backend/Entity/rotation-calendar.yaml) and follows the date of the capture. On
@@ -639,3 +643,129 @@ accounts:
     - Europe
   inactive: false
   hotsByRegion: {}
+- name: MARBLEFOX
+  discriminator: "8834"
+  email: marblefox@example.com
+  password: demo-pass-11
+  notes: "Ranked EU, plays AM casually."
+  latestInteractionAt: 2026-08-21T19:40:00
+  regionsByGame:
+    hots:
+    - Europe
+    - Americas
+  inactive: false
+  hotsByRegion:
+    Europe:
+      tier: Gold
+      division: 3
+      penaltyGames: 1
+      placementsPending: true
+      heroes:
+      - anduin
+      - anubarak
+      - brightwing
+      - cassia
+      - deckard
+      - dehaka
+      - garrosh
+      - gazlowe
+      - illidan
+      - imperius
+      - kerrigan
+      - kharazim
+      - lucio
+      - lunara
+      - maiev
+      - mei
+      - mephisto
+      - muradin
+      - probius
+      - qhira
+      - sgt-hammer
+      - sonya
+      - the-lost-vikings
+      - thrall
+      - valeera
+      - valla
+      - zarya
+      - zeratul
+      gold: 4260
+      shards: 310
+      gems: 0
+      accountLevel: 96
+      lootChests: 3
+      readAt: 2026-08-21T14:10:00
+    Americas:
+      tier: Bronze
+      division: 4
+      penaltyGames: 0
+      placementsPending: false
+      heroes:
+      - diablo
+      - genji
+      - jaina
+      - leoric
+      - malganis
+      - murky
+      - raynor
+      - stukov
+      - tychus
+      rankPoints: 140
+      rankPointsMax: 1000
+      gold: 210
+      shards: 0
+      gems: 0
+      accountLevel: 31
+      lootChests: 0
+      readAt: 2026-08-16T10:20:00
+- name: HALFMOONBAY
+  discriminator: "2290"
+  email: halfmoonbay@example.com
+  password: demo-pass-12
+  notes: ""
+  latestInteractionAt: 2026-08-21T19:40:00
+  regionsByGame:
+    hots:
+    - Americas
+  inactive: false
+  hotsByRegion: {}
+- name: GLASSFERN
+  discriminator: "6647"
+  email: glassfern@example.com
+  password: demo-pass-13
+  notes: "Dead account, kept for the badge."
+  latestInteractionAt: 2026-08-21T19:40:00
+  regionsByGame:
+    hots:
+    - Europe
+  inactive: true
+  hotsByRegion:
+    Europe:
+      tier: Bronze
+      division: 3
+      penaltyGames: 0
+      placementsPending: false
+      heroes:
+      - alexstrasza
+      - azmodan
+      - dva
+      - fenix
+      - hanzo
+      - kaelthas
+      - lt-morales
+      - malthael
+      - medivh
+      - nova
+      - orphea
+      - rexxar
+      - tassadar
+      - tyrande
+      - yrel
+      rankPoints: 60
+      rankPointsMax: 1000
+      gold: 180
+      shards: 0
+      gems: 0
+      accountLevel: 19
+      lootChests: 0
+      readAt: 2026-05-14T08:00:00

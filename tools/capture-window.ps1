@@ -28,9 +28,15 @@
 .PARAMETER Foreground
     Capture the currently active window instead of the main window.
 
+.PARAMETER Lang
+    Which README the shot is for: 'de', 'fr' or 'es'. Lands under docs/images/<Lang>/<Name>.png
+    instead of docs/images/<Name>.png. Omit it for English - README.md references the
+    un-prefixed path, and that has to stay the one language with no subfolder of its own.
+
 .EXAMPLE
     .\tools\capture-window.ps1 overview
     .\tools\capture-window.ps1 start-menu -Delay 8
+    .\tools\capture-window.ps1 settings -Lang de
 #>
 [CmdletBinding()]
 param(
@@ -41,7 +47,10 @@ param(
     [ValidateRange(0, 60)]
     [int] $Delay = 5,
 
-    [switch] $Foreground
+    [switch] $Foreground,
+
+    [ValidateSet('de', 'fr', 'es')]
+    [string] $Lang
 )
 
 Set-StrictMode -Version Latest
@@ -115,6 +124,7 @@ finally {
 }
 
 $target = Join-Path (Split-Path $PSScriptRoot -Parent) 'docs/images'
+if ($Lang) { $target = Join-Path $target $Lang }
 if (-not (Test-Path $target)) { [void](New-Item -ItemType Directory -Path $target) }
 
 $file = Join-Path $target "$Name.png"

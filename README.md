@@ -27,6 +27,11 @@ were not typed in — the app read them out of the running game.** Everything be
 * Archive accounts you stopped using instead of deleting them — **there is no delete button**,
   on purpose: one misclick in a list of look-alike rows should not be the last step
 * Filter by name, by game, or by hero
+* **Filter by rank and sort the list.** For Heroes of the Storm, eight rank chips — Unranked
+  through Grand Master — narrow the list to one or several ranks at once; *Unranked* covers both
+  an account never read and one read with no rank set. Next to it, a sort control (last read,
+  name, rank, gold, heroes read, with a click to reverse the direction) and a count of matching
+  accounts are available for every game, not only Heroes of the Storm.
 
 ![The row menu](docs/images/actions-menu.png)
 
@@ -95,7 +100,7 @@ out of the game the first time the account is read.
 
 ![Picking heroes to filter by](docs/images/hero-filter.png)
 
-  Two heroes picked, seven rows left of twenty-five:
+  Two heroes picked, four rows left of eight:
 
 ![The list under that filter](docs/images/hero-filter-result.png)
 

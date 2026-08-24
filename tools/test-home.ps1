@@ -10,7 +10,7 @@
     run that strands halfway.
 
     So the app gets a different folder. SMURFTOWN_HOME does that (Smurftown/Directories.cs),
-    and this script fills it with the ten invented accounts from tools/demo-data.yaml -
+    and this script fills it with the thirteen invented accounts from tools/demo-data.yaml -
     all addresses under example.com, all passwords obvious placeholders.
 
     THE VARIABLE STAYS SET IN THE CALLING SHELL. $env: is the process environment, and a

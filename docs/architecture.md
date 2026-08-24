@@ -124,8 +124,8 @@ tools/                   not part of the solution - asset generators and drivers
   hero-names-de.json       German hero names, a data sheet rather than a fetch
   placement-referenz.png   cut-out placement logo from the game, reference for a generator
   gen-demo-data.py         generates tools/demo-data.yaml
-  demo-data.yaml           ten invented accounts held in reserve - NEVER photograph the real
-                           list, the repo is public
+  demo-data.yaml           thirteen invented accounts, the shooting set for every README
+                           screenshot - NEVER photograph the real list, the repo is public
   smurftown-home.ps1       resolves the data folder the way Directories.cs does - the one
                            place the other scripts ask
   test-home.ps1            demo data into a throwaway folder, SMURFTOWN_HOME set, app started

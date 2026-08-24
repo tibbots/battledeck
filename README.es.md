@@ -11,7 +11,7 @@ máquina: todo se guarda en `C:\Users\YOUR_USER\.smurftown`. La aplicación hace
 una** petición, una vez a la hora: le pregunta a GitHub si existe una versión más reciente. [Qué es
 eso, y qué no es](#updates).
 
-![La lista de cuentas](docs/images/overview.png)
+![La lista de cuentas](docs/images/es/overview.png)
 
 Una fila por cuenta y región. **El rango, los héroes, el oro, las esquirlas, las gemas y los
 cofres de esa fila no se escribieron a mano — la aplicación los leyó directamente del juego en
@@ -28,13 +28,18 @@ marcha.** Todo lo que sigue explica cómo.
 * Archiva las cuentas que ya no usas en lugar de eliminarlas — **no hay botón de eliminar**, y es
   a propósito: un clic equivocado en una lista de filas parecidas no debería ser el último paso
 * Filtra por nombre, por juego o por héroe
+* **Filtra por rango y ordena la lista.** Para Heroes of the Storm, ocho chips de rango — Sin
+  rango hasta Gran maestro — reducen la lista a uno o varios rangos a la vez; *Sin rango* cubre
+  tanto una cuenta nunca leída como una leída sin rango asignado. Al lado, un control de orden
+  (última lectura, nombre, rango, oro, héroes leídos, con un clic para invertir la dirección) y un
+  contador de cuentas que coinciden están disponibles para cada juego, no solo Heroes of the Storm.
 
-![El menú de la fila](docs/images/actions-menu.png)
+![El menú de la fila](docs/images/es/actions-menu.png)
 
 Una cuenta archivada no desaparece, solo se aparta. El interruptor de la barra de herramientas
 muestra esa otra mitad de la lista, y el mismo botón de la fila la devuelve a su sitio.
 
-![Las cuentas archivadas](docs/images/archive.png)
+![Las cuentas archivadas](docs/images/es/archive.png)
 * Marca qué juegos juega cada cuenta: Heroes of the Storm, Overwatch, World of Warcraft, Diablo
 * **Elige las regiones en las que juega una cuenta.** El progreso en Heroes of the Storm depende
   de la región, así que una cuenta que juega en Europa y en América tiene dos rangos, dos
@@ -45,19 +50,19 @@ muestra esa otra mitad de la lista, y el mismo botón de la fila la devuelve a s
 se sabe sobre Overwatch — que hoy por hoy es nada, y lo dice claramente en lugar de aparentar lo
 contrario.
 
-![Filtrado por Overwatch](docs/images/filter-game.png)
+![Filtrado por Overwatch](docs/images/es/filter-game.png)
 
 **El filtro de región cambia entre las filas de una misma cuenta.** Abajo están los mismos
 battletags de más arriba, pero su lado en América: rango distinto, héroes distintos, oro
 distinto. `HALFMOONBAY` tiene marcada América y nunca se ha leído ahí, así que muestra guiones en
 lugar de ceros — un cero afirmaría que la cuenta no posee nada, y eso no es algo que sepamos.
 
-![Filtrado por América](docs/images/filter-region.png)
+![Filtrado por América](docs/images/es/filter-region.png)
 
 **Todo lo relativo a una cuenta está en un único diálogo.** El battletag se lee del juego, no se
 escribe: aparece la primera vez que la cuenta se lee.
 
-![El diálogo de la cuenta](docs/images/edit-account.png)
+![El diálogo de la cuenta](docs/images/es/edit-account.png)
 
 ## Heroes of the Storm
 * **Inicia y conéctate.** Elige una cuenta desde el menú de inicio de la fila — la aplicación
@@ -65,7 +70,7 @@ escribe: aparece la primera vez que la cuenta se lee.
   regiones funcionan; el juego olvida el ajuste en cada inicio y tras cada cierre de sesión, así
   que la aplicación lo establece cada vez.
 
-![El menú de inicio](docs/images/start-menu.png)
+![El menú de inicio](docs/images/es/start-menu.png)
 
   Las cuatro opciones son cuatro tareas distintas, no cuatro formas de hacer la misma. *Jugar*
   inicia el juego y ahí se detiene — si te has sentado a jugar, no quieres que la aplicación siga
@@ -82,7 +87,7 @@ escribe: aparece la primera vez que la cuenta se lee.
   rara vez hace falta, y un campo que la aplicación no pudo leer se deja como está, en vez de
   sobrescribirlo con una suposición.
 
-![Rango, partidas de penalización y héroes, por región](docs/images/edit-hots.png)
+![Rango, partidas de penalización y héroes, por región](docs/images/es/edit-hots.png)
 
   Todo lo que hay en esa pestaña pertenece a **una sola** región; el selector de arriba indica
   cuál. Si juegas en dos, mantienes dos.
@@ -91,18 +96,18 @@ escribe: aparece la primera vez que la cuenta se lee.
 * **Rotación libre de héroes.** La rotación se repite según un calendario anual, y ese calendario
   viene incluido en la aplicación — sin mantenimiento, sin fuente externa, sin nada que descargar.
 
-![La rotación libre del periodo actual](docs/images/rotation.png)
+![La rotación libre del periodo actual](docs/images/es/rotation.png)
 
 * **Filtra por héroe.** Elige uno o varios y la lista conserva toda cuenta que posea **alguno**
   de ellos, o que pueda jugarlo porque está libre este periodo. El anillo alrededor de cada
   retrato indica el rol del héroe, y la pequeña insignia del Nexo marca los que están libres
   ahora mismo.
 
-![Eligiendo héroes para filtrar](docs/images/hero-filter.png)
+![Eligiendo héroes para filtrar](docs/images/es/hero-filter.png)
 
-  Dos héroes elegidos, quedan siete filas de veinticinco:
+  Dos héroes elegidos, quedan cuatro filas de ocho:
 
-![La lista bajo ese filtro](docs/images/hero-filter-result.png)
+![La lista bajo ese filtro](docs/images/es/hero-filter-result.png)
 
 * **Contador de partidas de penalización** por cuenta — clic izquierdo suma una, clic derecho
   resta una — y se lee del juego junto con todo lo demás.
@@ -152,7 +157,7 @@ se vuelve menos fiable con palabras acentuadas.
 El cambio se hace **en el juego**, no aquí — y necesita reiniciar, además de una descarga la
 primera vez que eliges un idioma que nunca se había instalado.
 
-![Opciones](docs/images/settings.png)
+![Opciones](docs/images/es/settings.png)
 
 Los ajustes se guardan a medida que los cambias; no hay botón de guardar en ninguna parte de esta
 aplicación. En la misma pestaña la aplicación encuentra tu instalación de Heroes of the Storm —
@@ -187,7 +192,7 @@ que hayas hecho con ellas: es la misma pregunta que cualquiera puede hacerle a u
 público. Si hay algo más nuevo, la insignia de versión de la esquina superior derecha lo
 indica; un clic abre esto:
 
-![La oferta de actualización](docs/images/update-offer.png)
+![La oferta de actualización](docs/images/es/update-offer.png)
 
 **Instalar** descarga la versión, la comprueba contra la suma SHA-256 publicada y la coloca en su
 sitio; la aplicación se reinicia sola. Donde **no** puede reemplazar su propio archivo — una

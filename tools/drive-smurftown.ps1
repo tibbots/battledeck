@@ -32,12 +32,19 @@
       wait:MS            wait
       shot:NAME          capture to docs/images/NAME.png
 
+.PARAMETER Lang
+    Which README the shots in this call are for: 'de', 'fr' or 'es'. Every 'shot:' step
+    lands under docs/images/<Lang>/ instead of docs/images/. Omit it for English. This
+    script does not switch Smurftown's own UI language - set that before starting it.
+
 .EXAMPLE
     .\tools\drive-smurftown.ps1 -Do 'front; click:139,140; wait:600; move:660,770; shot:filter-game'
+    .\tools\drive-smurftown.ps1 -Lang de -Do 'front; move:20,20; shot:overview'
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)] [string] $Do
+    [Parameter(Mandatory = $true)] [string] $Do,
+    [ValidateSet('de', 'fr', 'es')] [string] $Lang
 )
 
 Set-StrictMode -Version Latest
@@ -132,6 +139,7 @@ function Save-Shot([string] $name) {
     try { $g.CopyFromScreen($o.X, $o.Y, 0, 0, $bmp.Size) } finally { $g.Dispose() }
 
     $dir = Join-Path (Split-Path $PSScriptRoot -Parent) 'docs/images'
+    if ($Lang) { $dir = Join-Path $dir $Lang }
     if (-not (Test-Path $dir)) { [void](New-Item -ItemType Directory -Path $dir) }
     $file = Join-Path $dir "$name.png"
     try { $bmp.Save($file, [System.Drawing.Imaging.ImageFormat]::Png) } finally { $bmp.Dispose() }

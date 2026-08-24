@@ -11,7 +11,7 @@ sur votre machine : tout est conservé dans `C:\Users\YOUR_USER\.smurftown`. L'
 **exactement une** requête, une fois par heure — elle demande à GitHub s'il existe une version plus
 récente. [Ce que c'est, et ce que ce n'est pas](#updates).
 
-![La liste des comptes](docs/images/overview.png)
+![La liste des comptes](docs/images/fr/overview.png)
 
 Une ligne par compte et par région. **Le rang, les héros, l'or, les éclats, les gemmes et les
 coffres de cette ligne n'ont pas été saisis à la main — l'application les a lus directement dans
@@ -29,14 +29,20 @@ la partie en cours.** Tout ce qui suit explique comment.
   bouton de suppression**, et c'est voulu : un clic malheureux dans une liste de lignes qui se
   ressemblent toutes ne doit pas être la dernière étape
 * Filtrez par nom, par jeu ou par héros
+* **Filtrez par rang et triez la liste.** Pour Heroes of the Storm, huit puces de rang — Sans
+  rang jusqu'à Grand Maître — réduisent la liste à un ou plusieurs rangs à la fois ; *Sans rang*
+  couvre aussi bien un compte jamais lu qu'un compte lu sans rang défini. À côté, un contrôle de
+  tri (dernière lecture, nom, rang, or, héros lus, avec un clic pour inverser le sens) et un
+  compteur de comptes correspondants restent disponibles pour chaque jeu, pas seulement Heroes of
+  the Storm.
 
-![Le menu de la ligne](docs/images/actions-menu.png)
+![Le menu de la ligne](docs/images/fr/actions-menu.png)
 
 Un compte archivé ne disparaît pas, il se met simplement de côté. Le bouton de la barre d'outils
 affiche cette moitié de la liste à la place, et le même bouton sur la ligne permet de restaurer un
 compte.
 
-![L'archive](docs/images/archive.png)
+![L'archive](docs/images/fr/archive.png)
 * Indiquez à quels jeux joue un compte : Heroes of the Storm, Overwatch, World of Warcraft, Diablo
 * **Choisissez les régions dans lesquelles joue un compte.** La progression dans Heroes of the
   Storm est liée à la région, si bien qu'un compte qui joue à la fois en Europe et dans les
@@ -47,7 +53,7 @@ compte.
 affiche ce qui est connu à son sujet — ce qui, aujourd'hui, n'est rien, et l'application le dit
 plutôt que de faire semblant.
 
-![Filtré sur Overwatch](docs/images/filter-game.png)
+![Filtré sur Overwatch](docs/images/fr/filter-game.png)
 
 **Le filtre de région bascule entre les lignes d'un même compte.** Ci-dessous, ce sont les mêmes
 battletags que plus haut, mais côté Amériques : rang différent, héros différents, or différent.
@@ -55,12 +61,12 @@ battletags que plus haut, mais côté Amériques : rang différent, héros diff
 lieu de zéros — un zéro affirmerait que le compte ne possède rien, et ce n'est pas quelque chose
 que nous savons.
 
-![Filtré sur les Amériques](docs/images/filter-region.png)
+![Filtré sur les Amériques](docs/images/fr/filter-region.png)
 
 **Tout ce qui concerne un compte se trouve dans une seule boîte de dialogue.** Le battletag est
 affiché, pas saisi : il est lu depuis le jeu, dès la première lecture du compte.
 
-![La boîte de dialogue du compte](docs/images/edit-account.png)
+![La boîte de dialogue du compte](docs/images/fr/edit-account.png)
 
 ## Heroes of the Storm
 * **Démarrez et connectez-vous.** Choisissez un compte dans le menu de démarrage de la ligne —
@@ -68,7 +74,7 @@ affiché, pas saisi : il est lu depuis le jeu, dès la première lecture du com
   votre place. Les trois régions fonctionnent ; le jeu oublie ce réglage à chaque démarrage et
   après chaque déconnexion, l'application le redéfinit donc à chaque fois.
 
-![Le menu de démarrage](docs/images/start-menu.png)
+![Le menu de démarrage](docs/images/fr/start-menu.png)
 
   Les quatre entrées sont quatre tâches différentes, pas quatre façons de faire la même chose.
   *Jouer* lance le jeu et s'arrête là — si vous vous installez pour jouer, vous ne voulez pas que
@@ -84,7 +90,7 @@ affiché, pas saisi : il est lu depuis le jeu, dès la première lecture du com
   vous-même — mais vous en aurez rarement besoin, et un champ que l'application n'a pas pu lire
   reste inchangé plutôt que d'être écrasé par une supposition.
 
-![Rang, parties de pénalité et héros, par région](docs/images/edit-hots.png)
+![Rang, parties de pénalité et héros, par région](docs/images/fr/edit-hots.png)
 
   Tout ce qui figure dans cet onglet appartient à **une seule** région ; le sélecteur en haut
   indique laquelle. Si vous jouez dans deux régions, vous en gérez deux.
@@ -93,18 +99,18 @@ affiché, pas saisi : il est lu depuis le jeu, dès la première lecture du com
 * **Rotation libre des héros.** La rotation se répète sur un calendrier annuel, et ce calendrier
   est fourni avec l'application — aucune maintenance, aucune source externe, rien à récupérer.
 
-![La rotation libre de la période en cours](docs/images/rotation.png)
+![La rotation libre de la période en cours](docs/images/fr/rotation.png)
 
 * **Filtrez par héros.** Choisissez-en un ou plusieurs et la liste ne garde que les comptes qui
   possèdent l'un d'entre eux — ou peuvent le jouer gratuitement cette période. L'anneau autour de
   chaque portrait indique le rôle du héros, et le petit badge du Nexus marque ceux qui sont libres
   cette période.
 
-![Sélection de héros pour le filtre](docs/images/hero-filter.png)
+![Sélection de héros pour le filtre](docs/images/fr/hero-filter.png)
 
-  Deux héros choisis, il reste sept lignes sur vingt-cinq :
+  Deux héros choisis, il reste quatre lignes sur huit :
 
-![La liste sous ce filtre](docs/images/hero-filter-result.png)
+![La liste sous ce filtre](docs/images/fr/hero-filter-result.png)
 
 * **Compteur de parties de pénalité** par compte, clic gauche pour l'augmenter, clic droit pour
   la diminuer — et lu dans le jeu comme tout le reste.
@@ -154,7 +160,7 @@ mais devient moins fiable sur les mots accentués.
 Le changement se fait **dans le jeu**, pas ici — et il nécessite un redémarrage, ainsi qu'un
 téléchargement la première fois que vous choisissez une langue jamais installée.
 
-![Options](docs/images/settings.png)
+![Options](docs/images/fr/settings.png)
 
 Les réglages sont enregistrés au fur et à mesure ; il n'y a de bouton d'enregistrement nulle part
 dans cette application. C'est dans le même onglet que l'application trouve votre installation de
@@ -189,7 +195,7 @@ comptes, ni ce que vous en avez fait — c'est la même question que n'importe q
 un dépôt public. S'il y a du nouveau, la pastille de version en haut à droite le signale ; un
 clic ouvre ceci :
 
-![La proposition de mise à jour](docs/images/update-offer.png)
+![La proposition de mise à jour](docs/images/fr/update-offer.png)
 
 **Installer** télécharge la version, la vérifie contre la somme de contrôle SHA-256 publiée et la
 met en place ; l'application redémarre d'elle-même. Là où elle ne peut **pas** remplacer son

@@ -11,7 +11,7 @@ Rechner: Alles liegt in `C:\Users\YOUR_USER\.smurftown`. Die App stellt **genau 
 einmal pro Stunde — sie fragt GitHub, ob es eine neuere Version gibt. [Was das ist und was es nicht
 ist](#updates).
 
-![Die Kontenliste](docs/images/overview.png)
+![Die Kontenliste](docs/images/de/overview.png)
 
 Eine Zeile je Konto und Region. **Rang, Helden, Gold, Splitter, Edelsteine und Beutetruhen in
 dieser Zeile wurden nicht eingetippt — die App hat sie aus dem laufenden Spiel gelesen.** Alles,
@@ -29,14 +29,19 @@ was folgt, erklärt wie.
   nicht**, mit Absicht: Ein Fehlklick in einer Liste aus lauter gleich aussehenden Zeilen soll
   nicht der letzte Schritt sein
 * Filtern nach Name, Spiel oder Held
+* **Nach Rang filtern und die Liste sortieren.** Für Heroes of the Storm grenzen acht Rang-Chips
+  — Ohne Rang bis Großmeister — die Liste auf einen oder mehrere Ränge zugleich ein; *Ohne Rang*
+  deckt sowohl ein nie gelesenes Konto als auch eines ohne gesetzten Rang ab. Daneben stehen eine
+  Sortierung (Zuletzt gelesen, Name, Rang, Gold, Helden gelesen, mit Klick zum Umkehren der
+  Richtung) und ein Zähler der passenden Konten — für jedes Spiel, nicht nur Heroes of the Storm.
 
-![Das Zeilenmenü](docs/images/actions-menu.png)
+![Das Zeilenmenü](docs/images/de/actions-menu.png)
 
 Ein archiviertes Konto verschwindet nicht, es geht nur aus dem Weg. Der Umschalter in der
 Filterleiste zeigt stattdessen diese Hälfte der Liste, und derselbe Knopf in der Zeile holt ein
 Konto zurück.
 
-![Das Archiv](docs/images/archive.png)
+![Das Archiv](docs/images/de/archive.png)
 * Markieren, welche Spiele ein Konto spielt: Heroes of the Storm, Overwatch, World of Warcraft,
   Diablo
 * **Die Regionen wählen, in denen ein Konto spielt.** Der Fortschritt in Heroes of the Storm hängt
@@ -48,7 +53,7 @@ Konto zurück.
 zeigt, was über Overwatch bekannt ist — heute ist das nichts, und genau das steht auch da, statt
 etwas vorzutäuschen.
 
-![Gefiltert auf Overwatch](docs/images/filter-game.png)
+![Gefiltert auf Overwatch](docs/images/de/filter-game.png)
 
 **Der Regionsfilter schaltet zwischen den Zeilen eines Kontos um.** Unten stehen dieselben
 Battletags wie weiter oben, aber ihre Amerika-Seite: anderer Rang, andere Helden, anderes Gold.
@@ -56,12 +61,12 @@ Battletags wie weiter oben, aber ihre Amerika-Seite: anderer Rang, andere Helden
 Gedankenstriche statt Nullen — eine Null würde behaupten, das Konto besäße nichts, und das wissen
 wir schlicht nicht.
 
-![Gefiltert auf Amerika](docs/images/filter-region.png)
+![Gefiltert auf Amerika](docs/images/de/filter-region.png)
 
 **Alles zu einem Konto steht in einem Dialog.** Der Battletag wird angezeigt, nicht eingetippt:
 Er kommt aus dem Spiel, sobald das Konto zum ersten Mal gelesen wird.
 
-![Der Konto-Dialog](docs/images/edit-account.png)
+![Der Konto-Dialog](docs/images/de/edit-account.png)
 
 ## Heroes of the Storm
 * **Starten und anmelden.** Wähl ein Konto aus dem Start-Menü der Zeile — die App startet das
@@ -69,7 +74,7 @@ Er kommt aus dem Spiel, sobald das Konto zum ersten Mal gelesen wird.
   Regionen funktionieren; das Spiel vergisst die Einstellung bei jedem Start und nach jedem
   Abmelden, deshalb setzt die App sie jedes Mal neu.
 
-![Das Start-Menü](docs/images/start-menu.png)
+![Das Start-Menü](docs/images/de/start-menu.png)
 
   Die vier Einträge sind vier Aufgaben, nicht vier Wege zu derselben. *Spielen* startet das Spiel
   und hört dort auf — wer sich hinsetzt, um zu spielen, will nicht, dass die App die nächste
@@ -85,7 +90,7 @@ Er kommt aus dem Spiel, sobald das Konto zum ersten Mal gelesen wird.
   das aber selten, und ein Feld, das die App nicht lesen konnte, bleibt unangetastet, statt mit
   einer Vermutung überschrieben zu werden.
 
-![Rang, Strafspiele und Helden, je Region](docs/images/edit-hots.png)
+![Rang, Strafspiele und Helden, je Region](docs/images/de/edit-hots.png)
 
   Alles auf diesem Reiter gehört zu **einer** Region; der Umschalter oben sagt, zu welcher.
   Spielst du in zweien, pflegst du auch zwei.
@@ -94,18 +99,18 @@ Er kommt aus dem Spiel, sobald das Konto zum ersten Mal gelesen wird.
 * **Freie Rotation.** Die Rotation wiederholt sich nach einem jährlichen Kalender, und der liegt
   der App bei — keine Pflege, keine externe Quelle, nichts zum Nachladen.
 
-![Die freie Rotation der aktuellen Periode](docs/images/rotation.png)
+![Die freie Rotation der aktuellen Periode](docs/images/de/rotation.png)
 
 * **Nach Helden filtern.** Wähl einen oder mehrere, und die Liste behält jedes Konto, das
   **einen davon** besitzt — oder ihn diese Periode kostenlos spielen kann. Der Ring um jedes
   Portrait zeigt die Rolle des Helden, und das kleine Nexus-Zeichen markiert die, die gerade
   frei sind.
 
-![Helden für den Filter auswählen](docs/images/hero-filter.png)
+![Helden für den Filter auswählen](docs/images/de/hero-filter.png)
 
-  Zwei Helden gewählt, sieben von fünfundzwanzig Zeilen übrig:
+  Zwei Helden gewählt, vier von acht Zeilen übrig:
 
-![Die Liste unter diesem Filter](docs/images/hero-filter-result.png)
+![Die Liste unter diesem Filter](docs/images/de/hero-filter-result.png)
 
 * **Zähler für Strafspiele** je Konto, Linksklick zählt hoch, Rechtsklick runter — und wird
   zusammen mit allem anderen aus dem Spiel gelesen.
@@ -156,7 +161,7 @@ unzuverlässiger wird.
 Umgestellt wird **im Spiel**, nicht hier — und das braucht einen Neustart, dazu einen Download,
 wenn du eine Sprache wählst, die noch nie installiert war.
 
-![Optionen](docs/images/settings.png)
+![Optionen](docs/images/de/settings.png)
 
 Einstellungen werden gespeichert, sobald du sie änderst; einen Speichern-Knopf gibt es in dieser
 App nirgends. Im selben Reiter findet die App auch deine Heroes-of-the-Storm-Installation — sie
@@ -191,7 +196,7 @@ das, was du damit gemacht hast — es ist dieselbe Frage, die jeder an ein öffe
 Repository stellen kann. Gibt es etwas Neueres, sagt das der Versions-Chip oben rechts; ein
 Klick öffnet dies:
 
-![Das Update-Angebot](docs/images/update-offer.png)
+![Das Update-Angebot](docs/images/de/update-offer.png)
 
 **Installieren** lädt den Release herunter, prüft ihn gegen die veröffentlichte SHA-256-Prüfsumme
 und setzt ihn ein; die App startet sich selbst neu. Wo sie ihre eigene Datei **nicht** ersetzen

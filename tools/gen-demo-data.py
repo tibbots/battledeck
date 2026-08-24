@@ -157,6 +157,33 @@ account('TOWERDIVE', '6633', 'towerdive@example.com', 'demo-pass-09',
 account('PAYLOADONLY', '3078', 'payloadonly@example.com', 'demo-pass-10',
         (True, False, False, False), ['Europe'])
 
+# 11 - two regions AND penalty games AND an open placement, together on the SAME region:
+#      the account dialog needs all three traits in one image to show the region bar,
+#      the warning triangle and the dimmed medal at once.
+account('MARBLEFOX', '8834', 'marblefox@example.com', 'demo-pass-11',
+        (False, True, False, False), ['Europe', 'Americas'],
+        notes='Ranked EU, plays AM casually.',
+        hots_by=[('Europe', region('Gold', 3, heroes(28, 45),
+                                   4260, 310, 0, 96, 3, '2026-08-21T14:10:00',
+                                   penalty=1, placements=True)),
+                 ('Americas', region('Bronze', 4, heroes(9, 20),
+                                     210, 0, 0, 31, 0, '2026-08-16T10:20:00',
+                                     points=140, points_max=1000))])
+
+# 12 - Americas ticked, never read: the AM filter needs a dashed row of its own, the
+#      way the unnamed account (3 above) gives the EU filter one.
+account('HALFMOONBAY', '2290', 'halfmoonbay@example.com', 'demo-pass-12',
+        (False, True, False, False), ['Americas'])
+
+# 13 - a second archived account, so the archive toggle does not look like a
+#      one-account fixture.
+account('GLASSFERN', '6647', 'glassfern@example.com', 'demo-pass-13',
+        (False, True, False, False), ['Europe'], inactive=True,
+        notes='Dead account, kept for the badge.',
+        hots_by=[('Europe', region('Bronze', 3, heroes(15, 50),
+                                   180, 0, 0, 19, 0, '2026-05-14T08:00:00',
+                                   points=60, points_max=1000))])
+
 HEADER = """# Demo accounts for the README screenshots - NO real credentials.
 #
 # WHY THIS FILE EXISTS: tibbots/smurftown is a public repo, and the UI shows the
@@ -200,6 +227,10 @@ HEADER = """# Demo accounts for the README screenshots - NO real credentials.
 #                "has something in it"
 #   PAYLOADONLY  without the HotS checkbox: invisible under the HotS filter, present
 #                under Overwatch
+#   MARBLEFOX    two regions, penalty games AND an open placement on the same region -
+#                the account dialog needs all three at once
+#   HALFMOONBAY  Americas ticked, never read - the AM filter's own dashed row
+#   GLASSFERN    archived, second such account, on Europe
 #
 # THE FREE ROTATION DOES NOT COME FROM THIS FILE, but from the embedded calendar
 # (Backend/Entity/rotation-calendar.yaml) and follows the date of the capture. On
