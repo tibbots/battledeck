@@ -56,101 +56,11 @@
 
         <Separator Background="#313339" Margin="0,18,0,0" />
 
-        <!-- THE FUNNEL. Five steps, and the marker is a SHAPE per state rather than one shape
-             in three colours: a ring while nothing has happened, a turning arc while it is
-             happening, a check when it is done. Only the failure keeps a filled disc, in red.
-
-             All of it drawn and none of it typed - the same reasoning as the three dots of the
-             actions menu, whose spacing depended on whichever font was installed.
-
-             Blue for the arc and the check, because that is the accent the whole application
-             uses for "this is the app talking": the tabs, the rank highlight, the start button.
-             A separate success colour would be a fourth meaning nobody asked for. -->
-        <ItemsControl ItemsSource="{Binding Steps}" Margin="20,14,20,0">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Grid Margin="0,0,0,14" Opacity="{Binding Opacity}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <!-- The marker sits on the first text line, not centred on the block:
-                             with a detail line underneath, a centred marker drifts away from
-                             the label it belongs to. -->
-                        <Grid Grid.Column="0" Width="14" Height="14" Margin="0,3,12,0"
-                              VerticalAlignment="Top">
-                            <!-- Pending and failed. -->
-                            <Ellipse Fill="{Binding MarkerFill}" Stroke="{Binding MarkerBrush}"
-                                     StrokeThickness="2"
-                                     Visibility="{Binding RingVisibility}" />
-
-                            <!-- THE SPINNER. A ring with a gap, turned by a storyboard - not an
-                                 image and not a font glyph.
-
-                                 THE GAP IS CALCULATED, not chosen. StrokeDashArray counts in
-                                 multiples of the stroke width, so the numbers below are not
-                                 points: the stroke centreline has radius (14-2)/2 = 6, giving a
-                                 circumference of 37.7 points, which is 18.85 units at a
-                                 thickness of 2. "14 5" is 19 - one full turn with about a
-                                 quarter of it missing. Change the size or the thickness and
-                                 these two numbers have to be recomputed, or the gap starts
-                                 drifting around the ring as it turns.
-
-                                 IT TURNS VIA StrokeDashOffset AND NOT VIA A RotateTransform,
-                                 and that is not a matter of taste. WPF freezes Freezables
-                                 declared inside a template wherever it can, and animating a
-                                 frozen Transform throws at runtime - the build says nothing
-                                 about it. StrokeDashOffset is a plain dependency property on
-                                 Shape with no Freezable anywhere near it. Sliding the dash
-                                 pattern by exactly its own period (14 + 5 = 19) walks the gap
-                                 once around the ring, which is the same picture with none of
-                                 the risk.
-
-                                 The animation starts on Loaded and never stops. It also runs
-                                 while the element is collapsed, which is four of the five steps
-                                 - animating one double on a hidden shape costs nothing
-                                 measurable, and the alternative would be a trigger per state
-                                 that has to be kept in step with the ViewModel. -->
-                            <Ellipse Stroke="#1A73E8" StrokeThickness="2"
-                                     StrokeDashArray="14 5" StrokeDashCap="Round"
-                                     Visibility="{Binding SpinnerVisibility}">
-                                <Ellipse.Triggers>
-                                    <EventTrigger RoutedEvent="Loaded">
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation
-                                                    Storyboard.TargetProperty="StrokeDashOffset"
-                                                    From="0" To="19" Duration="0:0:0.9"
-                                                    RepeatBehavior="Forever" />
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </EventTrigger>
-                                </Ellipse.Triggers>
-                            </Ellipse>
-
-                            <!-- Done. Blue and free-standing - there is no disc behind it, so
-                                 the check is the whole marker and can use the full 14 points. -->
-                            <Path Data="M1.5,7.5 L5.5,11.5 L12.5,3" Stroke="#1A73E8"
-                                  StrokeThickness="2.2" StrokeStartLineCap="Round"
-                                  StrokeEndLineCap="Round" StrokeLineJoin="Round"
-                                  Visibility="{Binding CheckVisibility}" />
-                        </Grid>
-
-                        <StackPanel Grid.Column="1" Orientation="Vertical">
-                            <TextBlock Text="{Binding Label}" Foreground="White" FontSize="14"
-                                       FontWeight="DemiBold" />
-                            <!-- One line, and it is allowed to wrap: the progress sentences of
-                                 the run land here, and they are written for humans, not for a
-                                 fixed width. -->
-                            <TextBlock Text="{Binding Detail}" Foreground="{Binding DetailBrush}"
-                                       FontSize="12" TextWrapping="Wrap" Margin="0,3,0,0"
-                                       Visibility="{Binding DetailVisibility}" />
-                        </StackPanel>
-                    </Grid>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <!-- THE FUNNEL. Five steps here; ReuseGuide draws the same kind of row with a
+             different step count off the identical template - see RunStepsTemplate.xaml
+             for the drawing rules, RunStep.cs for what a step is. -->
+        <ItemsControl ItemsSource="{Binding Steps}" Margin="20,14,20,0"
+                      ItemTemplate="{StaticResource RunStepTemplate}" />
 
         <!-- THE REGION QUESTION, asked here rather than in a window of its own. A second dialog
              would take the foreground in the middle of the run, and taking the foreground is

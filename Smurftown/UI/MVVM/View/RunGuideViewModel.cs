@@ -1,15 +1,11 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MvvmDialogs;
 using Serilog;
 using Smurftown.Backend.Automation;
 using Smurftown.Backend.Entity;
 using Smurftown.Backend.Gateway;
 using Smurftown.Backend.Texts;
-using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace Smurftown.UI.MVVM.View
 {
@@ -23,86 +19,13 @@ namespace Smurftown.UI.MVVM.View
     /// </summary>
     public sealed record RegionChoice(string Label, string ShortName, BattlenetRegion Region, ICommand Command);
 
-    /// <summary>What a step of the run guide is doing right now.</summary>
-    public enum RunStepState
-    {
-        Pending,
-        Active,
-        Done,
-        Failed
-    }
-
-    /// <summary>
-    ///     One step of the funnel: what it is called, where it stands, and one line of detail
-    ///     underneath.
-    ///     <para>
-    ///         An immutable record without notification, replaced in the collection rather than
-    ///         mutated - the same construction as <c>HotsRankChoice</c> and for the same reason.
-    ///         Five records rebuilt a few times a second cost nothing, and a mutable step would
-    ///         need its own <c>INotifyPropertyChanged</c> for four properties that are all
-    ///         derived from one.
-    ///     </para>
-    /// </summary>
-    public sealed record RunStep(string Label, RunStepState State, string Detail)
-    {
-        private static readonly Brush PendingBrush = Frozen(0x5A, 0x5E, 0x6C);
-        private static readonly Brush FailedBrush = Frozen(0xD9, 0x53, 0x4F);
-
-        /// <summary>A step nobody has reached yet is dimmed - the same language as everywhere else.</summary>
-        public double Opacity => State == RunStepState.Pending ? 0.45 : 1.0;
-
-        /// <summary>
-        ///     <b>Three different shapes, not one shape in three colours.</b> A ring while
-        ///     nothing has happened, a turning arc while it is happening, a check when it is
-        ///     done - and only the failure keeps a filled disc, in red. Colour alone would have
-        ///     to be read; a shape is recognised across the room, which matters for a window
-        ///     that spends most of its life behind a full-screen game.
-        ///     <para>
-        ///         Blue for both the arc and the check, and that is deliberate: they are the
-        ///         same accent the whole application uses for "this is the app talking"
-        ///         (<c>#1A73E8</c>, the tabs, the rank highlight, the start button). A separate
-        ///         success colour would be a fourth meaning nobody asked for.
-        ///     </para>
-        ///     <para>
-        ///         The shapes are drawn and not typed. The repo learned that with the three dots
-        ///         of the actions menu, whose spacing depended on the font that happened to be
-        ///         installed.
-        ///     </para>
-        /// </summary>
-        public Visibility RingVisibility =>
-            State is RunStepState.Pending or RunStepState.Failed ? Visibility.Visible : Visibility.Collapsed;
-
-        /// <summary>The turning arc - exactly one step wears it, the one being worked on.</summary>
-        public Visibility SpinnerVisibility =>
-            State == RunStepState.Active ? Visibility.Visible : Visibility.Collapsed;
-
-        public Visibility CheckVisibility =>
-            State == RunStepState.Done ? Visibility.Visible : Visibility.Collapsed;
-
-        /// <summary>Stroke of the ring: grey while pending, red when it failed.</summary>
-        public Brush MarkerBrush => State == RunStepState.Failed ? FailedBrush : PendingBrush;
-
-        /// <summary>Only the failure is filled. A pending step is an outline and nothing more.</summary>
-        public Brush MarkerFill => State == RunStepState.Failed ? FailedBrush : Brushes.Transparent;
-
-        public Visibility DetailVisibility =>
-            Detail.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-
-        /// <summary>A failed step says so in red; everything else stays grey.</summary>
-        public Brush DetailBrush => State == RunStepState.Failed ? FailedBrush : PendingBrush;
-
-        private static Brush Frozen(byte r, byte g, byte b)
-        {
-            var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
-            brush.Freeze();
-            return brush;
-        }
-    }
-
     /// <summary>
     ///     The window that walks a human through refreshing from a client that is already
     ///     running - and that exists because of one measured fact: <b>the client has to hold the
-    ///     foreground, and only the human can put it there</b>.
+    ///     foreground, and only the human can put it there</b>. The frame it runs in -
+    ///     <see cref="Steps" />, <see cref="CloseCommand" />, <see cref="Start" />, the step
+    ///     bookkeeping - is <see cref="RunGuideBase" />; this class is what is specific to
+    ///     refreshing from an account that is not yet known.
     ///     <para>
     ///         <b>Why the app cannot do it itself.</b> Measured over three evenings ending
     ///         23.08.2026: a Heroes of the Storm client in exclusive full screen that loses the
@@ -139,10 +62,12 @@ namespace Smurftown.UI.MVVM.View
     ///     <para>
     ///         <b>Nothing closes itself.</b> The guide sits behind a full-screen client for the
     ///         whole run; whoever comes back wants to read what happened, not to find an empty
-    ///         screen where a window used to be.
+    ///         screen where a window used to be. That is <see cref="AutoCloseOnSuccess" />
+    ///         answering <c>false</c> - <see cref="ReuseGuideViewModel" /> is the funnel that
+    ///         answers it the other way.
     ///     </para>
     /// </summary>
-    public class RunGuideViewModel : ObservableObject, IModalDialogViewModel
+    public sealed class RunGuideViewModel : RunGuideBase
     {
         private const int StepFront = 0;
         private const int StepAccount = 1;
@@ -150,19 +75,7 @@ namespace Smurftown.UI.MVVM.View
         private const int StepRead = 3;
         private const int StepDone = 4;
 
-        /// <summary>
-        ///     How long the human has to bring the client to the front. Generous on purpose:
-        ///     this window sits behind a full-screen game, so somebody who alt-tabbed to the
-        ///     wrong place first should not be punished with a restart.
-        /// </summary>
-        private static readonly TimeSpan FrontTimeout = TimeSpan.FromSeconds(60);
-
-        /// <summary>Three times a second - the answer costs a process enumeration.</summary>
-        private static readonly TimeSpan FrontPoll = TimeSpan.FromMilliseconds(300);
-
         private static readonly BattlenetAccountGateway _gateway = BattlenetAccountGateway.Instance;
-
-        private readonly CancellationTokenSource _cancel = new();
 
         /// <summary>
         ///     Whether the loot chests are emptied before the reading. Picked in the menu under
@@ -178,44 +91,29 @@ namespace Smurftown.UI.MVVM.View
         /// </summary>
         private readonly bool _openChests;
 
-        private bool? _dialogResult;
-        private bool _finished;
-        private int _current = StepFront;
         private string _regionQuestion = "";
         private Visibility _regionVisibility = Visibility.Collapsed;
         private IReadOnlyList<RegionChoice> _regionChoices = [];
         private TaskCompletionSource<BattlenetRegion?>? _regionAnswer;
 
-        public RunGuideViewModel(bool openChests = false)
+        public RunGuideViewModel(bool openChests = false) : base(
+        [
+            new RunStep(Strings.Current["run.stepFront"], RunStepState.Pending, ""),
+            new RunStep(Strings.Current["run.stepAccount"], RunStepState.Pending, ""),
+            new RunStep(Strings.Current["run.stepRegion"], RunStepState.Pending, ""),
+            new RunStep(Strings.Current["run.stepRead"], RunStepState.Pending, ""),
+            new RunStep(Strings.Current["run.stepDone"], RunStepState.Pending, "")
+        ])
         {
             _openChests = openChests;
-
-            Steps =
-            [
-                new RunStep(Strings.Current["run.stepFront"], RunStepState.Pending, ""),
-                new RunStep(Strings.Current["run.stepAccount"], RunStepState.Pending, ""),
-                new RunStep(Strings.Current["run.stepRegion"], RunStepState.Pending, ""),
-                new RunStep(Strings.Current["run.stepRead"], RunStepState.Pending, ""),
-                new RunStep(Strings.Current["run.stepDone"], RunStepState.Pending, "")
-            ];
-
-            CloseCommand = new RelayCommand(Close);
         }
 
-        public ObservableCollection<RunStep> Steps { get; }
+        public override string Explain => Strings.Current["run.explain"];
+        public override string Title => Strings.Current["run.title"];
+        protected override string LogContext => "Refreshing from the running client";
 
-        /// <summary>The one sentence that says why a human is needed at all.</summary>
-        public string Explain => Strings.Current["run.explain"];
-
-        public string Title => Strings.Current["run.title"];
-
-        public ICommand CloseCommand { get; }
-
-        /// <summary>
-        ///     Cancel while it runs, close when it is over - one button, because there is never
-        ///     a moment where both would make sense.
-        /// </summary>
-        public string CloseLabel => Strings.Current[_finished ? "run.close" : "run.cancel"];
+        /// <summary>See the type doc - the guide never closes on its own, success or not.</summary>
+        protected override bool AutoCloseOnSuccess => false;
 
         public string RegionQuestion
         {
@@ -235,43 +133,7 @@ namespace Smurftown.UI.MVVM.View
             private set => SetProperty(ref _regionChoices, value);
         }
 
-        public bool? DialogResult
-        {
-            get => _dialogResult;
-            private set => SetProperty(ref _dialogResult, value);
-        }
-
-        /// <summary>
-        ///     Starts the run. Called from the view's <c>Loaded</c> and not from the constructor:
-        ///     the first thing it does is wait on the human, and there has to be a window on
-        ///     screen telling them so.
-        /// </summary>
-        public async void Start()
-        {
-            try
-            {
-                await RunAsync();
-            }
-            catch (OperationCanceledException)
-            {
-                Fail(_current, Strings.Current["run.cancelled"]);
-            }
-            catch (Exception e)
-            {
-                // The messages from GameSession are written for humans (wrong screen, nobody
-                // signed in, window never usable) - so they are shown as they are instead of
-                // being wrapped in a generic phrase.
-                Log.Error(e, "Refreshing from the running client failed");
-                Fail(_current, e.Message);
-            }
-            finally
-            {
-                _finished = true;
-                OnPropertyChanged(nameof(CloseLabel));
-            }
-        }
-
-        private async Task RunAsync()
+        protected override async Task RunAsync()
         {
             // The progress channel of the run, finally pointed at something that is not the
             // log. It writes into whichever step is active, so the detail line follows the
@@ -279,7 +141,7 @@ namespace Smurftown.UI.MVVM.View
             var progress = new Progress<string>(step =>
             {
                 Log.Information("Running client: {Step}", step);
-                Detail(_current, step);
+                Detail(Current, step);
             });
 
             if (!await WaitForClient(StepFront, "run.bringToFront")) return;
@@ -287,13 +149,13 @@ namespace Smurftown.UI.MVVM.View
 
             // ------------------------------------------------------------------ the account
             Begin(StepAccount);
-            var session = await Task.Run(() => GameSession.AttachToRunning(progress), _cancel.Token);
+            var session = await Task.Run(() => GameSession.AttachToRunning(progress), Cancel.Token);
 
             // expected: null - nobody said who should be standing there. This reading IS the
             // identification, and the values come along in the same capture; see
             // ProfileReader.ReadAsync.
-            var reading = await Task.Run(() => ProfileReader.ReadAsync(session, null, _cancel.Token),
-                _cancel.Token);
+            var reading = await Task.Run(() => ProfileReader.ReadAsync(session, null, Cancel.Token),
+                Cancel.Token);
             Log.Information("Running client: {Note}", reading.Note);
 
             var seen = reading.SeenBattletag;
@@ -346,7 +208,7 @@ namespace Smurftown.UI.MVVM.View
             // floor before data.yaml.
             await Task.Run(() => HotsReadout.ReadAll(session, account, data,
                 reading with { Matches = true }, _openChests, progress, changes, problems),
-                _cancel.Token);
+                Cancel.Token);
 
             data.ReadAt = DateTime.Now;
 
@@ -366,43 +228,9 @@ namespace Smurftown.UI.MVVM.View
             // collection screen, and whoever looks over cannot tell whether the app has
             // finished or is still paging. On ARAM it has finished - and the human can hit
             // "Ready" right away.
-            await Task.Run(() => PlayScreen.ShowAramAsync(session), _cancel.Token);
+            await Task.Run(() => PlayScreen.ShowAramAsync(session), Cancel.Token);
 
             Done(StepDone, problems.Count == 0 ? "" : string.Join(" · ", problems));
-        }
-
-        /// <summary>
-        ///     Waits until the client holds the foreground and has its picture - see
-        ///     <see cref="GameWindow.IsForemostAndPlayable" /> for why both halves are needed.
-        ///     <para>
-        ///         <c>false</c> means it never happened, and the step is already marked failed by
-        ///         then. The caller only has to stop.
-        ///     </para>
-        /// </summary>
-        private async Task<bool> WaitForClient(int step, string hint)
-        {
-            Begin(step);
-            Detail(step, Strings.Current[hint]);
-
-            var deadline = DateTime.UtcNow + FrontTimeout;
-
-            while (DateTime.UtcNow < deadline)
-            {
-                if (_cancel.IsCancellationRequested)
-                {
-                    Fail(step, Strings.Current["run.cancelled"]);
-                    return false;
-                }
-
-                if (await Task.Run(GameWindow.IsForemostAndPlayable)) return true;
-
-                await Task.Delay(FrontPoll);
-            }
-
-            Log.Warning("The client never came to the front within {Seconds:n0}s",
-                FrontTimeout.TotalSeconds);
-            Fail(step, Strings.Format("run.timeout", (int)FrontTimeout.TotalSeconds));
-            return false;
         }
 
         /// <summary>
@@ -486,7 +314,7 @@ namespace Smurftown.UI.MVVM.View
             RegionVisibility = Visibility.Visible;
             Detail(StepRegion, Strings.Current["run.regionWaiting"]);
 
-            await using var registration = _cancel.Token.Register(() => _regionAnswer.TrySetResult(null));
+            await using var registration = Cancel.Token.Register(() => _regionAnswer.TrySetResult(null));
 
             try
             {
@@ -497,55 +325,6 @@ namespace Smurftown.UI.MVVM.View
                 RegionVisibility = Visibility.Collapsed;
                 _regionAnswer = null;
             }
-        }
-
-        // ------------------------------------------------------------------ step bookkeeping
-
-        private void Begin(int step)
-        {
-            _current = step;
-            Set(step, RunStepState.Active, Steps[step].Detail);
-        }
-
-        private void Done(int step, string detail)
-        {
-            Set(step, RunStepState.Done, detail);
-        }
-
-        private void Fail(int step, string detail)
-        {
-            Set(step, RunStepState.Failed, detail);
-        }
-
-        private void Detail(int step, string detail)
-        {
-            Set(step, Steps[step].State, detail);
-        }
-
-        /// <summary>
-        ///     Replaces a step instead of mutating it - that is what makes the record work
-        ///     without notification of its own. Assigning into an
-        ///     <see cref="ObservableCollection{T}" /> raises <c>Replace</c>, and the
-        ///     <c>ItemsControl</c> rebuilds exactly that row.
-        /// </summary>
-        private void Set(int step, RunStepState state, string detail)
-        {
-            Steps[step] = Steps[step] with { State = state, Detail = detail };
-        }
-
-        private void Close()
-        {
-            // Cancel first, close second. While the run is going, the button is "Cancel" and
-            // the window has to stay until the flow has noticed - a window torn out from under
-            // a run in progress would leave the client on whatever screen it was paging
-            // through, with nothing on screen saying so.
-            if (!_finished)
-            {
-                _cancel.Cancel();
-                return;
-            }
-
-            DialogResult = true;
         }
     }
 }

@@ -26,6 +26,18 @@ namespace Smurftown.Backend.Automation
         /// </summary>
         private static readonly TimeSpan PictureTimeout = TimeSpan.FromSeconds(5);
 
+        /// <summary>
+        ///     How long a human has to bring the client to the front, in <see cref="WaitForForeground" />.
+        ///     Every ceiling in this class and in <see cref="GameSession" /> stands at 20s: it is
+        ///     never felt on a run that goes right - the poll below returns the moment the client
+        ///     is usable - and on one that does not, 20s is how long somebody is willing to wait
+        ///     before the window's own message tells them what to do about it.
+        /// </summary>
+        public static readonly TimeSpan FrontTimeout = TimeSpan.FromSeconds(20);
+
+        /// <summary>Three times a second - the answer costs a process enumeration.</summary>
+        private static readonly TimeSpan FrontPoll = TimeSpan.FromMilliseconds(300);
+
         private static readonly string[] ProcessNames = ["HeroesOfTheStorm_x64", "HeroesOfTheStorm"];
 
         private GameWindow(Process process, IntPtr handle)
@@ -138,6 +150,39 @@ namespace Smurftown.Backend.Automation
             {
                 window.Process.Dispose();
             }
+        }
+
+        /// <summary>
+        ///     Polls <see cref="IsForemostAndPlayable" /> until it answers yes or
+        ///     <see cref="FrontTimeout" /> runs out - the wait every flow that reuses a running
+        ///     client needs before it may touch the window itself.
+        ///     <para>
+        ///         <b>It does not call <see cref="BringToFront" />.</b> That is not an omission,
+        ///         it is the entire fix: only a human pressing Alt+Tab reliably restores a client
+        ///         that was in exclusive full screen and lost the foreground - see the class
+        ///         remarks on <see cref="BringToFront" />. Whoever calls this owns a window on
+        ///         screen that says so and shows this wait as a step; a flow that skips the
+        ///         window and fights for the foreground itself reproduces the bug this method
+        ///         exists to end.
+        ///     </para>
+        ///     <para>
+        ///         Extracted on 24.08.2026 out of the run guide, which was the only caller until
+        ///         the reuse guide needed the identical wait for a second flow - two loops
+        ///         checking the same thing were exactly the place they would have drifted apart.
+        ///     </para>
+        /// </summary>
+        public static async Task<bool> WaitForForeground(CancellationToken token)
+        {
+            var deadline = DateTime.UtcNow + FrontTimeout;
+
+            while (DateTime.UtcNow < deadline)
+            {
+                if (token.IsCancellationRequested) return false;
+                if (await Task.Run(IsForemostAndPlayable, token)) return true;
+                await Task.Delay(FrontPoll);
+            }
+
+            return false;
         }
 
         public static GameWindow? Find()

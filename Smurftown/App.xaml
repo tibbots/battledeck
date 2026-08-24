@@ -22,6 +22,9 @@
                 <ResourceDictionary Source="UI/Theme/BattlenetToolTipTheme.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/ToastNotifications.Messages;component/Themes/Default.xaml" />
+                <!-- The funnel row RunGuide and ReuseGuide both draw their steps with - see
+                     RunStepsTemplate.xaml for why it is not two copies. -->
+                <ResourceDictionary Source="UI/MVVM/View/RunStepsTemplate.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!-- One DataTemplate per tab: MainViewModel.CurrentView carries a ViewModel, and
                  the ContentControl in MainWindow looks up the matching view here. Whoever

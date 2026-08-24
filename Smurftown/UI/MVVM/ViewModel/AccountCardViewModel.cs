@@ -1166,6 +1166,16 @@ namespace Smurftown.UI.MVVM.ViewModel
         ///         types with pauses between keystrokes. On the UI thread the
         ///         application would stand still for minutes in the meantime.
         ///     </para>
+        ///     <para>
+        ///         <b>A running client is handed to <see cref="View.ReuseGuideViewModel" />, not
+        ///         to <see cref="RunSession" /> directly.</b> Until 24.08.2026 both cases went
+        ///         through the same silent background call, and reusing a client meant
+        ///         <c>GameSession.TakeOver</c> fighting <c>BringToFront</c> against one that had
+        ///         lost the display - a window flickering up and down while nothing happened, the
+        ///         same bug the header chip's guide already carries the fix for. A fresh start
+        ///         never has that problem - there is no display to have lost yet - so it keeps
+        ///         going through the silent path below.
+        ///     </para>
         /// </summary>
         private async Task StartHots(BattlenetAccount account, SessionPlan plan)
         {
@@ -1180,24 +1190,45 @@ namespace Smurftown.UI.MVVM.ViewModel
                 return;
             }
 
-            Dialogs.Toast.ShowInformation(plan switch
-            {
-                { OpenChests: true } => $"Opening chests for {account.Battletag()}",
-                { Read: false } => $"Starting Heroes of the Storm for {account.Battletag()}",
-                { CloseAfterwards: false } =>
-                    $"Starting Heroes of the Storm for {account.Battletag()} and refreshing data",
-                _ => $"Refreshing data for {account.Battletag()}"
-            });
-
             try
             {
+                // Only a client that is ALREADY UP needs the human gate - see the type doc.
+                // Cheap and off the UI thread, the same call RunningGame.Poll makes every three
+                // seconds.
+                if (await Task.Run(GameWindow.IsRunning))
+                {
+                    using (Dialogs.Backdrop())
+                    {
+                        Dialogs.DialogService.ShowDialog(this,
+                            new ReuseGuideViewModel(account, _row!.Region, plan));
+                    }
+
+                    // The guide mutated the account and its region data directly through the
+                    // same shared objects this row already holds - this only rebuilds what the
+                    // row SHOWS, the same call every other write path in this class ends on.
+                    Row = _row;
+                    return;
+                }
+
+                Dialogs.Toast.ShowInformation(plan switch
+                {
+                    { OpenChests: true } => $"Opening chests for {account.Battletag()}",
+                    { Read: false } => $"Starting Heroes of the Storm for {account.Battletag()}",
+                    { CloseAfterwards: false } =>
+                        $"Starting Heroes of the Storm for {account.Battletag()} and refreshing data",
+                    _ => $"Refreshing data for {account.Battletag()}"
+                });
+
                 await RunSession(account, plan);
             }
             catch (Exception e)
             {
                 // The messages from GameSession are written for humans (wrong
                 // window size, screen didn't come up, game not found) - therefore show them
-                // directly instead of wrapping them in a generic phrase.
+                // directly instead of wrapping them in a generic phrase. A failure INSIDE the
+                // reuse guide above never reaches this catch - it is shown on the step itself
+                // and stays on screen until a human closes it; this only catches what happens
+                // around the guide (the poll, opening the dialog) or anywhere in the silent path.
                 Log.Error(e, "{Battletag}: start failed", account.Battletag());
                 Dialogs.Toast.ShowError(e.Message);
             }
@@ -1340,7 +1371,12 @@ namespace Smurftown.UI.MVVM.ViewModel
         }
 
         /// <summary>
-        ///     Starts, signs in and reads - the shared flow behind all four gestures.
+        ///     Starts, signs in and reads - the silent flow behind all four gestures when there
+        ///     is no client running yet. <b>A running client never reaches here</b> since
+        ///     24.08.2026: <see cref="StartHots" /> hands that case to
+        ///     <see cref="View.ReuseGuideViewModel" /> instead, which needs a window on screen
+        ///     because it needs a human at the wheel - a fresh start does not, there is no
+        ///     display for the client to have lost yet.
         ///     <para>
         ///         Without <see cref="SessionPlan.Read" /> it's over after signing in. Nothing is
         ///         saved either then and <c>HotsReadAt</c> is not set: it wasn't

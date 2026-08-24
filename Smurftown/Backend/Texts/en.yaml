@@ -149,6 +149,16 @@ run.cancelled: Cancelled.
 # region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
 region.pickQuestion: "{0} is signed in. The client does not say which region it is playing in - pick it."   # 0 = Battletag
 
+# =========================================================== Reuse guide ===========
+# The account row's version of the run guide above: reusing a client that is already
+# running to switch it to a KNOWN account, instead of reading whichever one is already
+# signed in. Steps not covered here (front, read, done, cancel, close, timeout, cancelled)
+# reuse the run.* keys - identical wording, no reason for a second translation of the same
+# sentence.
+reuse.title: Switch account
+reuse.explain: "Heroes of the Storm only takes clicks while it is in front. Bring it up with Alt+Tab - this window waits, then signs the current account out and {0} in."   # 0 = Battletag
+reuse.stepSwitch: Switch the account
+
 # =========================================================== Currencies ============
 currency.gold: Gold
 currency.shards: Shards

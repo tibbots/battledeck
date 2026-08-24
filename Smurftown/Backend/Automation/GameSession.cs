@@ -31,17 +31,24 @@ namespace Smurftown.Backend.Automation
     /// </summary>
     public sealed class GameSession : IDisposable
     {
-        private static readonly TimeSpan WindowTimeout = TimeSpan.FromSeconds(180);
+        /// <summary>
+        ///     Every ceiling in this class stands at 20s (<see cref="RestoreTimeout" /> below is
+        ///     the one exception, already shorter). None of them is felt on a run that goes
+        ///     right - each is the upper bound of a poll that returns the moment its condition is
+        ///     met, not a wait that is sat out. What it buys is how long a run that has genuinely
+        ///     gone wrong sits there before the window's own message says so.
+        /// </summary>
+        private static readonly TimeSpan WindowTimeout = TimeSpan.FromSeconds(20);
 
         /// <summary>
         ///     How long an ALREADY RUNNING client gets to bring its window back to a
-        ///     usable size. Noticeably shorter than <see cref="WindowTimeout" />:
+        ///     usable size. Shorter than <see cref="WindowTimeout" />:
         ///     the window already exists, the only wait is for the
         ///     restoration to take effect.
         /// </summary>
         private static readonly TimeSpan RestoreTimeout = TimeSpan.FromSeconds(15);
-        private static readonly TimeSpan LoginScreenTimeout = TimeSpan.FromSeconds(90);
-        private static readonly TimeSpan MenuTimeout = TimeSpan.FromSeconds(150);
+        private static readonly TimeSpan LoginScreenTimeout = TimeSpan.FromSeconds(20);
+        private static readonly TimeSpan MenuTimeout = TimeSpan.FromSeconds(20);
 
         /// <summary>Minimum wait time after the region change, before any measurement happens at all.</summary>
         private static readonly TimeSpan FormSettleMinimum = TimeSpan.FromSeconds(1);
@@ -51,12 +58,12 @@ namespace Smurftown.Backend.Automation
         /// <summary>
         ///     This is how long the login form is searched for before giving up.
         ///     <para>
-        ///         Generous, because the wait costs nothing here: the form is found in
-        ///         the second it appears. The value is the upper limit for the case
-        ///         that it never comes at all - for example because the game does not get a connection.
+        ///         The wait costs nothing on a normal run: the form is found in the second it
+        ///         appears, this is only the upper limit for the case that it never comes at all -
+        ///         for example because the game does not get a connection.
         ///     </para>
         /// </summary>
-        private static readonly TimeSpan LoginFormTimeout = TimeSpan.FromSeconds(120);
+        private static readonly TimeSpan LoginFormTimeout = TimeSpan.FromSeconds(20);
 
         /// <summary>
         ///     Interval between two measurement attempts in <see cref="Retry{T}" />. Same cadence

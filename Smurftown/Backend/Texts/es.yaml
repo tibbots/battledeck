@@ -103,6 +103,16 @@ run.cancelled: Cancelado.
 # region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
 region.pickQuestion: "{0} ha iniciado sesión. El cliente no dice en qué región juega - elígela."
 
+# =========================================================== Reuse guide ===========
+# The account row's version of the run guide above: reusing a client that is already
+# running to switch it to a KNOWN account, instead of reading whichever one is already
+# signed in. Steps not covered here (front, read, done, cancel, close, timeout, cancelled)
+# reuse the run.* keys - identical wording, no reason for a second translation of the same
+# sentence.
+reuse.title: Cambiar de cuenta
+reuse.explain: "Heroes of the Storm solo acepta clics mientras está en primer plano. Tráelo con Alt+Tab; esta ventana espera, luego cierra la sesión actual e inicia la de {0}."
+reuse.stepSwitch: Cambiar de cuenta
+
 # =========================================================== Currencies ============
 currency.gold: Oro
 currency.shards: Esquirlas
