@@ -36,6 +36,32 @@ namespace Smurftown.Backend.Automation
         public int Height { get; }
 
         /// <summary>
+        ///     A single-color capture, entirely synthetic - no screen, no window, no game.
+        ///     <para>
+        ///         Exists for tests: <c>InternalsVisibleTo</c> already opens this assembly to
+        ///         <c>Smurftown.Tests</c> (see <c>XamlLoadsTests</c>), so this stays
+        ///         <c>internal</c> rather than growing the public surface for a case nothing
+        ///         outside a test ever needs. A solid color is enough for
+        ///         <see cref="GameSession.ScreenOf(Screenshot,Layout,ScreenMap)" />, which only
+        ///         ever reads the brightest of the three channels per pixel - it cannot tell a
+        ///         solid fill from a real capture of the same brightness.
+        ///     </para>
+        /// </summary>
+        internal static Screenshot Solid(int width, int height, byte r, byte g, byte b)
+        {
+            var buffer = new byte[width * height * BytesPerPixel];
+            for (var i = 0; i < buffer.Length; i += BytesPerPixel)
+            {
+                buffer[i] = b;
+                buffer[i + 1] = g;
+                buffer[i + 2] = r;
+                buffer[i + 3] = 255;
+            }
+
+            return new Screenshot(buffer, width, height);
+        }
+
+        /// <summary>
         ///     Captures a section of the screen. The coordinates are screen points, not
         ///     window-relative.
         /// </summary>

@@ -125,6 +125,13 @@ instead of `No usable game window after 15s` — the window is there, it is just
 - **Only from the main menu.** If the client sits in a hero select or in a match, the run aborts
   instead of clicking: signing out mid-match costs a match and earns the account a deserter
   status. If it is already at the login form, there is nothing to do.
+- **The screen is measured up to three times before either conclusion is drawn**, one second
+  apart, and Menu or Login is trusted the moment either appears. Measured on 24.08.2026: the
+  identical, unchanged screen came back as hero select twice and main menu once across three
+  sign-outs in a row — `WaitForForeground`, which runs right before this, checks only window
+  ownership and size, nothing about the picture inside it, and a single capture taken in that
+  same instant could still catch the client's own interface mid-redraw. Once the attempts run
+  out, the *last* reading counts, not the first — a transitional frame settles toward the truth.
 - **Two clicks, no focus change in between.** `SetForegroundWindow` closes the opened gear menu —
   the same trap as with the region picker, and more expensive here: 66 points below "Log out"
   sits **"Exit game"**.
@@ -208,7 +215,10 @@ and there is a human in it. Not on success, not in the error branch, not in a `f
 **Only from the main menu**, for the same reason the sign-out has that rule. At the login form
 there is no account to read; in a hero select or a match the profile overlay is not reachable, and
 clicking there anyway costs the human the match. Both cases abort with a sentence that says which
-one it was.
+one it was — and, since 24.08.2026, with a screenshot: it shares the sign-out's re-measured check
+(`GameSession.SettledScreen`, up to three tries a second apart) instead of trusting a single
+capture, for the identical reason — `WaitForForeground` checks only window ownership and size, not
+the picture inside it.
 
 **The poll costs a process list and nothing else.** `GameWindow.IsRunning` every three seconds — no
 capture, no `BringToFront`. A poll that steals the focus every three seconds would take the machine

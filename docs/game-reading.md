@@ -37,13 +37,16 @@ This is one of the reasons the rank screen is no longer read by image comparison
 - **Every capture costs** roughly 20 MB at 3440×1440 **and brings the game window to the front**
   (`GameWindow.Capture` calls `BringToFront`). The cadence is therefore 1.5 s, the same as in
   `WaitForScreen`. Anyone doing something else on the machine during a wait loop will notice.
-- **Retried where a miss actually costs something** — four sites, each with its own stop
-  condition: the **login mask** (nothing proceeds without it), the **expected hero count** (the
-  entire list's fate as replace-vs-merge hangs on that one number), **rank** (`ProfileReader`,
-  until the line `Sturmliga` appears, at most 8 s per opening), and a **card page** (at most
-  three times, aborting as soon as all ten slots are readable). Deliberately **not** retried:
-  `HeaderReader` — there, an unread value simply stays as it was. Blindly retrying everywhere
-  would only report real failures later and slower.
+- **Retried where a miss actually costs something** — six sites, four different mechanisms: the
+  **login mask** (nothing proceeds without it), the **expected hero count** (the entire list's
+  fate as replace-vs-merge hangs on that one number), **rank** (`ProfileReader`, until the line
+  `Sturmliga` appears, at most 8 s per opening), a **card page** (at most three times, aborting as
+  soon as all ten slots are readable), and the **screen check** — one mechanism used at two sites,
+  `GameSession.SignOut` and `GameSession.AttachToRunning` (`SettledScreen`, up to three times a
+  second apart — added 24.08.2026 after the identical screen read as hero select twice and main
+  menu once in a row). Deliberately **not** retried: `HeaderReader` — there, an unread
+  value simply stays as it was. Blindly retrying everywhere would only report real failures later
+  and slower.
 - **Where stillness isn't measurable at all, don't wait for stillness.** A `WaitForStableArea`
   used to sit over the collection's card grid. Its measurement box necessarily spans the area
   between the two name strips, and the moving background shows through there between the cards:

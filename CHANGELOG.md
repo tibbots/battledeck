@@ -37,6 +37,15 @@ nothing else on the line.
   the sentence that updates live underneath while a step runs — "25 of 31 cards read", "Signing
   in …" — stayed in English no matter what language was set in Settings. It now follows the same
   language as the rest of the window.
+- **"Switch account" no longer occasionally refuses a client that is genuinely at the main menu.**
+  It could report "shows HeroSelect instead of the main menu" on a screen that, a moment later,
+  read correctly — the check measured the screen exactly once, right after the client regained
+  focus, while its own interface could still be redrawing. It now measures up to three times a
+  second apart before giving up.
+- **The header chip's "Refresh data" has the same fix.** Attaching to an already-running client
+  could occasionally refuse it as "in a hero select or a match" or "no account signed in" on a
+  screen that was genuinely at the main menu, for the identical reason as above. Both checks now
+  share the same re-measured logic.
 
 ## [1.5.0] - 2026-08-24
 

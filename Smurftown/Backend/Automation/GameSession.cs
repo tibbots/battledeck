@@ -139,7 +139,7 @@ namespace Smurftown.Backend.Automation
             {
                 progress?.Report(ProgressStep.Of("progress.reusing"));
                 session = await TakeOver(running, map, token);
-                session.SignOut(progress);
+                await session.SignOut(progress, token);
             }
             else
             {
@@ -293,21 +293,28 @@ namespace Smurftown.Backend.Automation
             progress?.Report(ProgressStep.Of("progress.attaching"));
             var session = await TakeOver(running, ScreenMap.Load(), token);
 
-            var screen = session.ScreenOf(session.Capture());
+            // Re-measured, not trusted from one capture - same reasoning as SignOut, which is
+            // where the underlying bug was actually found: WaitForForeground (inside TakeOver's
+            // WaitForPlayableWindow) checks only window ownership and size, nothing about the
+            // picture, and a single capture taken right after regaining focus could still catch
+            // the client's own interface mid-redraw.
+            var (screen, last) = await session.SettledScreen(s => s == GameScreen.Menu, token);
             if (screen == GameScreen.Menu)
             {
                 Log.Information("Attached to the running client, main menu");
                 return session;
             }
 
+            var path = SaveDiagnostic(last, "attach-not-menu");
+
             // The session is deliberately NOT disposed on the way out - that would kill the
             // client the human is sitting in front of. It is dropped, nothing more; it holds no
             // resource beyond the process handle.
             throw new InvalidOperationException(screen == GameScreen.HeroSelect
                 ? "The client is in a hero select or in a match - the profile is not reachable " +
-                  "there. Come back to the main menu and try again."
+                  $"there. Come back to the main menu and try again. Screenshot: {path}"
                 : "The client is running, but no account is signed in - the login form is " +
-                  "showing. Sign in, or start the account from its row instead.");
+                  $"showing. Sign in, or start the account from its row instead. Screenshot: {path}");
         }
 
         /// <summary>
@@ -401,7 +408,25 @@ namespace Smurftown.Backend.Automation
         /// </summary>
         public GameScreen ScreenOf(Screenshot shot)
         {
-            var (x, y, width, height) = Layout.Area(_map.Detect.Strip);
+            return ScreenOf(shot, Layout, _map);
+        }
+
+        /// <summary>
+        ///     The same classification, but without a live session behind it - <see cref="Layout" />
+        ///     and <see cref="ScreenMap" /> given explicitly instead of read off <c>this</c>.
+        ///     <para>
+        ///         <b>Exists for tests.</b> The instance overload needs a real, playable
+        ///         <see cref="GameWindow" /> just to come into being - its constructor measures
+        ///         one. That is fine for the running app and impossible for a unit test. This
+        ///         overload has no such dependency: <see cref="Layout" /> is a plain
+        ///         <c>record struct</c> and <see cref="ScreenMap" /> loads from the embedded
+        ///         calibration, neither needs a window. <c>internal</c>, not <c>public</c> -
+        ///         nothing outside this class and its tests has a reason to call it directly.
+        ///     </para>
+        /// </summary>
+        internal static GameScreen ScreenOf(Screenshot shot, Layout layout, ScreenMap map)
+        {
+            var (x, y, width, height) = layout.Area(map.Detect.Strip);
             double sum = 0;
             var count = 0;
             for (var sy = y; sy < y + height; sy += 2)
@@ -413,8 +438,8 @@ namespace Smurftown.Backend.Automation
             }
 
             var brightness = count == 0 ? 0 : sum / count;
-            if (brightness >= _map.Detect.MenuAbove) return GameScreen.Menu;
-            if (brightness <= _map.Detect.HeroSelectBelow) return GameScreen.HeroSelect;
+            if (brightness >= map.Detect.MenuAbove) return GameScreen.Menu;
+            if (brightness <= map.Detect.HeroSelectBelow) return GameScreen.HeroSelect;
             return GameScreen.Login;
         }
 
@@ -555,6 +580,12 @@ namespace Smurftown.Backend.Automation
         ///         <c>BringToFront</c> stands once before it and not in <c>ClickAt</c>.
         ///     </para>
         /// </summary>
+        /// <summary>How many times <see cref="SettledScreen" /> re-measures before it trusts
+        ///     whatever it last saw. Same cadence as <see cref="TabFinder" /> - one second apart,
+        ///     <see cref="RetryInterval" /> reused. Shared by <see cref="SignOut" /> and
+        ///     <see cref="AttachToRunning" />.</summary>
+        private const int ScreenSettleAttempts = 3;
+
         /// <summary>
         ///     Signs the running client out, so the next account can sign in.
         ///     <para>
@@ -562,6 +593,26 @@ namespace Smurftown.Backend.Automation
         ///         a game, it aborts instead of clicking - signing out mid
         ///         match costs the human a game and the account a deserter status.
         ///         If it is already on the login form, there is nothing to do.
+        ///     </para>
+        ///     <para>
+        ///         <b>The screen is measured more than once before either conclusion is
+        ///         drawn.</b> Measured on 24.08.2026: the identical, unchanged screen came back
+        ///         as <see cref="GameScreen.HeroSelect" /> twice and <see cref="GameScreen.Menu" />
+        ///         once, across three sign-outs in a row. <see cref="GameWindow.WaitForForeground" />,
+        ///         which runs right before this, checks only window ownership and size - nothing
+        ///         about the picture inside it - and the very next line here used to trust a
+        ///         single capture taken in that same instant, while the client's own interface
+        ///         could still be redrawing after regaining focus. Same class of bug as
+        ///         <see cref="LocateLogin" /> catching a loading spinner and the rank medallion
+        ///         being read mid-draw - both fixed the same way: measure again instead of
+        ///         trusting the first frame.
+        ///     </para>
+        ///     <para>
+        ///         <b>Menu or Login is trusted the moment either appears</b> - both are already
+        ///         a known, actionable state. Anything else keeps the <i>last</i> reading, not
+        ///         the first, once the attempts run out - a transitional frame settles toward
+        ///         the truth, the same reasoning as <see cref="WaitForStableArea(int,int,int,int,string,System.Threading.CancellationToken,System.Nullable{System.TimeSpan})" />
+        ///         continuing with its last measured value rather than the first.
         ///     </para>
         ///     <para>
         ///         <b>The window is brought to the front once before, not between the two
@@ -574,9 +625,10 @@ namespace Smurftown.Backend.Automation
         ///         special case - the caller sets it anew at every sign-in anyway.
         ///     </para>
         /// </summary>
-        private void SignOut(IProgress<ProgressStep>? progress)
+        private async Task SignOut(IProgress<ProgressStep>? progress, CancellationToken token)
         {
-            var screen = ScreenOf(Capture());
+            var (screen, last) = await SettledScreen(
+                s => s == GameScreen.Menu || s == GameScreen.Login, token);
             if (screen == GameScreen.Login)
             {
                 Log.Information("Running client is already signed out");
@@ -584,9 +636,12 @@ namespace Smurftown.Backend.Automation
             }
 
             if (screen != GameScreen.Menu)
+            {
+                var path = SaveDiagnostic(last, "signout-not-menu");
                 throw new InvalidOperationException(
                     $"A Heroes of the Storm instance is running, but it shows {screen} instead of " +
-                    "the main menu. Sign out or close it yourself.");
+                    $"the main menu. Sign out or close it yourself. Screenshot: {path}");
+            }
 
             progress?.Report(ProgressStep.Of("progress.signingOut"));
             Log.Information("Reusing the running client - signing out");
@@ -596,6 +651,56 @@ namespace Smurftown.Backend.Automation
             Thread.Sleep(700);
             Click(_map.Menu.Logout);
             Thread.Sleep(1500);
+        }
+
+        /// <summary>
+        ///     Re-measures the screen up to <see cref="ScreenSettleAttempts" /> times, one
+        ///     <see cref="RetryInterval" /> apart, instead of trusting a single capture - see the
+        ///     reasoning on <see cref="SignOut" />, which found the bug this exists to close.
+        ///     <see cref="AttachToRunning" /> shares it rather than repeating it - a second copy
+        ///     of the same loop is exactly the place the two would have drifted apart.
+        ///     <para>
+        ///         Returns as soon as <paramref name="settled" /> accepts a reading - for
+        ///         <see cref="SignOut" /> that is Menu or Login, for <see cref="AttachToRunning" />
+        ///         only Menu, since Login and hero select are both reasons to stop there.
+        ///         Otherwise the LAST reading, once attempts run out - a transitional frame
+        ///         settles toward the truth, not away from it.
+        ///     </para>
+        /// </summary>
+        private async Task<(GameScreen Screen, Screenshot? Last)> SettledScreen(
+            Func<GameScreen, bool> settled, CancellationToken token)
+        {
+            var screen = GameScreen.Unknown;
+            Screenshot? last = null;
+
+            for (var attempt = 1; attempt <= ScreenSettleAttempts; attempt++)
+            {
+                token.ThrowIfCancellationRequested();
+                last = Capture();
+                screen = ScreenOf(last);
+
+                // Logged so a live run can be compared against the single-shot check this loop
+                // replaces, without having to run the old code side by side: attempt 1 IS that
+                // old check, unchanged. If it is already accepted, old and new agree. If it is
+                // not but a later attempt is, this line is the record of a case the old code
+                // would have thrown on and this loop caught.
+                if (attempt == 1 && !settled(screen))
+                    Log.Information(
+                        "Screen check: first reading was {Screen} - the single-shot check this " +
+                        "loop replaces would have stopped here", screen);
+
+                if (settled(screen))
+                {
+                    if (attempt > 1)
+                        Log.Information("Screen check: settled on {Screen} after {Attempt} attempts",
+                            screen, attempt);
+                    return (screen, last);
+                }
+
+                if (attempt < ScreenSettleAttempts) await Task.Delay(RetryInterval, token);
+            }
+
+            return (screen, last);
         }
 
         private void SelectRegion(LoginForm form, BattlenetRegion region)
