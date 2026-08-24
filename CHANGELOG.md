@@ -21,6 +21,27 @@ nothing else on the line.
 
 ## [Upcoming]
 
+## [1.5.0] - 2026-08-24
+
+### Changed
+
+- **A stuck automation step now reports itself within 20 seconds instead of up to three
+  minutes.** Waiting for the game to start, sign in or come back to the front could previously run
+  far longer before giving up. None of that time was ever spent on a run that went right — a
+  successful wait always returned the moment its condition was met — so only how long a genuinely
+  stuck run took to say so has changed.
+
+### Fixed
+
+- **Switching a running client to a different account no longer makes the window flicker between
+  minimised and maximised.** Reusing an already-running Heroes of the Storm client for "Play and
+  read data" and the row's other start options used to try bringing the window to the front on its
+  own, which does not work once a client has lost the display — the same limitation the header
+  chip's refresh already worked around. The row now asks the same way the chip does: a small
+  window explains that Heroes of the Storm needs to be brought to the front with Alt+Tab, waits
+  until it actually is, and — unlike the chip's window — closes itself once the switch and any
+  reading are done, since there is nothing left on screen worth a click to dismiss.
+
 ## [1.4.0] - 2026-08-24
 
 ### Added
@@ -257,7 +278,8 @@ First public release.
   Run anyway* — the checksum shipped with each release proves that the file matches the release,
   not who built it.
 
-[Upcoming]: https://github.com/tibbots/smurftown/compare/1.4.0...HEAD
+[Upcoming]: https://github.com/tibbots/smurftown/compare/1.5.0...HEAD
+[1.5.0]: https://github.com/tibbots/smurftown/releases/tag/1.5.0
 [1.4.0]: https://github.com/tibbots/smurftown/releases/tag/1.4.0
 [1.3.0]: https://github.com/tibbots/smurftown/releases/tag/1.3.0
 [1.2.0]: https://github.com/tibbots/smurftown/releases/tag/1.2.0
