@@ -37,13 +37,13 @@ namespace Smurftown.Backend.Automation
     public static class LootOpener
     {
         /// <summary>After the first press: the chest opens, four cards are dealt out.</summary>
-        private static readonly TimeSpan OpenDelay = TimeSpan.FromMilliseconds(2500);
+        private static readonly TimeSpan OpenDelay = TimeSpan.FromMilliseconds(2000);
 
         /// <summary>After the second: all four turn over, the names fade in.</summary>
-        private static readonly TimeSpan RevealDelay = TimeSpan.FromMilliseconds(2500);
+        private static readonly TimeSpan RevealDelay = TimeSpan.FromMilliseconds(2000);
 
         /// <summary>After the third: back to the loot page.</summary>
-        private static readonly TimeSpan AcceptDelay = TimeSpan.FromMilliseconds(2500);
+        private static readonly TimeSpan AcceptDelay = TimeSpan.FromMilliseconds(2000);
 
         /// <summary>
         ///     How many times a chest is tried at most. Two, because the game occasionally
@@ -66,7 +66,7 @@ namespace Smurftown.Backend.Automation
         /// </summary>
         private const int CountAttempts = 3;
 
-        private static readonly TimeSpan CountPause = TimeSpan.FromMilliseconds(800);
+        private static readonly TimeSpan CountPause = TimeSpan.FromMilliseconds(600);
 
         /// <summary>
         ///     How many rounds a run may take when the starting count could not be read. That
@@ -96,7 +96,7 @@ namespace Smurftown.Backend.Automation
                     "The loot tab was not found - nothing opened. Check that the client language " +
                     "matches the one set in Smurftown.");
 
-            await Task.Delay(3000, token);
+            await Task.Delay(2800, token);
 
             var state = await CountWithRetry(session, token);
             if (state == null)

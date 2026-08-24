@@ -44,7 +44,7 @@ namespace Smurftown.Backend.Automation
         private static readonly TimeSpan MenuTimeout = TimeSpan.FromSeconds(150);
 
         /// <summary>Minimum wait time after the region change, before any measurement happens at all.</summary>
-        private static readonly TimeSpan FormSettleMinimum = TimeSpan.FromSeconds(2.5);
+        private static readonly TimeSpan FormSettleMinimum = TimeSpan.FromSeconds(1);
 
         private static readonly TimeSpan FormSettleTimeout = TimeSpan.FromSeconds(20);
 
@@ -64,7 +64,7 @@ namespace Smurftown.Backend.Automation
         ///     each one brings the game window to the front. Measuring faster would bring nothing - the
         ///     login form does not appear any more precisely within a second.
         /// </summary>
-        private static readonly TimeSpan RetryInterval = TimeSpan.FromSeconds(1.5);
+        private static readonly TimeSpan RetryInterval = TimeSpan.FromSeconds(1);
 
         /// <summary>
         ///     Below this window height, no work is done. Not a calibration value, but a
@@ -422,7 +422,7 @@ namespace Smurftown.Backend.Automation
 
                 last = Capture();
                 if (ScreenOf(last) == wanted) return;
-                await Task.Delay(1500, token);
+                await Task.Delay(1000, token);
             }
 
             var path = SaveDiagnostic(last, $"no-{wanted}".ToLowerInvariant());

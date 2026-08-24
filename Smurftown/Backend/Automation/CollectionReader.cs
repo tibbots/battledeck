@@ -142,7 +142,7 @@ namespace Smurftown.Backend.Automation
             // clears the role preselection, staying there makes the hint with the expected count
             // appear. Both in one go, because a second visit would only cost time.
             session.Click(map.AllRoles);
-            await Task.Delay(2500, token);
+            await Task.Delay(500, token);
             var (expected, total) = await ReadExpectedCount(session, map, token);
             if (expected > 0) progress?.Report(Strings.FormatForLog("progress.owned", expected, total));
 
@@ -258,14 +258,14 @@ namespace Smurftown.Backend.Automation
                     vocabulary.CollectionTab, "collection", token))
                 return false;
 
-            await Task.Delay(3000, token);
+            await Task.Delay(500, token);
 
             session.Window.BringToFront();
             if (!await TabFinder.ClickAsync(session, map.HeroesBar,
                     vocabulary.HeroesTab, "heroes", token))
                 return false;
 
-            await Task.Delay(3000, token);
+            await Task.Delay(500, token);
             return true;
         }
 
@@ -278,12 +278,12 @@ namespace Smurftown.Backend.Automation
         {
             session.Window.BringToFront();
             session.Click(field);
-            await Task.Delay(1200, token);
+            await Task.Delay(500, token);
 
             var (x, _) = session.Layout.Point(field);
             var y = session.Layout.Length(map.DropdownFirst + index * map.DropdownPitch);
             session.ClickAt(x, y);
-            await Task.Delay(2500, token);
+            await Task.Delay(500, token);
         }
 
         /// <summary>Expected count and total count, as they appear in the sidebar.</summary>
