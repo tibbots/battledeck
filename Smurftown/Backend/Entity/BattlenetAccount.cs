@@ -40,7 +40,18 @@ namespace Smurftown.Backend.Entity
             set => _email = value.ToLower();
         }
 
-        public required string Password { get; set; }
+        /// <summary>
+        ///     Not <c>required</c> since 24.08.2026: an account whose human does not want to
+        ///     hand this application their Battle.net password can leave it empty and still use
+        ///     every other feature. The one thing that costs is the automated start -
+        ///     <see cref="Automation.GameSession.FillCredentials" /> refuses to type a value that
+        ///     is not there, and the row's start menu hides itself for exactly this reason (see
+        ///     <c>AccountCardViewModel.BuildStartOptions</c>). Reading still works: whoever starts
+        ///     Heroes of the Storm and signs in themselves is picked up by the header chip, the
+        ///     same way it already reads any client that is already running.
+        /// </summary>
+        public string Password { get; set; } = "";
+
         public required string Notes { get; set; }
         public required DateTime LatestInteractionAt { get; set; }
 

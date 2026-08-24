@@ -62,6 +62,25 @@
         <ItemsControl ItemsSource="{Binding Steps}" Margin="20,14,20,0"
                       ItemTemplate="{StaticResource RunStepTemplate}" />
 
+        <!-- THE NEW-ACCOUNT QUESTION: the client is signed into a battletag no account in
+             Smurftown carries yet. Asked here for the same reason as the region question below -
+             a second window would take the foreground away from the client at the worst possible
+             moment. Hidden whenever there is nothing to ask, which is the normal case: an
+             already known account answers this step at once. -->
+        <StackPanel Orientation="Vertical" Visibility="{Binding AccountVisibility}"
+                    Margin="20,0,20,0">
+            <Separator Background="#313339" Margin="0,0,0,14" />
+            <TextBlock Text="{Binding AccountQuestion}" Foreground="#8F8F92" FontSize="13"
+                       FontWeight="DemiBold" TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                <TextBox Style="{StaticResource BattlenetTextBoxTheme}" Width="280" Height="34"
+                         Text="{Binding EmailInput, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Style="{StaticResource BattlenetButtonPrimaryTheme}"
+                        Content="{loc:Str account.emailConfirm}" Width="120" Height="34"
+                        Margin="10,0,0,0" Command="{Binding ConfirmEmailCommand}" />
+            </StackPanel>
+        </StackPanel>
+
         <!-- THE REGION QUESTION, asked here rather than in a window of its own. A second dialog
              would take the foreground in the middle of the run, and taking the foreground is
              the one thing this flow cannot survive. It is hidden whenever there is nothing to

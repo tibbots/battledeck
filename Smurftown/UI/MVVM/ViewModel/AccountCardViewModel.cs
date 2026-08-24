@@ -360,7 +360,7 @@ namespace Smurftown.UI.MVVM.ViewModel
                 // The strip, then the preselection. Heroes of the Storm first, because only there
                 // is any data at all; if the account doesn't have it, the choice falls back to the
                 // first game it does have.
-                SelectGame(PreferredGame(AvailableGames(account, value.Region)));
+                SelectGame(PreferredGame(AvailableGames(account, value.Region)), account.Password.Length > 0);
 
                 OnPropertyChanged();
             }
@@ -848,13 +848,21 @@ namespace Smurftown.UI.MVVM.ViewModel
         ///         previously stood there dimmed, because the loot page was calibrated, but the
         ///         flow behind it was still missing.
         ///     </para>
+        ///     <para>
+        ///         <b>Hidden, not dimmed, when the account has no password</b> - since
+        ///         24.08.2026 that is allowed, and none of the four modes can work without one:
+        ///         all of them end in <c>GameSession.StartAndLogin</c>, which types the stored
+        ///         password into the login form. Reading such an account still works, only not
+        ///         from this menu - whoever starts Heroes of the Storm and signs in themselves is
+        ///         picked up by the header chip instead.
+        ///     </para>
         /// </summary>
-        private IReadOnlyList<StartOption> BuildStartOptions(bool hots)
+        private IReadOnlyList<StartOption> BuildStartOptions(bool hots, bool hasPassword)
         {
             var command = RunStartOptionCommand;
             var options = new List<StartOption>();
 
-            if (hots)
+            if (hots && hasPassword)
             {
                 // The order is not just taste: a click on the game symbol takes
                 // the FIRST entry. That's why the case you want most often stands on top.
@@ -972,13 +980,13 @@ namespace Smurftown.UI.MVVM.ViewModel
         ///         offered the four HotS entries while the row stood on Overwatch.
         ///     </para>
         /// </summary>
-        private void SelectGame(string? game)
+        private void SelectGame(string? game, bool hasPassword)
         {
             var hots = game == GameVisuals.Hots;
 
             // Not a computed property: otherwise every switch would have to raise the
             // notification by hand.
-            StartOptions = BuildStartOptions(hots);
+            StartOptions = BuildStartOptions(hots, hasPassword);
             HasStartOptions = StartOptions.Count > 0;
 
             HotsPanelVisibility = hots ? Visibility.Visible : Visibility.Collapsed;

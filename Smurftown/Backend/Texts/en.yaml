@@ -90,6 +90,25 @@ accounts.sortByHeroesRead: Heroes read
 accounts.sortDirectionHint: Reverse sort direction
 accounts.filterCount: "{0} of {1}"                       # 0 = matching, 1 = in scope for the game/region
 
+# The onboarding panel: not a single account in data.yaml yet. The one place that explains
+# both ways an account gets into this list - since 24.08.2026 one of them never touches this
+# dialog or a password, see docs/game-integration.md.
+accounts.emptyTitle: No accounts yet
+accounts.emptyLead: There are two ways to get one in here.
+accounts.emptyOption1Title: Add an account
+accounts.emptyOption1Hint: "Type its e-mail and password. Smurftown can then start Heroes of the Storm and sign it in for you."
+accounts.emptyOption1Button: Add account
+accounts.emptyOption2Title: Sign in yourself
+accounts.emptyOption2Hint: "Start Heroes of the Storm and sign in - Smurftown never sees a password this way. Once you're at the main menu, a chip appears at the top of this window; click it and choose 'Refresh' to read the account in, or to create it here if it's new. The one thing this path skips is starting the game for you."
+# The filtered-empty panel: accounts exist, the current view just doesn't show any of them -
+# a different fact from accounts.empty* above, and it gets different wording. Archive and
+# filter are told apart too: an empty archive and a filter matching nothing are not the same
+# reason for a blank list.
+accounts.noMatchesTitle: No accounts match
+accounts.noMatchesHint: Adjust the search, the hero or rank filter, or the game and region above.
+accounts.emptyArchiveTitle: The archive is empty
+accounts.emptyArchiveHint: Archived accounts show up here once you archive one from its row menu.
+
 # =========================================================== Account row =============
 row.noBattletagHint: No battletag read yet - start the account with 'Play and refresh data'.
 row.noHeroes: no heroes read yet
@@ -158,6 +177,10 @@ run.timeout: "The client did not come to the front within {0} seconds."   # 0 = 
 run.cancelled: Cancelled.
 # region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
 region.pickQuestion: "{0} is signed in. The client does not say which region it is playing in - pick it."   # 0 = Battletag
+# account.email* sit here too, for the same reason: they belong to this run guide, not to the
+# edit dialog's dialog.email further below - that one edits a known account, this one creates one.
+account.emailQuestion: "{0} is signed in for the first time - no account in Smurftown carries that battletag yet. Which e-mail belongs to it?"   # 0 = Battletag
+account.emailConfirm: Continue
 
 # =========================================================== Reuse guide ===========
 # The account row's version of the run guide above: reusing a client that is already
@@ -206,7 +229,6 @@ dialog.placements: PLACEMENTS
 dialog.placementsPending: placements pending
 dialog.placementsHint: "Placement matches (usually 3) are still open.\nThe rank stays stored, it is just shown as not yet valid."
 dialog.needEmail: e-mail is required
-dialog.needPassword: password is required
 dialog.needGame: pick at least one game and a region for it
 
 # =========================================================== Hero picker ===========
@@ -340,6 +362,7 @@ progress.cards: "{0} cards read"
 progress.chest: Opening chest {0} of {1}
 
 # =========================================================== Toasts ===============
+toast.accountReactivated: "{0} was archived - restored instead of adding a duplicate"   # 0 = Battletag or e-mail
 toast.signedIn: "{0} is signed in"                       # 0 = Battletag
 toast.nothingChanged: "{0}: nothing changed"
 toast.copied: "{0} copied to clipboard"                  # 0 = "E-mail" / "Password"
@@ -368,6 +391,8 @@ change.chestMany: "{0} chests opened"
 change.heroesAdded: "{0} heroes added ({1} total)"
 change.heroes: Heroes {0} -> {1} ({2} added, {3} removed)
 change.regionAdded: Region {0} added                     # 0 = region name
+change.accountCreated: New account {0} created           # 0 = Battletag
+change.reactivated: No longer archived
 
 # =========================================================== What went wrong ========
 # ONLY THE FRAME is translated. What stands in {0} is the text of an exception or the
@@ -384,7 +409,7 @@ problem.tagForeign: "The profile shows '{0}' - that belongs to another account (
 problem.tagAmbiguous: "The profile showed '{0}', the second capture '{1}' - ambiguous, nothing is adopted for '{2}'."
 problem.runBusy: A game run is already in progress - wait for it to finish.
 problem.runNotATag: "The profile shows '{0}' - that is not a battletag. Nothing is written."
-problem.runUnknown: "The client is signed in as '{0}' - no account in Smurftown carries that battletag. Nothing is written."
+problem.runEmailTaken: "The e-mail '{0}' already belongs to another account in Smurftown - check for a typo. Nothing is written."
 
 # =========================================================== Error window ==========
 error.title: Application Error

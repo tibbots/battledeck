@@ -62,6 +62,21 @@ namespace Smurftown.UI.MVVM
             HotsRegionData data, ProfileReading? resolved, bool openChests,
             IProgress<ProgressStep> progress, List<string> changes, List<string> problems)
         {
+            // REACTIVATES an archived account, right here and nowhere else - this is the one
+            // place all three entrances (the row, the header chip, a reused running client)
+            // funnel their read through, and reading it out of the game is the strongest signal
+            // there is that it is in use again. Deliberately NOT on UpdateInteraction/AddOrUpdate:
+            // those also run for copying the password or correcting a rank by hand, and neither
+            // of those carries the same signal - an archived account must survive being merely
+            // clicked on.
+            if (account.Inactive)
+            {
+                account.Inactive = false;
+                changes.Add(Strings.Current["change.reactivated"]);
+                Log.Information("{Battletag}: was archived - reactivated by reading it from the game",
+                    account.Battletag());
+            }
+
             // Chests FIRST: they change shards, gold and occasionally the hero list.
             // Read afterwards the stored state is correct, read before it would be stale immediately.
             if (openChests) await OpenChests(session, account, progress, changes, problems);

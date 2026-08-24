@@ -21,6 +21,27 @@ nothing else on the line.
 
 ## [Upcoming]
 
+### Added
+
+- **Battle.net accounts no longer need a stored password.** The password field in the account
+  dialog is optional now. What that costs is the automated start — Smurftown still needs a stored
+  password to sign an account in and click through the login form itself — but every other feature
+  keeps working: start Heroes of the Storm yourself, sign in, and use the header chip's "Refresh"
+  once the client is up, exactly as if the client had been started from a row.
+- **The header chip can create a new account, not only read a known one.** Signing into a battletag
+  Smurftown has never seen and clicking "Refresh" used to refuse with "no account carries that
+  battletag - nothing is written". It now asks for the account's e-mail address and creates it from
+  there, with no password stored — the same account this point above describes.
+- **An empty account list explains the two ways to fill it**, instead of showing a blank area: add
+  one by hand with its e-mail and password, or start Heroes of the Storm yourself and sign in - the
+  two points above.
+- **Archived accounts come back instead of being lost.** Adding a new account under an e-mail that
+  already belongs to an archived one restores that account rather than replacing it — its battletag,
+  rank, heroes and every region it was ever ticked for are kept, and only the password, notes and
+  newly ticked regions come from what was just typed, and only where those were not left blank.
+  Reading such an account straight out of a running game — from its row, the header chip, or an
+  already-running client — brings it back from the archive automatically, the same way.
+
 ## [1.6.0] - 2026-08-24
 
 ### Added

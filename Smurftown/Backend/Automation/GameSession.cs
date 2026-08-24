@@ -790,8 +790,26 @@ namespace Smurftown.Backend.Automation
             await WaitForStableArea(x, y, width, height, name, token, minimum);
         }
 
+        /// <summary>
+        ///     Types e-mail and password into the located form.
+        ///     <para>
+        ///         <b>Refuses an empty password</b> since 24.08.2026, when the field stopped
+        ///         being <c>required</c> on <see cref="BattlenetAccount" />. Typing an empty
+        ///         string would submit the form anyway and fail confusingly later, at "main menu
+        ///         did not appear" - this way the account row never gets this far in the first
+        ///         place, because its start menu hides itself for exactly this account. The check
+        ///         still sits here and not only there: it is the one place that actually types
+        ///         the value, and a future caller must not have to remember the precondition.
+        ///     </para>
+        /// </summary>
         private void FillCredentials(BattlenetAccount account, LoginForm form)
         {
+            if (account.Password.Length == 0)
+                throw new InvalidOperationException(
+                    $"{account.Battletag()} has no password stored - it cannot be signed in " +
+                    "automatically. Start Heroes of the Storm yourself and sign in; the header " +
+                    "chip reads it from there.");
+
             Window.BringToFront();
 
             // Clear both fields first: the form pre-fills the email address with the last

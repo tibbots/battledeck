@@ -6,9 +6,11 @@ using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MvvmDialogs;
+using Serilog;
 using Smurftown.Backend.Entity;
 using Smurftown.Backend.Gateway;
 using Smurftown.Backend.Texts;
+using ToastNotifications.Messages;
 
 namespace Smurftown.UI.MVVM.View;
 
@@ -92,6 +94,14 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
     private readonly bool _inactive;
 
     /// <summary>
+    ///     The account this dialog was opened for - <c>null</c> for the "+" button, the account
+    ///     itself when editing. Kept only for <see cref="Execute" />'s reactivation check: is the
+    ///     e-mail just typed the SAME account already open here (an ordinary save), or a
+    ///     DIFFERENT, archived one this save is about to collide with.
+    /// </summary>
+    private readonly BattlenetAccount? _originalAccount;
+
+    /// <summary>
     ///     <paramref name="region" /> and <paramref name="hotsTab" /> come from the account
     ///     row, which knows both: a row is exactly one account in exactly one region, and a
     ///     click on its hero strip means the HotS tab and nothing else. Without them the
@@ -102,6 +112,7 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
         bool hotsTab = false)
     {
         _inactive = account?.Inactive ?? false;
+        _originalAccount = account;
 
         // Regions and game states. Both as a copy: the checkmarks must not affect the
         // saved account as long as nothing has been saved. A NEW account
@@ -812,9 +823,11 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
     /// </summary>
     private void RefreshDialog()
     {
-        SaveButtonEnabled = !string.IsNullOrEmpty(_password)
-                            && !string.IsNullOrEmpty(_email)
-                            && AnyGameChecked;
+        // The password is deliberately NOT in this condition since 24.08.2026 - it is the one
+        // field a human may not want to hand this application at all, and every other feature
+        // stays usable without it. What it costs instead is the row's start menu, which hides
+        // itself for an account with no password - see AccountCardViewModel.BuildStartOptions.
+        SaveButtonEnabled = !string.IsNullOrEmpty(_email) && AnyGameChecked;
 
         // Name and discriminator are deliberately NO LONGER in the condition - they are read,
         // not typed, and a new account does not have them yet.
@@ -824,7 +837,6 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
     private string MissingFieldHint()
     {
         if (string.IsNullOrEmpty(_email)) return Strings.Current["dialog.needEmail"];
-        if (string.IsNullOrEmpty(_password)) return Strings.Current["dialog.needPassword"];
         if (!AnyGameChecked) return Strings.Current["dialog.needGame"];
         return "";
     }
@@ -845,24 +857,46 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
         // exactly the region that was just open would be lost.
         StashRegion();
 
+        // Saving under an e-mail that already belongs to a DIFFERENT, archived account turns
+        // this save into a reactivation instead of letting AddOrUpdate's Remove+Add (identity
+        // is the e-mail alone) quietly replace that account with a blank one of the same name.
+        // ReferenceEquals against the account THIS dialog opened for: editing an account and
+        // leaving its own e-mail untouched must stay an ordinary save, not "reactivate myself".
+        var existing = _battlenetAccountGateway.FindByEmail(Email!);
+        var reactivating = existing is { Inactive: true } && !ReferenceEquals(existing, _originalAccount);
+
         var account = new BattlenetAccount
         {
             // Passed through unchanged - the dialog only displays the battletag. It is written
-            // exclusively when reading it out of the profile overlay.
-            Name = _name,
-            Discriminator = _discriminator,
+            // exclusively when reading it out of the profile overlay. REACTIVATING carries the
+            // EXISTING account's battletag along instead of the blank pair every "+" dialog
+            // starts with - it never had one of its own to begin with.
+            Name = reactivating ? existing!.Name : _name,
+            Discriminator = reactivating ? existing!.Discriminator : _discriminator,
             Email = Email!,
-            Password = Password!,
+
+            // Blank means "leave it as it is", not "clear it": a "+" dialog that happens to
+            // collide with an archived account has no pre-filled password or notes to compare
+            // against the way editing does, so an empty field here must not silently erase a
+            // real one that account already had.
+            Password = reactivating && string.IsNullOrEmpty(Password) ? existing!.Password : Password!,
+            Notes = reactivating && string.IsNullOrEmpty(Notes) ? existing!.Notes : Notes ?? "",
+
             LatestInteractionAt = DateTime.Now,
-            Notes = Notes ?? "",
-            Inactive = _inactive,
+            Inactive = reactivating ? false : _inactive,
 
             // The matrix, in the order of the selection list rather than that of the clicks -
             // data.yaml should not change just because someone ticked America before Europe.
             // Games without a region are not in the dictionary at all, see Tick.
-            RegionsByGame = _regionsByGame.ToDictionary(
-                entry => entry.Key,
-                entry => BattlenetRegions.InDisplayOrder.Where(entry.Value.Contains).ToList()),
+            //
+            // REACTIVATING MERGES rather than replaces: the archived account's own row was
+            // invisible while filling out this "+" dialog, so a forgotten tick must not drop a
+            // region it already played - this only ADDS what got ticked here.
+            RegionsByGame = reactivating
+                ? MergeRegions(existing!.RegionsByGame, _regionsByGame)
+                : _regionsByGame.ToDictionary(
+                    entry => entry.Key,
+                    entry => BattlenetRegions.InDisplayOrder.Where(entry.Value.Contains).ToList()),
 
             // The game states along with the values written by reading (gold, shards,
             // gems, level, chests, read timestamp). They appear in no input mask - they
@@ -872,10 +906,64 @@ public class AddOrEditAccountViewModel : ObservableObject, IModalDialogViewModel
             //
             // States of deselected regions also ride along. Removing a checkmark hides
             // the row and does not throw away what was once read there.
-            HotsByRegion = _data.ToDictionary(entry => entry.Key, entry => entry.Value)
+            //
+            // REACTIVATING keeps the EXISTING account's region data wherever it has any - it
+            // was read from the game, and this "+" dialog has nothing but a blank default to
+            // offer in its place. Only a region the existing account never had comes from here.
+            HotsByRegion = reactivating
+                ? MergeHotsByRegion(existing!.HotsByRegion, _data)
+                : _data.ToDictionary(entry => entry.Key, entry => entry.Value)
         };
 
+        if (reactivating)
+        {
+            Dialogs.Toast.ShowInformation(Strings.Format("toast.accountReactivated", account.DisplayName));
+            Log.Information("{Email}: re-added while archived - restored instead of replaced",
+                account.Email);
+        }
+
         _battlenetAccountGateway.AddOrUpdate(account);
+    }
+
+    /// <summary>
+    ///     Union per game, not replacement - see the reasoning at the call site in
+    ///     <see cref="Execute" />. A region the existing account already played survives even if
+    ///     this "+" dialog never ticked it again; anything newly ticked here is added on top.
+    /// </summary>
+    private static Dictionary<string, List<BattlenetRegion>> MergeRegions(
+        Dictionary<string, List<BattlenetRegion>> existing,
+        Dictionary<string, HashSet<BattlenetRegion>> typed)
+    {
+        var merged = existing.ToDictionary(
+            entry => entry.Key, entry => new HashSet<BattlenetRegion>(entry.Value));
+
+        foreach (var (game, regions) in typed)
+        {
+            if (!merged.TryGetValue(game, out var set)) merged[game] = set = [];
+            foreach (var region in regions) set.Add(region);
+        }
+
+        return merged.ToDictionary(
+            entry => entry.Key,
+            entry => BattlenetRegions.InDisplayOrder.Where(entry.Value.Contains).ToList());
+    }
+
+    /// <summary>
+    ///     The existing account's own region data wins wherever it has any - see the reasoning
+    ///     at the call site in <see cref="Execute" />. Only a region the existing account never
+    ///     played comes from this dialog's working copy at all.
+    /// </summary>
+    private static Dictionary<BattlenetRegion, HotsRegionData> MergeHotsByRegion(
+        Dictionary<BattlenetRegion, HotsRegionData> existing,
+        Dictionary<BattlenetRegion, HotsRegionData> typed)
+    {
+        var merged = existing.ToDictionary(entry => entry.Key, entry => entry.Value);
+        foreach (var (region, data) in typed)
+        {
+            if (!merged.ContainsKey(region)) merged[region] = data;
+        }
+
+        return merged;
     }
 }
 

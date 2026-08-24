@@ -55,6 +55,14 @@ namespace Smurftown.UI.MVVM.ViewModel
                     OnPropertyChanged(nameof(FilteredCount));
                     OnPropertyChanged(nameof(ScopeCount));
                     OnPropertyChanged(nameof(FilterCountLabel));
+                    OnPropertyChanged(nameof(AccountRowsVisibility));
+                    OnPropertyChanged(nameof(NoAccountsVisibility));
+                    OnPropertyChanged(nameof(NoMatchesVisibility));
+                    // Both now read ScopeCount, not just _showArchived - a change to either
+                    // needs to reach them, and ScopeCount changes on every re-filter, not only
+                    // when the archive toggle itself is flipped.
+                    OnPropertyChanged(nameof(NoMatchesTitle));
+                    OnPropertyChanged(nameof(NoMatchesHint));
                 };
             }
 
@@ -89,6 +97,12 @@ namespace Smurftown.UI.MVVM.ViewModel
             {
                 if (!SetProperty(ref _showArchived, value)) return;
                 OnPropertyChanged(nameof(ArchiveHint));
+                // The wording of the "nothing to show" panel depends on which half of the
+                // list is open - see NoMatchesTitle/NoMatchesHint. The visibility itself
+                // follows the re-filter this same change already triggers (through the base
+                // OnPropertyChanged override), which is why only the TEXT is notified here.
+                OnPropertyChanged(nameof(NoMatchesTitle));
+                OnPropertyChanged(nameof(NoMatchesHint));
             }
         }
 
@@ -582,6 +596,69 @@ namespace Smurftown.UI.MVVM.ViewModel
             set => SetProperty(ref _accountRows, value);
         }
 
+        /// <summary>
+        ///     Nothing is active for the current game and region - either because every account
+        ///     is archived, or because none was ever ticked for this exact game/region pair. The
+        ///     archive toggle itself is excluded on purpose: standing IN the archive with zero
+        ///     entries is answered by <see cref="NoMatchesVisibility" /> instead, one panel down -
+        ///     "the archive is empty" is not the same sentence as "add your first account".
+        /// </summary>
+        private bool NothingActiveHere => !_showArchived && ScopeCount == 0;
+
+        /// <summary>
+        ///     "Nothing in <c>data.yaml</c> at all" and "something is in there, the current view
+        ///     just doesn't show it" are two different facts and get two different panels below -
+        ///     the same distinction this application draws everywhere between "never read" and
+        ///     "read, found nothing". Conflating them here would tell somebody who has archived
+        ///     every account, or searched for a typo, that they have never added one at all.
+        /// </summary>
+        public Visibility AccountRowsVisibility => FilteredCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        /// <summary>
+        ///     The onboarding panel: either not a single account exists yet, or every account
+        ///     that would otherwise show here is archived - both leave the active list equally
+        ///     empty, and both have the same two answers, so both get the same panel. This is the
+        ///     one place that explains the two ways an account gets into this list at all, since
+        ///     24.08.2026 one of them - starting Heroes of the Storm yourself and reading it via
+        ///     the header chip - never touches this dialog or a password.
+        ///     <para>
+        ///         <b>Archiving somebody's only account is what exposed the gap</b> this second
+        ///         condition closes: until 24.08.2026 that state showed "no active accounts" here
+        ///         instead - true, but the wrong panel, since the two ways to fill this list are
+        ///         exactly as relevant with one archived account as with none.
+        ///     </para>
+        /// </summary>
+        public Visibility NoAccountsVisibility =>
+            _battlenetAccountGateway.BattlenetAccounts.Count == 0 || NothingActiveHere
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+
+        /// <summary>
+        ///     Accounts exist, the current view just doesn't show any of them - a search, hero or
+        ///     rank filter hiding rows that ARE there, or the archive toggle itself standing on an
+        ///     empty half. Deliberately NOT the case <see cref="NothingActiveHere" /> already
+        ///     covers: "add your first account" is the more useful answer there than a sentence
+        ///     about filters that, in that state, are not even the reason.
+        /// </summary>
+        public Visibility NoMatchesVisibility =>
+            _battlenetAccountGateway.BattlenetAccounts.Count > 0 && !NothingActiveHere && FilteredCount == 0
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+
+        /// <summary>
+        ///     Only two cases reach this panel now that <see cref="NothingActiveHere" /> has its
+        ///     own: the archive itself stands empty, or a search/hero/rank filter hides rows that
+        ///     exist. "No active accounts" is gone from here - it used to stand in for both, and
+        ///     for the first of them it named a symptom rather than the thing to do about it.
+        /// </summary>
+        public string NoMatchesTitle => (_showArchived && ScopeCount == 0)
+            ? Strings.Current["accounts.emptyArchiveTitle"]
+            : Strings.Current["accounts.noMatchesTitle"];
+
+        public string NoMatchesHint => (_showArchived && ScopeCount == 0)
+            ? Strings.Current["accounts.emptyArchiveHint"]
+            : Strings.Current["accounts.noMatchesHint"];
+
         private bool CanCreateAccount()
         {
             return true;
@@ -662,7 +739,9 @@ namespace Smurftown.UI.MVVM.ViewModel
             // CollectionChanged again, and the handler calls back in - the same shape as the
             // OnPropertyChanged/RefreshDialog loop in AddOrEditAccountViewModel, just with the
             // collection view standing in for the missing equality check.
-            if (e.PropertyName is nameof(FilteredCount) or nameof(ScopeCount) or nameof(FilterCountLabel))
+            if (e.PropertyName is nameof(FilteredCount) or nameof(ScopeCount) or nameof(FilterCountLabel)
+                or nameof(AccountRowsVisibility) or nameof(NoAccountsVisibility) or nameof(NoMatchesVisibility)
+                or nameof(NoMatchesTitle) or nameof(NoMatchesHint))
             {
                 return;
             }

@@ -43,6 +43,17 @@ accounts.sortByGold: Oro
 accounts.sortByHeroesRead: Héroes leídos
 accounts.sortDirectionHint: Invertir el orden
 accounts.filterCount: "{0} de {1}"
+accounts.emptyTitle: Aún no hay cuentas
+accounts.emptyLead: Hay dos formas de conseguir una cuenta aquí.
+accounts.emptyOption1Title: Añadir una cuenta
+accounts.emptyOption1Hint: "Escribe su correo y su contraseña. Smurftown puede entonces iniciar Heroes of the Storm e iniciar su sesión por ti."
+accounts.emptyOption1Button: Añadir cuenta
+accounts.emptyOption2Title: Inicia sesión tú
+accounts.emptyOption2Hint: "Inicia Heroes of the Storm e inicia sesión - así Smurftown nunca ve una contraseña. En cuanto llegues al menú principal, aparece un botón en la parte superior de esta ventana; haz clic en él y elige «Actualizar» para leer la cuenta, o para crearla aquí si es nueva. Lo único que este camino no hace es iniciar el juego por ti."
+accounts.noMatchesTitle: Ninguna cuenta coincide
+accounts.noMatchesHint: Ajusta la búsqueda, el filtro de héroes o de rango, o el juego y la región de arriba.
+accounts.emptyArchiveTitle: El archivo está vacío
+accounts.emptyArchiveHint: Las cuentas archivadas aparecen aquí en cuanto archivas una desde el menú de su fila.
 
 # =========================================================== Account row =============
 row.noBattletagHint: Aún no se ha leído ningún battletag - inicia la cuenta con «Jugar y actualizar».
@@ -112,6 +123,10 @@ run.timeout: "El cliente no pasó al primer plano en {0} segundos."
 run.cancelled: Cancelado.
 # region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
 region.pickQuestion: "{0} ha iniciado sesión. El cliente no dice en qué región juega - elígela."
+# account.email* sit here too, for the same reason: they belong to this run guide, not to the
+# edit dialog's dialog.email further below - that one edits a known account, this one creates one.
+account.emailQuestion: "{0} ha iniciado sesión por primera vez - ninguna cuenta en Smurftown tiene todavía ese battletag. ¿Qué correo le pertenece?"
+account.emailConfirm: Continuar
 
 # =========================================================== Reuse guide ===========
 # The account row's version of the run guide above: reusing a client that is already
@@ -157,7 +172,6 @@ dialog.placements: CLASIFICACIÓN
 dialog.placementsPending: clasificación pendiente
 dialog.placementsHint: "Quedan partidas de clasificación por jugar (normalmente 3).\nEl rango sigue guardado, solo se muestra como aún no válido."
 dialog.needEmail: falta el correo
-dialog.needPassword: falta la contraseña
 dialog.needGame: elige al menos un juego y una región para él
 
 # =========================================================== Hero picker ===========
@@ -274,6 +288,7 @@ progress.cards: "{0} cartas leídas"
 progress.chest: Abriendo el cofre {0} de {1}
 
 # =========================================================== Toasts ===============
+toast.accountReactivated: "{0} estaba archivado - restaurado en vez de crear una cuenta duplicada"
 toast.signedIn: "{0} ha iniciado sesión"
 toast.nothingChanged: "{0}: sin cambios"
 toast.copied: "{0} copiado al portapapeles"
@@ -299,6 +314,8 @@ change.chestMany: "{0} cofres abiertos"
 change.heroesAdded: "{0} héroes añadidos ({1} en total)"
 change.heroes: Héroes {0} -> {1} ({2} añadidos, {3} retirados)
 change.regionAdded: Región {0} añadida
+change.accountCreated: Cuenta nueva {0} creada
+change.reactivated: Ya no archivado
 
 # =========================================================== What went wrong ========
 # Only the frame is translated - what goes in {0} is an exception text or the note of a
@@ -315,7 +332,7 @@ problem.tagForeign: "El perfil muestra «{0}» - pertenece a otra cuenta ({1}). 
 problem.tagAmbiguous: "El perfil mostró «{0}» y la segunda captura «{1}» - ambiguo, no se adopta nada para «{2}»."
 problem.runBusy: Ya hay una ejecución de juego en curso - espera a que termine.
 problem.runNotATag: "El perfil muestra «{0}» - eso no es un battletag. No se escribe nada."
-problem.runUnknown: "El cliente ha iniciado sesión como «{0}» - ninguna cuenta en Smurftown tiene ese battletag. No se escribe nada."
+problem.runEmailTaken: "El correo «{0}» ya pertenece a otra cuenta en Smurftown - comprueba que no sea una errata. No se escribe nada."
 
 # =========================================================== Error window ==========
 error.title: Error de la aplicación

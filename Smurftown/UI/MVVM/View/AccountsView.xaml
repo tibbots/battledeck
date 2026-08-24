@@ -441,7 +441,7 @@
              from the row corner, a 14-point margin stood here, otherwise exactly the
              topmost row would have looked clipped. It no longer protrudes, so the margin is
              gone. Whoever lets something protrude again in the account row needs it back. -->
-        <ItemsControl Grid.Row="1"
+        <ItemsControl Grid.Row="1" Visibility="{Binding AccountRowsVisibility}"
                       ItemsSource="{Binding AccountRows, UpdateSourceTrigger=PropertyChanged}">
 
             <ItemsControl.ItemsPanel>
@@ -476,6 +476,84 @@
                 </ControlTemplate>
             </ItemsControl.Template>
         </ItemsControl>
+
+        <!-- ================================================== The empty states =======
+             Two different reasons for an empty content area, and they get two different
+             panels - the same distinction this app draws everywhere between "never read"
+             and "read, found nothing" (see data-model.md). Conflating them here would tell
+             somebody who has archived every account, or searched for a typo, that they have
+             never added one at all. Both share this Grid cell with the ItemsControl above;
+             AccountsViewModel's three Visibility properties make sure only one of the three
+             is ever showing. -->
+
+        <!-- ONBOARDING: not a single account in data.yaml. The one place that explains both
+             ways an account gets into this list - since 24.08.2026 one of them never touches
+             this window's dialog or a password, see docs/game-integration.md. -->
+        <StackPanel Grid.Row="1" Visibility="{Binding NoAccountsVisibility}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="{loc:Str accounts.emptyTitle}" Foreground="White" FontSize="22"
+                       FontWeight="DemiBold" HorizontalAlignment="Center" />
+            <TextBlock Text="{loc:Str accounts.emptyLead}" Foreground="#8F93A0" FontSize="13"
+                       HorizontalAlignment="Center" Margin="0,8,0,28" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <!-- Option 1: typed in by hand, e-mail and password - the only path with an
+                     automated start, because it is the only one that has a password to type. -->
+                <Border Width="340" Padding="24" CornerRadius="8" BorderThickness="1.5"
+                        BorderBrush="#313339" Background="#24262e">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Str accounts.emptyOption1Title}" Foreground="White"
+                                   FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock Text="{loc:Str accounts.emptyOption1Hint}" Foreground="#8F93A0"
+                                   FontSize="12.5" TextWrapping="Wrap" Margin="0,8,0,16" />
+                        <Button Command="{Binding CreateAccountCommand}"
+                                Content="{loc:Str accounts.emptyOption1Button}"
+                                Style="{StaticResource BattlenetButtonPrimaryTheme}"
+                                Width="160" Height="34" HorizontalAlignment="Left" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Option 2: the header-chip entrance - GameSession.AttachToRunning reads
+                     whoever is already signed in, Smurftown never sees this account's password.
+                     No button here: the action is starting Heroes of the Storm, and that stays
+                     a human's step on purpose - see CLAUDE.md's testing section. -->
+                <Border Width="340" Padding="24" CornerRadius="8" BorderThickness="1.5"
+                        BorderBrush="#313339" Background="#24262e" Margin="20,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Str accounts.emptyOption2Title}" Foreground="White"
+                                   FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock Text="{loc:Str accounts.emptyOption2Hint}" Foreground="#8F93A0"
+                                   FontSize="12.5" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- FILTERED EMPTY: accounts exist, the current view just doesn't show any of them.
+             Same motif as the per-row NoData panel in AccountCardView.xaml and the empty hero
+             filter above - "nothing here" reads the same way everywhere in this app.
+             DASHED AS A RECTANGLE AND NOT A BORDER: Border cannot do dashing, the same trap
+             ui-conventions.md already names for the row's own NoData box.
+
+             NO FIXED Width/Height, unlike an earlier version of this box: a fixed 420x90 was
+             sized for the English hint and overflowed it in every other language - German's
+             translation alone runs noticeably longer. The Grid instead sizes to the padded
+             StackPanel, and the Rectangle (Stretch by default) follows it - self-sizing to
+             whatever the actual sentence needs, in any of the four languages. -->
+        <Grid Grid.Row="1" Visibility="{Binding NoMatchesVisibility}"
+              HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Rectangle Stroke="#3A3D46" StrokeThickness="1.5" StrokeDashArray="3 2"
+                       RadiusX="8" RadiusY="8" />
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                        MaxWidth="380" Margin="24,18,24,18">
+                <TextBlock Text="{Binding NoMatchesTitle}" Foreground="#8F93A0" FontSize="15"
+                           FontWeight="SemiBold" HorizontalAlignment="Center"
+                           TextWrapping="Wrap" TextAlignment="Center" />
+                <TextBlock Text="{Binding NoMatchesHint}" Foreground="#5A5E6C" FontSize="12.5"
+                           HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"
+                           Margin="0,6,0,0" />
+            </StackPanel>
+        </Grid>
 
     </Grid>
 </UserControl>

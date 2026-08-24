@@ -396,6 +396,25 @@ namespace Smurftown.Backend.Gateway
             return null;
         }
 
+        /// <summary>
+        ///     Which account carries this e-mail - the identity itself
+        ///     (<see cref="BattlenetAccount.Equals(object?)" />), and therefore the only lookup
+        ///     that can ever have more than one hit be a bug rather than a state to guard
+        ///     against, unlike <see cref="FindByBattletag" />.
+        ///     <para>
+        ///         Exists for <see cref="View.AddOrEditAccountViewModel" />'s reactivation check:
+        ///         saving the "+" dialog under an e-mail that already belongs to an archived
+        ///         account must restore that account instead of letting
+        ///         <see cref="AddOrUpdate" />'s Remove+Add quietly replace it with a blank one of
+        ///         the same name.
+        ///     </para>
+        /// </summary>
+        public BattlenetAccount? FindByEmail(string email)
+        {
+            return BattlenetAccounts.FirstOrDefault(account =>
+                string.Equals(account.Email, email, StringComparison.OrdinalIgnoreCase));
+        }
+
         private bool Contains(BattlenetAccount account, string searchQuery)
         {
             var parts = new List<string> { account.Name, account.Discriminator, account.Email };
