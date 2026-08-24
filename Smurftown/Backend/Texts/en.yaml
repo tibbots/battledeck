@@ -79,6 +79,16 @@ accounts.rotationHint: "Free rotation {0} - {1} heroes{2}\nClick to edit"
 accounts.rotationHintUnknown: "Free rotation {0} - not in the calendar\nClick to enter the free heroes of this period"
 accounts.archiveShow: Show archived accounts
 accounts.archiveShowing: Showing archived accounts - click to go back
+accounts.rankFilterHint: Filter by rank - an account matches if its rank is one of the selected tiers
+accounts.rankUnranked: Unranked
+accounts.sortLabel: Sort
+accounts.sortByLastRead: Last read
+accounts.sortByName: Name
+accounts.sortByRank: Rank
+accounts.sortByGold: Gold
+accounts.sortByHeroesRead: Heroes read
+accounts.sortDirectionHint: Reverse sort direction
+accounts.filterCount: "{0} of {1}"                       # 0 = matching, 1 = in scope for the game/region
 
 # =========================================================== Account row =============
 row.noBattletagHint: No battletag read yet - start the account with 'Play and refresh data'.

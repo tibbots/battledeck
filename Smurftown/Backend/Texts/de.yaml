@@ -28,6 +28,16 @@ accounts.rotationHint: "Freie Rotation {0} - {1} Helden{2}\nKlicken zum Bearbeit
 accounts.rotationHintUnknown: "Freie Rotation {0} - nicht im Kalender\nKlicken, um die freien Helden dieser Periode einzutragen"
 accounts.archiveShow: Archivierte Konten zeigen
 accounts.archiveShowing: Zeigt archivierte Konten - klicken, um zurückzugehen
+accounts.rankFilterHint: Nach Rang filtern - ein Konto bleibt stehen, wenn sein Rang eine der gewählten Stufen ist
+accounts.rankUnranked: Ohne Rang
+accounts.sortLabel: Sortierung
+accounts.sortByLastRead: Zuletzt gelesen
+accounts.sortByName: Name
+accounts.sortByRank: Rang
+accounts.sortByGold: Gold
+accounts.sortByHeroesRead: Helden gelesen
+accounts.sortDirectionHint: Sortierrichtung umkehren
+accounts.filterCount: "{0} von {1}"
 
 # =========================================================== Account row =============
 row.noBattletagHint: Noch kein Battletag gelesen - starte das Konto mit 'Spielen und Daten holen'.

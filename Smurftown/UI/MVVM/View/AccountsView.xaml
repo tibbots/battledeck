@@ -21,106 +21,312 @@
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="80" />
+            <!-- 60 (tier 1) + 64 (tier 2) + 20 (the panel's own top/bottom margin) = 144.
+                 Tier 2 grew from 44 to 64 for the 47px rank chips - 16px of slack around
+                 them, roughly the same breathing room tier 1 leaves its own tallest control. -->
+            <RowDefinition Height="144" />
             <RowDefinition />
         </Grid.RowDefinitions>
 
-        <DockPanel Grid.Row="0" Height="60" VerticalAlignment="Top" Background="#24262e" Margin="20,10,20,10">
-            <TextBlock Text="{loc:Str accounts.filter}" Foreground="Gray" FontWeight="Bold"
-                       FontSize="14" VerticalAlignment="Center" Margin="20,0,0,0" />
+        <!-- ================================================== The filter panel ======
+             Two tiers since 24.08.2026, one hairline between them (design round: "Filter /
+             Sort Split", picked over a version where tier 2 hides along with the game-bound
+             filters it also carries - see vault plan for the discarded options).
 
-            <ToggleButton Opacity="100" IsChecked="{Binding OverwatchFiltered}"
-                          Style="{StaticResource BattlenetIconButtonTheme}" Margin="20,0,0,0" Width="70">
-                <Image Source="pack://application:,,,/UI/Images/overwatch.png"
-                       RenderOptions.BitmapScalingMode="HighQuality" Height="35" Width="35" />
-            </ToggleButton>
-            <ToggleButton IsChecked="{Binding HotsFiltered}" Style="{StaticResource BattlenetIconButtonTheme}"
-                          Margin="0" Width="70">
-                <Image Source="pack://application:,,,/UI/Images/hots.png" RenderOptions.BitmapScalingMode="HighQuality"
-                       Height="37" Width="37" />
-            </ToggleButton>
-            <ToggleButton IsChecked="{Binding WowFiltered}" Style="{StaticResource BattlenetIconButtonTheme}"
-                          Margin="0" Width="70">
-                <Image Source="pack://application:,,,/UI/Images/wow.png" RenderOptions.BitmapScalingMode="HighQuality"
-                       Height="40" Width="40" />
-            </ToggleButton>
-            <ToggleButton IsChecked="{Binding DiabloFiltered}" Style="{StaticResource BattlenetIconButtonTheme}"
-                          Margin="0" Width="70">
-                <Image Source="pack://application:,,,/UI/Images/diablo4.png"
-                       RenderOptions.BitmapScalingMode="HighQuality" Height="40" Width="40" />
-            </ToggleButton>
-            <!-- ================================================== Region filter ======
-                 Three toggles, EXCLUSIVE and always set - exactly like the game symbols before.
-                 A second click on the same abbreviation is without effect, and the ToggleButton
-                 snaps back in the process (AccountsViewModel.NotifyRegions).
+             TIER 1 is unchanged from before this split: game, region, archive, search, add -
+             the identity/view controls, always visible regardless of game.
 
-                 Unlike with the game, this is not a technical necessity: a row shows
-                 exactly one region anyway, several chosen ones would simply have resulted in
-                 more rows. It is a UX decision - two neighboring filter blocks with
-                 different logic would be the more expensive surprise. The price is the same as
-                 with the game: whoever only plays in Americas is invisible under EU and only
-                 reachable via their own abbreviation.
+             TIER 2 is NEW and, unlike tier 1's own HotS-only section before it, does NOT hide
+             as a whole when the game filter isn't HotS: only its LEFT group (hero filter,
+             rotation, rank) is HotS-bound and hides with HotsFiltersVisibility exactly as
+             before, just one row down. Its RIGHT group - the "N of M" count and the sort
+             control - stays visible for every game, because sorting by name or by last read
+             is not a HotS question. -->
+        <Grid Grid.Row="0" Margin="20,10,20,10" VerticalAlignment="Top">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="60" />
+                <RowDefinition Height="64" />
+            </Grid.RowDefinitions>
 
-                 No image, but two letters: the game knows no region symbols, and
-                 three invented ones would be three characters nobody knows. The color has to
-                 sit on the TextBlock - BattlenetIconButtonTheme is made for images and sets
-                 none, WPF would otherwise draw the text black on dark gray.
+            <DockPanel Grid.Row="0" Background="#24262e">
+                <TextBlock Text="{loc:Str accounts.filter}" Foreground="Gray" FontWeight="Bold"
+                           FontSize="14" VerticalAlignment="Center" Margin="20,0,0,0" />
 
-                 WIDTH: 3x40 plus 7 for the separator is 127 points. They are the reason why
-                 the window grew from 1200 to 1340 on 21.08.2026 - the bar was already
-                 at around 1147 of 1160 before. -->
-            <Rectangle Width="1" Height="32" Fill="#313339" Margin="6,0,0,0" VerticalAlignment="Center" />
+                <ToggleButton Opacity="100" IsChecked="{Binding OverwatchFiltered}"
+                              Style="{StaticResource BattlenetIconButtonTheme}" Margin="20,0,0,0" Width="70">
+                    <Image Source="pack://application:,,,/UI/Images/overwatch.png"
+                           RenderOptions.BitmapScalingMode="HighQuality" Height="35" Width="35" />
+                </ToggleButton>
+                <ToggleButton IsChecked="{Binding HotsFiltered}" Style="{StaticResource BattlenetIconButtonTheme}"
+                              Margin="0" Width="70">
+                    <Image Source="pack://application:,,,/UI/Images/hots.png" RenderOptions.BitmapScalingMode="HighQuality"
+                           Height="37" Width="37" />
+                </ToggleButton>
+                <ToggleButton IsChecked="{Binding WowFiltered}" Style="{StaticResource BattlenetIconButtonTheme}"
+                              Margin="0" Width="70">
+                    <Image Source="pack://application:,,,/UI/Images/wow.png" RenderOptions.BitmapScalingMode="HighQuality"
+                           Height="40" Width="40" />
+                </ToggleButton>
+                <ToggleButton IsChecked="{Binding DiabloFiltered}" Style="{StaticResource BattlenetIconButtonTheme}"
+                              Margin="0" Width="70">
+                    <Image Source="pack://application:,,,/UI/Images/diablo4.png"
+                           RenderOptions.BitmapScalingMode="HighQuality" Height="40" Width="40" />
+                </ToggleButton>
+                <!-- ================================================== Region filter ======
+                     Three toggles, EXCLUSIVE and always set - exactly like the game symbols before.
+                     A second click on the same abbreviation is without effect, and the ToggleButton
+                     snaps back in the process (AccountsViewModel.NotifyRegions).
 
-            <ToggleButton IsChecked="{Binding EuropeFiltered}" Width="40"
-                          Style="{StaticResource BattlenetIconButtonTheme}"
-                          ToolTip="{Binding RegionFilterHint}">
-                <TextBlock Text="EU" Foreground="#C6C8D0" FontSize="13" FontWeight="DemiBold" />
-            </ToggleButton>
-            <ToggleButton IsChecked="{Binding AmericasFiltered}" Width="40"
-                          Style="{StaticResource BattlenetIconButtonTheme}"
-                          ToolTip="{Binding RegionFilterHint}">
-                <TextBlock Text="AM" Foreground="#C6C8D0" FontSize="13" FontWeight="DemiBold" />
-            </ToggleButton>
-            <ToggleButton IsChecked="{Binding AsiaFiltered}" Width="40"
-                          Style="{StaticResource BattlenetIconButtonTheme}"
-                          ToolTip="{Binding RegionFilterHint}">
-                <TextBlock Text="AS" Foreground="#C6C8D0" FontSize="13" FontWeight="DemiBold" />
-            </ToggleButton>
+                     Unlike with the game, this is not a technical necessity: a row shows
+                     exactly one region anyway, several chosen ones would simply have resulted in
+                     more rows. It is a UX decision - two neighboring filter blocks with
+                     different logic would be the more expensive surprise. The price is the same as
+                     with the game: whoever only plays in Americas is invisible under EU and only
+                     reachable via their own abbreviation.
 
-            <!-- From here on stand the additional filters, and they belong to Heroes of the Storm.
-                 Filtering on another game makes them disappear along with this separator -
-                 and they then no longer TAKE EFFECT either, see AccountsViewModel.HotsFiltersVisibility.
-                 The separator goes with them: standing alone it showed a boundary between the
-                 game symbols and nothing. -->
-            <Rectangle Width="1" Height="32" Fill="#313339" Margin="6,0,0,0" VerticalAlignment="Center"
-                       Visibility="{Binding HotsFiltersVisibility}" />
+                     No image, but two letters: the game knows no region symbols, and
+                     three invented ones would be three characters nobody knows. The color has to
+                     sit on the TextBlock - BattlenetIconButtonTheme is made for images and sets
+                     none, WPF would otherwise draw the text black on dark gray.
 
-            <!-- Hero filter: the circle stack IS the button and opens the same selection surface
-                 as the account dialog. The clear cross sits next to it instead of inside it - a
-                 button inside a button would just be a second way to swallow the same click. -->
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0"
+                     WIDTH: 3x40 plus 7 for the separator is 127 points. They are the reason why
+                     the window grew from 1200 to 1340 on 21.08.2026 - the bar was already
+                     at around 1147 of 1160 before. -->
+                <Rectangle Width="1" Height="32" Fill="#313339" Margin="6,0,0,0" VerticalAlignment="Center" />
+
+                <ToggleButton IsChecked="{Binding EuropeFiltered}" Width="40"
+                              Style="{StaticResource BattlenetIconButtonTheme}"
+                              ToolTip="{Binding RegionFilterHint}">
+                    <TextBlock Text="EU" Foreground="#C6C8D0" FontSize="13" FontWeight="DemiBold" />
+                </ToggleButton>
+                <ToggleButton IsChecked="{Binding AmericasFiltered}" Width="40"
+                              Style="{StaticResource BattlenetIconButtonTheme}"
+                              ToolTip="{Binding RegionFilterHint}">
+                    <TextBlock Text="AM" Foreground="#C6C8D0" FontSize="13" FontWeight="DemiBold" />
+                </ToggleButton>
+                <ToggleButton IsChecked="{Binding AsiaFiltered}" Width="40"
+                              Style="{StaticResource BattlenetIconButtonTheme}"
+                              ToolTip="{Binding RegionFilterHint}">
+                    <TextBlock Text="AS" Foreground="#C6C8D0" FontSize="13" FontWeight="DemiBold" />
+                </ToggleButton>
+
+                <!-- Free rotation moved back here from tier 2: editing the free-hero list is
+                     not a filter, the same way the archive toggle beside it isn't one either -
+                     EditRotationCommand's own comment already said so, the layout just hadn't
+                     caught up yet. HotS-only, same HotsFiltersVisibility it always had. -->
+                <Rectangle Width="1" Height="32" Fill="#313339" Margin="6,0,0,0" VerticalAlignment="Center"
+                           Visibility="{Binding HotsFiltersVisibility}" />
+                <Border Height="38" CornerRadius="19" Padding="8,0" Cursor="Hand"
+                        VerticalAlignment="Center" Margin="10,0,0,0" ToolTip="{Binding RotationHint}"
                         Visibility="{Binding HotsFiltersVisibility}">
-                <Button Command="{Binding OpenHeroFilterCommand}" Cursor="Hand"
-                        ToolTip="{loc:Str accounts.heroFilterHint}">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="hover" Height="44" CornerRadius="22" Padding="12,0"
-                                    Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
-                                <ContentPresenter VerticalAlignment="Center" />
-                            </Border>
-                            <ControlTemplate.Triggers>
+                    <Border.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding EditRotationCommand}" />
+                    </Border.InputBindings>
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="BorderBrush" Value="Transparent" />
+                            <Setter Property="BorderThickness" Value="1" />
+                            <Style.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="hover" Property="Background" Value="#2A2D36" />
-                                    <Setter TargetName="hover" Property="BorderBrush" Value="#313339" />
+                                    <Setter Property="Background" Value="#2A2D36" />
+                                    <Setter Property="BorderBrush" Value="#313339" />
                                 </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <!-- Compensation for the overlap margin, which also affects the first portrait -->
-                        <ItemsControl ItemsSource="{Binding HeroFilterChips}"
-                                      Visibility="{Binding HeroFilterChipsVisibility}"
-                                      VerticalAlignment="Center" Margin="12,0,0,0">
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                Opacity="{Binding RotationOpacity}">
+                        <Image Source="pack://application:,,,/UI/Images/free.png"
+                               RenderOptions.BitmapScalingMode="HighQuality" Width="22" Height="22" />
+                        <TextBlock Text="{Binding RotationLabel}" FontSize="12.5" FontWeight="DemiBold"
+                                   Foreground="#8F8F92" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,20,0">
+                    <!-- Archive toggle. Understated on purpose: it is not a filter among filters,
+                         but a second view of the same list, and it's rarely needed.
+                         Hence only a symbol without a label, in the color of the other
+                         secondary text - and white when set, so it's never unclear why
+                         the list looks almost empty. -->
+                    <ToggleButton IsChecked="{Binding ShowArchived, Mode=TwoWay}" Cursor="Hand"
+                                  VerticalAlignment="Center" ToolTip="{Binding ArchiveHint}">
+                        <ToggleButton.Template>
+                            <ControlTemplate TargetType="ToggleButton">
+                                <Border x:Name="hover" Width="36" Height="36" CornerRadius="18"
+                                        Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
+                                    <Grid Width="16" Height="15">
+                                        <Path x:Name="lid" Data="M0,0 L16,0 L16,3.8 L0,3.8 Z" Fill="#8F8F92" />
+                                        <Path x:Name="box" Data="M1.7,5.3 L14.3,5.3 L14.3,15 L1.7,15 Z"
+                                              Fill="#6E7078" />
+                                        <Path Data="M8,13 L4.9,9.1 L6.8,9.1 L6.8,6.5 L9.2,6.5 L9.2,9.1 L11.1,9.1 Z"
+                                              Fill="#24262e" />
+                                    </Grid>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="hover" Property="Background" Value="#2A2D36" />
+                                        <Setter TargetName="hover" Property="BorderBrush" Value="#313339" />
+                                    </Trigger>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter TargetName="lid" Property="Fill" Value="White" />
+                                        <Setter TargetName="box" Property="Fill" Value="#C9CBD2" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </ToggleButton.Template>
+                    </ToggleButton>
+
+                    <!-- No spacing to the left: the block is right-aligned, the earlier margin
+                         of 400 only inflated it to 790px. Width 224 instead of 260 (and the
+                         260 stood for 300), because otherwise the bar in the worst case runs over
+                         the usable width and the right block gets squeezed. The 36 points
+                         that the search field gives up here are exactly the archive toggle before it. -->
+                    <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource BattlenetTextBoxTheme}" VerticalAlignment="Center" Width="224"
+                             Height="30" Margin="8,0,0,0" />
+
+                    <Button Command="{Binding CreateAccountCommand}" Background="Transparent"
+                            BorderBrush="Transparent" Style="{StaticResource BattlenetButtonSecondaryTheme}"
+                            Margin="0,0,0,0"
+                            Padding="0"
+                            Width="70">
+                        <Grid>
+                            <!-- Outer Circle -->
+                            <Ellipse Width="36" Height="36" Fill="#FF454545" />
+
+                            <!-- Horizontal Line of Plus Sign -->
+                            <Rectangle Width="12" Height="2" Fill="White" VerticalAlignment="Center"
+                                       HorizontalAlignment="Center" />
+
+                            <!-- Vertical Line of Plus Sign -->
+                            <Rectangle Width="2" Height="12" Fill="White" VerticalAlignment="Center"
+                                       HorizontalAlignment="Center" />
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- TIER 2: hairline on top via Border, not a Rectangle standing between two rows -
+                 there is no gap here for a Rectangle to stand in. -->
+            <Border Grid.Row="1" Background="#24262e" BorderBrush="#313339" BorderThickness="0,1,0,0">
+                <DockPanel LastChildFill="False">
+
+                    <!-- Left group: hero filter, rotation, rank - all three are Heroes of the
+                         Storm questions and hide together, exactly the same HotsFiltersVisibility
+                         binding tier 1 used to gate this section with. -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0"
+                                Visibility="{Binding HotsFiltersVisibility}">
+
+                        <!-- Hero filter: the circle stack IS the button and opens the same selection
+                             surface as the account dialog. The clear cross sits next to it instead of
+                             inside it - a button inside a button would just be a second way to
+                             swallow the same click. -->
+                        <!-- Pill height/corner-radius match the rotation control's exactly
+                             (38/19), even though rotation now lives in tier 1 - the two are
+                             no longer side by side, so the match has to be measured rather
+                             than eyeballed. The chip stack itself keeps its own scale (24/27),
+                             which already sits close to rotation's 22px icon at the same
+                             pill height. -->
+                        <Button Command="{Binding OpenHeroFilterCommand}" Cursor="Hand"
+                                ToolTip="{loc:Str accounts.heroFilterHint}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="hover" Height="38" CornerRadius="19" Padding="8,0"
+                                            Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
+                                        <ContentPresenter VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="hover" Property="Background" Value="#2A2D36" />
+                                            <Setter TargetName="hover" Property="BorderBrush" Value="#313339" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Compensation for the overlap margin, which also affects the first portrait -->
+                                <ItemsControl ItemsSource="{Binding HeroFilterChips}"
+                                              Visibility="{Binding HeroFilterChipsVisibility}"
+                                              VerticalAlignment="Center" Margin="8,0,0,0">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Width="24" Height="24" Margin="-8,0,0,0" ToolTip="{Binding Tooltip}">
+                                                <Ellipse>
+                                                    <Ellipse.Fill>
+                                                        <ImageBrush ImageSource="{Binding ImageSource}"
+                                                                    Stretch="UniformToFill" />
+                                                    </Ellipse.Fill>
+                                                </Ellipse>
+                                                <Ellipse Stroke="{Binding RoleBrush}" StrokeThickness="2" />
+                                                <Ellipse Stroke="#24262e" StrokeThickness="2" Width="27" Height="27" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <!-- Empty state: dashed circle with a suggested silhouette. Head and
+                                     shoulders separated instead of as one path - a closed circle made
+                                     from an arc segment is in XAML only a rounding error away from vanishing. -->
+                                <Grid Width="24" Height="24" Visibility="{Binding HeroFilterEmptyVisibility}"
+                                      VerticalAlignment="Center">
+                                    <Ellipse Stroke="#4A4D57" StrokeThickness="1.2" StrokeDashArray="3 2" />
+                                    <Grid Width="12" Height="11.2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Ellipse Width="5.2" Height="5.2" Stroke="#6B6E79" StrokeThickness="1"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Top" />
+                                        <Path Data="M 0,4.8 C 0.6,1.6 2.6,0 5,0 C 7.4,0 9.4,1.6 10.1,4.8"
+                                              Stroke="#6B6E79" StrokeThickness="1"
+                                              HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+                                    </Grid>
+                                </Grid>
+                                <TextBlock Text="{Binding HeroFilterLabel}" FontSize="12.5" FontWeight="DemiBold"
+                                           VerticalAlignment="Center" Margin="8,0,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#8F8F92" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HeroFilterActive}" Value="True">
+                                                    <Setter Property="Foreground" Value="White" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Command="{Binding ClearHeroFilterCommand}" Cursor="Hand" ToolTip="{loc:Str accounts.clearHeroFilter}"
+                                Visibility="{Binding HeroFilterChipsVisibility}" VerticalAlignment="Center" Margin="2,0,0,0">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="clear" Width="16" Height="16" CornerRadius="8" Background="#33363F">
+                                        <TextBlock Text="&#x2715;" Foreground="#C9CBD2" FontSize="8"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="clear" Property="Background" Value="#D62A2A" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <Rectangle Width="1" Height="24" Fill="#313339" Margin="12,0,0,0" VerticalAlignment="Center" />
+
+                        <!-- Rank filter: eight tiers (Unranked through Grand Master), each its own
+                             medal as a toggle, OR-combined exactly like the hero filter. "Unranked"
+                             covers both never-read and read-but-no-tier - see
+                             AccountRegion.EffectiveRankTier. Dimmed when unselected, an accent ring
+                             when selected: the same convention the rank grid in the account dialog
+                             already uses (0.35 dimmed / #1A73E8 border on the chosen one). -->
+                        <ItemsControl ItemsSource="{Binding RankFilterOptions}" Margin="10,0,0,0"
+                                      VerticalAlignment="Center" ToolTip="{loc:Str accounts.rankFilterHint}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel Orientation="Horizontal" />
@@ -128,183 +334,105 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Width="36" Height="36" Margin="-12,0,0,0" ToolTip="{Binding Tooltip}">
-                                        <Ellipse>
-                                            <Ellipse.Fill>
-                                                <ImageBrush ImageSource="{Binding ImageSource}"
-                                                            Stretch="UniformToFill" />
-                                            </Ellipse.Fill>
-                                        </Ellipse>
-                                        <Ellipse Stroke="{Binding RoleBrush}" StrokeThickness="2" />
-                                        <Ellipse Stroke="#24262e" StrokeThickness="2" Width="40" Height="40" />
-                                    </Grid>
+                                    <!-- 47/40 button/medal (80% larger than the original 26/22).
+                                         2px between chips, not 4 - tighter now that the ring
+                                         itself hugs the medal closer too (43, not the full 47
+                                         hit area). -->
+                                    <ToggleButton IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                                  Command="{Binding DataContext.ToggleRankCommand,
+                                                                    RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  CommandParameter="{Binding Tier}"
+                                                  Cursor="Hand" Width="47" Height="47" Margin="2,0,0,0"
+                                                  ToolTip="{Binding Tier}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <!-- Opacity sits on the template element itself, not on a
+                                                     Border/Grid.Style - inside a ControlTemplate that is
+                                                     fine, ControlTemplate.Triggers still overrides it (the
+                                                     one place a locally-set value does NOT beat a trigger). -->
+                                                <Grid x:Name="content" Opacity="0.4">
+                                                    <Ellipse x:Name="ring" Width="43" Height="43"
+                                                             Stroke="Transparent" StrokeThickness="2" />
+                                                    <Image Source="{Binding ImagePath}" Width="40" Height="40"
+                                                           Margin="3.5" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                </Grid>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="ring" Property="Stroke" Value="#1A73E8" />
+                                                        <Setter TargetName="content" Property="Opacity" Value="1.0" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <!-- Empty state: dashed circle with a suggested silhouette. Head and
-                             shoulders separated instead of as one path - a closed circle made
-                             from an arc segment is in XAML only a rounding error away from vanishing. -->
-                        <Grid Width="36" Height="36" Visibility="{Binding HeroFilterEmptyVisibility}"
-                              VerticalAlignment="Center">
-                            <Ellipse Stroke="#4A4D57" StrokeThickness="1.5" StrokeDashArray="3 2" />
-                            <Grid Width="18" Height="17" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <Ellipse Width="7.5" Height="7.5" Stroke="#6B6E79" StrokeThickness="1.4"
-                                         HorizontalAlignment="Center" VerticalAlignment="Top" />
-                                <Path Data="M 0,7 C 1,2.5 4,0 7.5,0 C 11,0 14,2.5 15,7"
-                                      Stroke="#6B6E79" StrokeThickness="1.4"
-                                      HorizontalAlignment="Center" VerticalAlignment="Bottom" />
-                            </Grid>
-                        </Grid>
-                        <TextBlock Text="{Binding HeroFilterLabel}" FontSize="13" FontWeight="DemiBold"
-                                   VerticalAlignment="Center" Margin="10,0,0,0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="#8F8F92" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HeroFilterActive}" Value="True">
-                                            <Setter Property="Foreground" Value="White" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
                     </StackPanel>
-                </Button>
 
-                <Button Command="{Binding ClearHeroFilterCommand}" Cursor="Hand" ToolTip="{loc:Str accounts.clearHeroFilter}"
-                        Visibility="{Binding HeroFilterChipsVisibility}" VerticalAlignment="Center">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="clear" Width="22" Height="22" CornerRadius="11" Background="#33363F">
-                                <TextBlock Text="&#x2715;" Foreground="#C9CBD2" FontSize="11"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="clear" Property="Background" Value="#D62A2A" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-            </StackPanel>
+                    <!-- Right group: count and sort. ALWAYS visible - sorting by name or by last
+                         read is a question for every game, not only Heroes of the Storm. -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
+                                Margin="0,0,20,0">
+                        <TextBlock Text="{Binding FilterCountLabel}" Foreground="#8F8F92" FontSize="11.5"
+                                   VerticalAlignment="Center" Margin="0,0,16,0" />
 
-            <!-- Free rotation. The symbol IS the control: a left click opens the
-                 hero selection for this period.
-                 Until 21.08.2026 a toggle sat on it that set the hero filter to the free
-                 heroes, and the input hung on the right click. Both are gone: the filter
-                 answered a question nobody asks ("show me everyone who can play any of the
-                 fourteen" namely matches every HotS account), and a hidden
-                 right mouse button for the actual function was the wrong order of priority. -->
-            <Border Height="44" CornerRadius="22" Padding="10,0" Cursor="Hand"
-                    VerticalAlignment="Center" Margin="6,0,0,0" ToolTip="{Binding RotationHint}"
-                    Visibility="{Binding HotsFiltersVisibility}">
-                <Border.InputBindings>
-                    <MouseBinding MouseAction="LeftClick" Command="{Binding EditRotationCommand}" />
-                </Border.InputBindings>
-                <Border.Style>
-                    <!-- Background belongs in the style: written as an attribute, the local
-                         value would beat the hover trigger. Transparent instead of null, otherwise
-                         the surface wouldn't catch the mouse and only the text itself would be clickable. -->
-                    <Style TargetType="Border">
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="BorderBrush" Value="Transparent" />
-                        <Setter Property="BorderThickness" Value="1" />
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2A2D36" />
-                                <Setter Property="BorderBrush" Value="#313339" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <!-- The opacity hangs on the whole content, not on the symbol alone: with an
-                     outdated state, the number next to it is no longer true either. -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                            Opacity="{Binding RotationOpacity}">
-                    <Image Source="pack://application:,,,/UI/Images/free.png"
-                           RenderOptions.BitmapScalingMode="HighQuality" Width="26" Height="26" />
-                    <!-- One color instead of two: the switch to white used to show that the
-                         rotation filter is active - it no longer exists. -->
-                    <TextBlock Text="{Binding RotationLabel}" FontSize="13" FontWeight="DemiBold"
-                               Foreground="#8F8F92" VerticalAlignment="Center" Margin="9,0,0,0" />
-                </StackPanel>
+                        <TextBlock Text="{loc:Str accounts.sortLabel}" Foreground="#8F8F92" FontSize="12.5"
+                                   VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <ComboBox ItemsSource="{Binding SortFieldOptions}" SelectedValuePath="Field"
+                                  SelectedValue="{Binding SortField, Mode=TwoWay}"
+                                  Style="{StaticResource BattlenetComboBoxTheme}"
+                                  MinWidth="118" Height="30" VerticalAlignment="Center">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Label}" FontSize="12.5" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <Button Command="{Binding ToggleSortDirectionCommand}" Cursor="Hand"
+                                ToolTip="{loc:Str accounts.sortDirectionHint}" VerticalAlignment="Center"
+                                Margin="6,0,0,0">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="hover" Width="28" Height="28" CornerRadius="14"
+                                            Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
+                                        <!-- Drawn pointing UP - the resting state, unrotated, is
+                                             therefore ascending. SortDescending flips it 180° to
+                                             point down, matching the direction convention the
+                                             tier/division ordering everywhere else in this app
+                                             already reads by (higher = further "up"). -->
+                                        <Path x:Name="arrow" Data="M6,10 L6,1 M2.5,4.5 L6,1 L9.5,4.5"
+                                              Stroke="#8F93A0" StrokeThickness="1.6" StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              RenderTransformOrigin="0.5,0.5" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="hover" Property="Background" Value="#2A2D36" />
+                                            <Setter TargetName="hover" Property="BorderBrush" Value="#313339" />
+                                            <Setter TargetName="arrow" Property="Stroke" Value="White" />
+                                        </Trigger>
+                                        <!-- A whole new RotateTransform as the Setter's Value, not a
+                                             TargetName pointed at a nested x:Name inside RenderTransform -
+                                             a Freezable named that way sits outside the template's
+                                             element namescope and MC4111s at build time. -->
+                                        <DataTrigger Binding="{Binding SortDescending}" Value="True">
+                                            <Setter TargetName="arrow" Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <RotateTransform Angle="180" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+                </DockPanel>
             </Border>
-
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,20,0">
-                <!-- Archive toggle. Understated on purpose: it is not a filter among filters,
-                     but a second view of the same list, and it's rarely needed.
-                     Hence only a symbol without a label, in the color of the other
-                     secondary text - and white when set, so it's never unclear why
-                     the list looks almost empty. -->
-                <ToggleButton IsChecked="{Binding ShowArchived, Mode=TwoWay}" Cursor="Hand"
-                              VerticalAlignment="Center" ToolTip="{Binding ArchiveHint}">
-                    <ToggleButton.Template>
-                        <ControlTemplate TargetType="ToggleButton">
-                            <Border x:Name="hover" Width="36" Height="36" CornerRadius="18"
-                                    Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
-                                <Grid Width="16" Height="15">
-                                    <Path x:Name="lid" Data="M0,0 L16,0 L16,3.8 L0,3.8 Z" Fill="#8F8F92" />
-                                    <Path x:Name="box" Data="M1.7,5.3 L14.3,5.3 L14.3,15 L1.7,15 Z"
-                                          Fill="#6E7078" />
-                                    <Path Data="M8,13 L4.9,9.1 L6.8,9.1 L6.8,6.5 L9.2,6.5 L9.2,9.1 L11.1,9.1 Z"
-                                          Fill="#24262e" />
-                                </Grid>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="hover" Property="Background" Value="#2A2D36" />
-                                    <Setter TargetName="hover" Property="BorderBrush" Value="#313339" />
-                                </Trigger>
-                                <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="lid" Property="Fill" Value="White" />
-                                    <Setter TargetName="box" Property="Fill" Value="#C9CBD2" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </ToggleButton.Template>
-                </ToggleButton>
-
-                <!-- No spacing to the left: the block is right-aligned, the earlier margin
-                     of 400 only inflated it to 790px. Width 224 instead of 260 (and the
-                     260 stood for 300), because otherwise the bar in the worst case runs over
-                     the usable width and the right block gets squeezed. The 36 points
-                     that the search field gives up here are exactly the archive toggle before it.
-
-                     THE ROW AS A WHOLE, with the HotS filter chosen and 1340 window width:
-                         88 label + 300 four game symbols + 7 separator + 127 region filter
-                       +  7 separator + 280 hero filter + 114 rotation + 358 right block
-                       = 1281 of 1300 usable points, so 19 slack.
-
-                     The region filter is the reason why the window grew from 1200
-                     to 1340 on 21.08.2026: at 1200 the bar was already at around 1147 of
-                     1160. Whoever adds something here recalculates this chain. -->
-                <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource BattlenetTextBoxTheme}" VerticalAlignment="Center" Width="224"
-                         Height="30" Margin="8,0,0,0" />
-
-                <Button Command="{Binding CreateAccountCommand}" Background="Transparent"
-                        BorderBrush="Transparent" Style="{StaticResource BattlenetButtonSecondaryTheme}"
-                        Margin="0,0,0,0"
-                        Padding="0"
-                        Width="70">
-                    <Grid>
-                        <!-- Outer Circle -->
-                        <Ellipse Width="36" Height="36" Fill="#FF454545" />
-
-                        <!-- Horizontal Line of Plus Sign -->
-                        <Rectangle Width="12" Height="2" Fill="White" VerticalAlignment="Center"
-                                   HorizontalAlignment="Center" />
-
-                        <!-- Vertical Line of Plus Sign -->
-                        <Rectangle Width="2" Height="12" Fill="White" VerticalAlignment="Center"
-                                   HorizontalAlignment="Center" />
-                    </Grid>
-                </Button>
-            </StackPanel>
-
-
-        </DockPanel>
+        </Grid>
 
         <!-- NO margin at the top, and that is a decision with a history: the
              ScrollViewer in the template further below clips what lies above it, and

@@ -130,17 +130,9 @@ namespace Smurftown.Backend.Gateway
             RebuildRows();
 
             AccountRegionsFiltered = CollectionViewSource.GetDefaultView(AccountRegions);
-            AccountRegionsFiltered.SortDescriptions.Add(
-                new SortDescription(nameof(AccountRegion.LatestInteractionAt), ListSortDirection.Descending));
-            // DisplayName and not Name: since the battletag is read instead of typed,
-            // fresh accounts have no name, and they would otherwise all stand together
-            // under the empty key. DisplayName falls back to the email in that case.
-            AccountRegionsFiltered.SortDescriptions.Add(new SortDescription(
-                nameof(AccountRegion.DisplayName), ListSortDirection.Ascending));
-            // Region last, so that the two rows of ONE account always stand in the same
-            // order relative to each other - Europe, America, Asia.
-            AccountRegionsFiltered.SortDescriptions.Add(new SortDescription(
-                nameof(AccountRegion.RegionOrder), ListSortDirection.Ascending));
+            // Same default as always: last interaction first, see SortBy for the tie-breakers
+            // this always appends.
+            SortBy(AccountSortField.LastRead, ListSortDirection.Descending);
         }
 
         /// <summary>The accounts, as they stand in <c>data.yaml</c> - one per account.</summary>
@@ -159,6 +151,44 @@ namespace Smurftown.Backend.Gateway
         public ObservableCollection<AccountRegion> AccountRegions { get; } = [];
 
         public ICollectionView AccountRegionsFiltered { get; }
+
+        /// <summary>
+        ///     Re-sorts the row list by <paramref name="field" />, in <paramref name="direction" />.
+        ///     <para>
+        ///         <b>Two tie-breakers are always appended</b>, exactly as they stood
+        ///         hard-coded before this method existed: <c>DisplayName</c> ascending (skipped
+        ///         when that IS the primary field, or it would sort itself against itself),
+        ///         then <c>RegionOrder</c> ascending, so the two rows of one account always
+        ///         stand in the same order relative to each other regardless of what the list
+        ///         is primarily sorted by.
+        ///     </para>
+        /// </summary>
+        public void SortBy(AccountSortField field, ListSortDirection direction)
+        {
+            AccountRegionsFiltered.SortDescriptions.Clear();
+            AccountRegionsFiltered.SortDescriptions.Add(
+                new SortDescription(SortPropertyFor(field), direction));
+            if (field != AccountSortField.Name)
+            {
+                AccountRegionsFiltered.SortDescriptions.Add(new SortDescription(
+                    nameof(AccountRegion.DisplayName), ListSortDirection.Ascending));
+            }
+
+            AccountRegionsFiltered.SortDescriptions.Add(new SortDescription(
+                nameof(AccountRegion.RegionOrder), ListSortDirection.Ascending));
+        }
+
+        private static string SortPropertyFor(AccountSortField field)
+        {
+            return field switch
+            {
+                AccountSortField.Name => nameof(AccountRegion.DisplayName),
+                AccountSortField.Rank => nameof(AccountRegion.RankSortKey),
+                AccountSortField.Gold => nameof(AccountRegion.GoldSortKey),
+                AccountSortField.HeroesRead => nameof(AccountRegion.HeroesReadSortKey),
+                _ => nameof(AccountRegion.LatestInteractionAt)
+            };
+        }
 
         /// <summary>
         ///     Rebuilds the row list. Call after <b>every</b> change to an account -
@@ -225,6 +255,7 @@ namespace Smurftown.Backend.Gateway
         private Predicate<AccountRegion> CreatePredicate(string searchQuery, string? game,
             BattlenetRegion region,
             IReadOnlyCollection<string> heroIds, IReadOnlyCollection<string> freeHeroIds,
+            IReadOnlyCollection<HotsRankTier> rankTiers,
             bool showArchived)
         {
             return row =>
@@ -232,7 +263,28 @@ namespace Smurftown.Backend.Gateway
                 row.Region == region &&
                 (string.IsNullOrEmpty(searchQuery) || Contains(row.Account, searchQuery)) &&
                 (game == null || row.Account.PlaysIn(game, region)) &&
-                (heroIds.Count == 0 || CanPlayAnyHero(row, heroIds, freeHeroIds));
+                (heroIds.Count == 0 || CanPlayAnyHero(row, heroIds, freeHeroIds)) &&
+                (rankTiers.Count == 0 || rankTiers.Contains(row.EffectiveRankTier));
+        }
+
+        /// <summary>
+        ///     How many rows are "in scope" - game, region and the archive half alone, none of
+        ///     search, hero or rank narrowing it further. The denominator for the "N of M" count
+        ///     in the filter bar; the numerator is <see cref="AccountRegionsFiltered" />'s own
+        ///     count once every condition has run.
+        ///     <para>
+        ///         A smaller, separate predicate rather than a parameterised slice of
+        ///         <see cref="CreatePredicate" />: it answers a genuinely different question
+        ///         ("how many could match" vs. "how many do"), and threading which clauses to
+        ///         skip through one method would obscure both.
+        ///     </para>
+        /// </summary>
+        public int ScopeCount(string? game, BattlenetRegion region, bool showArchived)
+        {
+            return AccountRegions.Count(row =>
+                row.Account.Inactive == showArchived &&
+                row.Region == region &&
+                (game == null || row.Account.PlaysIn(game, region)));
         }
 
         /// <summary>
@@ -354,9 +406,11 @@ namespace Smurftown.Backend.Gateway
         public void FilterBy(string searchQuery, string? game,
             BattlenetRegion region,
             IReadOnlyCollection<string> heroIds, IReadOnlyCollection<string> freeHeroIds,
+            IReadOnlyCollection<HotsRankTier> rankTiers,
             bool showArchived)
         {
-            var filter = CreatePredicate(searchQuery, game, region, heroIds, freeHeroIds, showArchived);
+            var filter = CreatePredicate(searchQuery, game, region, heroIds, freeHeroIds, rankTiers,
+                showArchived);
             AccountRegionsFiltered.Filter = obj =>
             {
                 if (obj is AccountRegion row)

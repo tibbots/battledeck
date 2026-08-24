@@ -21,6 +21,15 @@ nothing else on the line.
 
 ## [Upcoming]
 
+### Added
+
+- **The account list can be filtered by rank and sorted, and shows how many accounts match.** A
+  second row under the filter bar carries the new controls. For Heroes of the Storm, eight rank
+  chips — Unranked through Grand Master — narrow the list to one or several ranks at once;
+  "Unranked" covers both an account never read and one read with no rank set. Next to it, a sort
+  control (last read, name, rank, gold, heroes read, with a click to reverse the direction) and a
+  count of matching accounts stay available for every game, not only Heroes of the Storm.
+
 ### Fixed
 
 - **The progress line in "Refresh data" and "Switch account" now speaks the app's language.**

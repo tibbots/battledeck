@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -27,11 +28,35 @@ namespace Smurftown.UI.MVVM.ViewModel
         private RelayCommand? _openHeroFilterCommand;
         private string _searchQuery = "";
         private bool _showArchived;
+        private List<HotsRankTier> _rankFilter = [];
+        private RelayCommand<HotsRankTier>? _toggleRankCommand;
+        private AccountSortField _sortField = AccountSortField.LastRead;
+        private ListSortDirection _sortDirection = ListSortDirection.Descending;
+        private RelayCommand? _toggleSortDirectionCommand;
+
+        private static readonly AccountSortField[] HotsOnlySortFields =
+        [
+            AccountSortField.Rank, AccountSortField.Gold, AccountSortField.HeroesRead
+        ];
 
         public AccountsViewModel()
         {
             _battlenetAccountGateway.Reload();
             _accountRows = _battlenetAccountGateway.AccountRegionsFiltered;
+
+            // The count in the filter bar answers "how many rows does the CURRENT filter
+            // leave", so it has to follow every Refresh() of the view - not just the
+            // properties this ViewModel itself changes. A Filter or a SortDescription change
+            // both raise this, and so does an account being added, edited or archived.
+            if (_accountRows is INotifyCollectionChanged notifying)
+            {
+                notifying.CollectionChanged += (_, _) =>
+                {
+                    OnPropertyChanged(nameof(FilteredCount));
+                    OnPropertyChanged(nameof(ScopeCount));
+                    OnPropertyChanged(nameof(FilterCountLabel));
+                };
+            }
 
             // The same applies to the region: always exactly one, at start Europe - the
             // normal case, and until 21.08.2026 the only one that existed.
@@ -173,6 +198,13 @@ namespace Smurftown.UI.MVVM.ViewModel
                 // not measurable; HeroFilter has always done it the same way.
                 NotifySymbols();
                 OnPropertyChanged(nameof(HotsFiltersVisibility));
+                // The sort field list narrows to Name/LastRead outside HotS, and the
+                // currently chosen field has to be re-read along with it: SortField's own
+                // getter falls back to LastRead once its real value drops out of the
+                // narrowed list, the same snap-back NotifySymbols already does for the game
+                // buttons themselves.
+                OnPropertyChanged(nameof(SortFieldOptions));
+                OnPropertyChanged(nameof(SortField));
                 OnPropertyChanged();
             }
         }
@@ -430,6 +462,117 @@ namespace Smurftown.UI.MVVM.ViewModel
         }
 
         /// <summary>
+        ///     Tiers the rank filter is narrowed to. Every account whose <c>EffectiveRankTier</c>
+        ///     is one of these is shown - an OR, exactly like <see cref="HeroFilter" />.
+        ///     "Unranked" is <see cref="HotsRankTier.None" /> like any other tier here; it covers
+        ///     both "never read" and "read, but no rank set" - see
+        ///     <see cref="AccountRegion.EffectiveRankTier" /> for why those two collapse.
+        /// </summary>
+        public IReadOnlyList<HotsRankTier> RankFilter
+        {
+            get => _rankFilter;
+            private set
+            {
+                _rankFilter = value.ToList();
+                // also triggers the re-filtering via OnPropertyChanged
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(RankFilterOptions));
+            }
+        }
+
+        /// <summary>The eight tiers, in ascending order, each with its own selection state and medal.</summary>
+        public IReadOnlyList<RankFilterOption> RankFilterOptions =>
+            Enum.GetValues<HotsRankTier>()
+                .Select(tier => new RankFilterOption(tier, HotsRankImages.Display(tier), _rankFilter.Contains(tier)))
+                .ToList();
+
+        /// <summary>One chip toggled. Mirrors the hero filter's toggle, just per tier instead of per hero.</summary>
+        public ICommand ToggleRankCommand
+        {
+            get { return _toggleRankCommand ??= new RelayCommand<HotsRankTier>(ToggleRank); }
+        }
+
+        private void ToggleRank(HotsRankTier tier)
+        {
+            RankFilter = _rankFilter.Contains(tier)
+                ? _rankFilter.Where(t => t != tier).ToList()
+                : [.. _rankFilter, tier];
+        }
+
+        /// <summary>
+        ///     The field the list is sorted by. <b>Always writable</b>, even for a field
+        ///     <see cref="SortFieldOptions" /> is currently hiding - the value survives a trip
+        ///     through Overwatch and back exactly like <see cref="HeroFilter" /> does, it is only
+        ///     the GETTER that falls back to <see cref="AccountSortField.LastRead" /> while the
+        ///     real choice isn't offered, so the ComboBox never shows a selection that isn't in
+        ///     its own list.
+        /// </summary>
+        public AccountSortField SortField
+        {
+            get => SortFieldOptions.Any(o => o.Field == _sortField) ? _sortField : AccountSortField.LastRead;
+            set => SetProperty(ref _sortField, value);
+        }
+
+        public ListSortDirection SortDirection
+        {
+            get => _sortDirection;
+            set
+            {
+                if (!SetProperty(ref _sortDirection, value)) return;
+                OnPropertyChanged(nameof(SortDescending));
+            }
+        }
+
+        /// <summary>Plain bool for the direction arrow's rotation trigger - a DataTrigger
+        /// comparing against a ListSortDirection value cannot be relied on to convert the
+        /// XAML string to the enum, so the ViewModel does that comparison instead.</summary>
+        public bool SortDescending => _sortDirection == ListSortDirection.Descending;
+
+        public ICommand ToggleSortDirectionCommand
+        {
+            get
+            {
+                return _toggleSortDirectionCommand ??= new RelayCommand(() =>
+                    SortDirection = _sortDirection == ListSortDirection.Ascending
+                        ? ListSortDirection.Descending
+                        : ListSortDirection.Ascending);
+            }
+        }
+
+        /// <summary>
+        ///     Rank, Gold and Heroes read only exist for Heroes of the Storm - hidden for every
+        ///     other game rather than offered without effect, the same principle as the hero and
+        ///     rank filters themselves.
+        /// </summary>
+        public IReadOnlyList<SortFieldOption> SortFieldOptions
+        {
+            get
+            {
+                var fields = _gameFilter == GameVisuals.Hots
+                    ? Enum.GetValues<AccountSortField>()
+                    : Enum.GetValues<AccountSortField>().Where(f => !HotsOnlySortFields.Contains(f)).ToArray();
+                return fields.Select(f => new SortFieldOption(f, Strings.Current[LabelKeyFor(f)])).ToList();
+            }
+        }
+
+        private static string LabelKeyFor(AccountSortField field) => field switch
+        {
+            AccountSortField.Name => "accounts.sortByName",
+            AccountSortField.Rank => "accounts.sortByRank",
+            AccountSortField.Gold => "accounts.sortByGold",
+            AccountSortField.HeroesRead => "accounts.sortByHeroesRead",
+            _ => "accounts.sortByLastRead"
+        };
+
+        /// <summary>How many rows the current filters leave, out of how many are in scope for
+        /// the chosen game and region - see <see cref="BattlenetAccountGateway.ScopeCount" />.</summary>
+        public int FilteredCount => _battlenetAccountGateway.AccountRegionsFiltered.Cast<object>().Count();
+
+        public int ScopeCount => _battlenetAccountGateway.ScopeCount(_gameFilter, _regionFilter, _showArchived);
+
+        public string FilterCountLabel => Strings.Format("accounts.filterCount", FilteredCount, ScopeCount);
+
+        /// <summary>
         ///     The rows of the overview - one per account per selected region. Until
         ///     21.08.2026 these were the accounts themselves.
         /// </summary>
@@ -512,14 +655,39 @@ namespace Smurftown.UI.MVVM.ViewModel
         {
             base.OnPropertyChanged(e);
 
+            // Trap: the count properties are notified from the CollectionChanged handler in
+            // the constructor, and that notification runs through THIS SAME override (the
+            // string overload of OnPropertyChanged calls the PropertyChangedEventArgs one).
+            // Without this guard, re-filtering here fires Refresh(), Refresh() raises
+            // CollectionChanged again, and the handler calls back in - the same shape as the
+            // OnPropertyChanged/RefreshDialog loop in AddOrEditAccountViewModel, just with the
+            // collection view standing in for the missing equality check.
+            if (e.PropertyName is nameof(FilteredCount) or nameof(ScopeCount) or nameof(FilterCountLabel))
+            {
+                return;
+            }
+
             // A hidden filter must not filter - see HotsFiltersVisibility.
-            // An empty list is therefore passed through; _heroFilter itself remains
-            // untouched and applies again as soon as HotS returns.
+            // An empty list is therefore passed through; _heroFilter/_rankFilter themselves
+            // remain untouched and apply again as soon as HotS returns.
             IReadOnlyCollection<string> heroes =
                 _gameFilter == GameVisuals.Hots ? _heroFilter : Array.Empty<string>();
+            IReadOnlyCollection<HotsRankTier> ranks =
+                _gameFilter == GameVisuals.Hots ? _rankFilter : Array.Empty<HotsRankTier>();
 
             _battlenetAccountGateway.FilterBy(SearchQuery, _gameFilter, _regionFilter, heroes,
-                _rotationGateway.Free, _showArchived);
+                _rotationGateway.Free, ranks, _showArchived);
+
+            // SortField's own getter already falls back to LastRead while the stored choice
+            // isn't offered (see its property), so applying that same getter here keeps what
+            // gets sorted in lockstep with what the dropdown shows - no second fallback needed.
+            _battlenetAccountGateway.SortBy(SortField, _sortDirection);
         }
     }
+
+    /// <summary>One rank chip: which tier, its medal, and whether it is currently selected.</summary>
+    public sealed record RankFilterOption(HotsRankTier Tier, string ImagePath, bool IsSelected);
+
+    /// <summary>One entry of the sort dropdown: the field it selects, and its localized label.</summary>
+    public sealed record SortFieldOption(AccountSortField Field, string Label);
 }

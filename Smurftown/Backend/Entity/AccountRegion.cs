@@ -44,5 +44,28 @@
         ///     name.
         /// </summary>
         public int RegionOrder => Region.DisplayOrder();
+
+        /// <summary>
+        ///     The tier the rank filter and the row itself go by - "never read" and "read,
+        ///     but no tier set" collapsed into the same <see cref="HotsRankTier.None" />,
+        ///     because the row shows nothing in either case (see
+        ///     <c>AccountCardViewModel.RankTier</c>, which makes the same collapse for
+        ///     display). The filter should not draw a distinction the row itself doesn't.
+        /// </summary>
+        public HotsRankTier EffectiveRankTier => Hots?.Tier ?? HotsRankTier.None;
+
+        /// <summary>
+        ///     Sort key for "by rank" - higher is better. Ten points per tier, minus the
+        ///     division (1 = highest, so subtracting it ranks division 1 above division 5
+        ///     within the same tier); tiers without a division subtract nothing. An account
+        ///     with no rank at all sorts lowest, at <see cref="HotsRankTier.None" /> times ten.
+        /// </summary>
+        public int RankSortKey => (int)EffectiveRankTier * 10 - (Hots?.Division ?? 0);
+
+        /// <summary>Sort key for "by gold" - never read sorts as -1, below every real amount.</summary>
+        public int GoldSortKey => Hots?.Gold ?? -1;
+
+        /// <summary>Sort key for "by heroes read" - never read sorts as -1, below zero owned.</summary>
+        public int HeroesReadSortKey => Hots?.Heroes.Count ?? -1;
     }
 }

@@ -31,6 +31,16 @@ accounts.rotationHint: "Rotation libre {0} - {1} héros{2}\nCliquer pour modifie
 accounts.rotationHintUnknown: "Rotation libre {0} - absente du calendrier\nCliquer pour saisir les héros libres de cette période"
 accounts.archiveShow: Afficher les comptes archivés
 accounts.archiveShowing: Affiche les comptes archivés - cliquer pour revenir
+accounts.rankFilterHint: Filtrer par rang - un compte reste affiché si son rang correspond à l'un des niveaux sélectionnés
+accounts.rankUnranked: Sans rang
+accounts.sortLabel: Trier
+accounts.sortByLastRead: Dernière lecture
+accounts.sortByName: Nom
+accounts.sortByRank: Rang
+accounts.sortByGold: Or
+accounts.sortByHeroesRead: Héros lus
+accounts.sortDirectionHint: Inverser le sens du tri
+accounts.filterCount: "{0} sur {1}"
 
 # =========================================================== Account row =============
 row.noBattletagHint: Aucun battletag lu - lancez le compte avec « Jouer et actualiser ».

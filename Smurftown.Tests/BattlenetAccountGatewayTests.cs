@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using Smurftown.Backend.Entity;
 using Smurftown.Backend.Gateway;
 using Xunit;
@@ -290,6 +292,70 @@ namespace Smurftown.Tests
 
             Assert.Equal(0, back.RankPoints);
             Assert.Equal(0.0, back.RankProgress);
+        }
+
+        /// <summary>
+        ///     "Unranked" in the filter covers both cases the row itself doesn't tell apart:
+        ///     never read at all (<c>HotsByRegion</c> has no entry, <c>Hots</c> is null) and
+        ///     read once with no tier ever set. Both must match a filter narrowed to
+        ///     <see cref="HotsRankTier.None" />, and neither must match a filter narrowed to a
+        ///     real tier.
+        /// </summary>
+        [Fact]
+        public void Rank_filter_matches_the_effective_tier_including_both_unranked_cases()
+        {
+            var folder = FreshFolder();
+            var gateway = new BattlenetAccountGateway(folder);
+
+            var gold = Mail("gold@example.com");
+            gold.HotsFor(BattlenetRegion.Europe).Tier = HotsRankTier.Gold;
+            gateway.AddOrUpdate(gold);
+
+            // Never touches HotsFor - HotsByRegion stays empty, Hots is null.
+            gateway.AddOrUpdate(Mail("neverread@example.com"));
+
+            var readNoRank = Mail("readnorank@example.com");
+            readNoRank.HotsFor(BattlenetRegion.Europe).ReadAt = DateTime.Now;
+            gateway.AddOrUpdate(readNoRank);
+
+            gateway.FilterBy("", Games.Hots, BattlenetRegion.Europe, [], [], [HotsRankTier.None], false);
+            var unranked = gateway.AccountRegionsFiltered.Cast<AccountRegion>()
+                .Select(row => row.Account.Email).ToList();
+
+            Assert.Contains("neverread@example.com", unranked);
+            Assert.Contains("readnorank@example.com", unranked);
+            Assert.DoesNotContain("gold@example.com", unranked);
+
+            gateway.FilterBy("", Games.Hots, BattlenetRegion.Europe, [], [], [HotsRankTier.Gold], false);
+            Assert.Equal(["gold@example.com"],
+                gateway.AccountRegionsFiltered.Cast<AccountRegion>().Select(row => row.Account.Email));
+        }
+
+        /// <summary>
+        ///     A never-read row has no gold to compare, so it has to sort as if it had less
+        ///     than any account that HAS a reading - including one that read zero.
+        /// </summary>
+        [Fact]
+        public void Sorting_by_gold_puts_a_never_read_account_below_every_real_amount()
+        {
+            var folder = FreshFolder();
+            var gateway = new BattlenetAccountGateway(folder);
+
+            var rich = Mail("rich@example.com");
+            rich.HotsFor(BattlenetRegion.Europe).Gold = 5000;
+            gateway.AddOrUpdate(rich);
+
+            var broke = Mail("broke@example.com");
+            broke.HotsFor(BattlenetRegion.Europe).Gold = 0;
+            gateway.AddOrUpdate(broke);
+
+            gateway.AddOrUpdate(Mail("neverread2@example.com"));
+
+            gateway.SortBy(AccountSortField.Gold, ListSortDirection.Descending);
+
+            Assert.Equal(
+                ["rich@example.com", "broke@example.com", "neverread2@example.com"],
+                gateway.AccountRegionsFiltered.Cast<AccountRegion>().Select(row => row.Account.Email));
         }
 
         private static string FreshFolder()
