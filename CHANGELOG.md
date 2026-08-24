@@ -21,6 +21,8 @@ nothing else on the line.
 
 ## [Upcoming]
 
+## [1.4.0] - 2026-08-24
+
 ### Added
 
 - **The rank medal shows how far through its division an account stands.** Every medal carries two
@@ -57,6 +59,11 @@ nothing else on the line.
   image was cut out of a compressed screenshot and showed it — clipped edges, noise, a smeared
   crown. The new one is symmetric and clean; its inner glow now sits above the crown, where the
   original animation carries it.
+- **Reading data out of the game and opening loot chests now takes noticeably less time.** The
+  pauses between clicks while paging through the collection, switching tabs, opening the region
+  picker and opening loot chests were tuned down after being measured as far larger than the game
+  actually needs. Signing in is faster the same way. What gets read or clicked does not change,
+  only how long each step waits before it looks.
 
 ## [1.3.0] - 2026-08-23
 
@@ -250,7 +257,8 @@ First public release.
   Run anyway* — the checksum shipped with each release proves that the file matches the release,
   not who built it.
 
-[Upcoming]: https://github.com/tibbots/smurftown/compare/1.3.0...HEAD
+[Upcoming]: https://github.com/tibbots/smurftown/compare/1.4.0...HEAD
+[1.4.0]: https://github.com/tibbots/smurftown/releases/tag/1.4.0
 [1.3.0]: https://github.com/tibbots/smurftown/releases/tag/1.3.0
 [1.2.0]: https://github.com/tibbots/smurftown/releases/tag/1.2.0
 [1.1.0]: https://github.com/tibbots/smurftown/releases/tag/1.1.0
