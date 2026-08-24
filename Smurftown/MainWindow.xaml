@@ -113,31 +113,92 @@
              WHILE A RUN IS GOING ON the button is disabled - and unlike the version chip, a
              disabled look is right here: the label beside it reads "Reading..." at the same
              time, so the dimming carries no statement of its own that could be missed. -->
+        <!-- Design round of 25.08.2026 (see the artifact "Live Game Chip"): the chip used to be
+             the same size and quietness as the version chip beside it, which is exactly wrong
+             for the one moment it matters - a client is actually up. Grown from 26 to 32px, a
+             live-blue glow that breathes instead of a static border, and a small dot that
+             pulses on its own beat. Deliberately smaller than the mock-up's 40px - big enough
+             to catch the eye without out-sizing the tab bar beside it.
+
+             THE PULSE ITSELF IS STARTED IN CODE, from MainWindow.xaml.cs's
+             StartRunningChipPulse - not from a Storyboard declared here. An
+             EventTrigger/BeginStoryboard in ControlTemplate.Triggers targeting names in this
+             same template (tried first, both for the effect directly and for "chip" with a
+             property path into it) failed XamlLoadsTests with "Name not found in the namescope
+             of ControlTemplate" - Application.LoadComponent parses and validates a template's
+             triggers without ever applying the template to a live control, and that eager
+             validation does not see names an EventTrigger would only need once the template is
+             actually instantiated. FrameworkTemplate.FindName sidesteps the question entirely:
+             it is called from code, after ApplyTemplate, and needs no trigger to fire first. -->
         <Style x:Key="RunningChipTheme" TargetType="Button">
-            <Setter Property="Height" Value="26" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="DemiBold" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Margin" Value="0,0,10,0" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="chip" CornerRadius="13" BorderThickness="1"
-                                Background="#152430" BorderBrush="#2B4A61">
+                        <Border x:Name="chip" CornerRadius="16" BorderThickness="1.5"
+                                BorderBrush="#3FB6FF">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#1C3A52" Offset="0" />
+                                    <GradientStop Color="#142433" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <!-- The glow is a DropShadowEffect with ShadowDepth 0, so it
+                                 radiates evenly instead of casting to one side - a "glow", not
+                                 a shadow. Unnamed: nothing in XAML needs to reach it, code-behind
+                                 gets there via "chip".Effect directly - see the type comment
+                                 above for why this animates from code and not from a Storyboard
+                                 declared here. -->
+                            <Border.Effect>
+                                <DropShadowEffect Color="#3FB6FF" ShadowDepth="0"
+                                                   BlurRadius="6" Opacity="0.35" />
+                            </Border.Effect>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                                        Margin="10,0,12,0">
+                                        Margin="12,0,14,0">
+                                <!-- The live dot: the pulse itself is the "something is
+                                     happening" signal - the icon beside it already says which
+                                     thing, the name after that says it in words too. -->
+                                <Ellipse x:Name="dot" Width="7" Height="7" Fill="#3FB6FF"
+                                         VerticalAlignment="Center" Margin="0,0,8,0" />
                                 <Image Source="pack://application:,,,/UI/Images/hots.png"
-                                       Width="14" Height="14" Margin="0,0,7,0"
+                                       Width="16" Height="16" Margin="0,0,7,0"
                                        RenderOptions.BitmapScalingMode="HighQuality" />
-                                <TextBlock x:Name="label" Text="{Binding Running.Label}"
-                                           Foreground="#7FB6DC" VerticalAlignment="Center" />
+                                <!-- THE GAME'S NAME, not an instruction to click it - since
+                                     25.08.2026 no longer Running.Label ("Refresh"/"Reading..."),
+                                     see RunningGame.GameName. What was detected is the more
+                                     useful fact than what a click does; the caret after it is
+                                     what now says "click me, this opens something". -->
+                                <TextBlock Text="{Binding Running.GameName}"
+                                           Foreground="#E4F4FF" VerticalAlignment="Center" />
+                                <!-- The caret: a small downward triangle, U+25BE. It is the
+                                     ONLY thing in this chip that says "this is a dropdown" -
+                                     before it, nothing here looked different from a plain
+                                     button, and the menu underneath was discoverable only by
+                                     already knowing it was there. -->
+                                <TextBlock x:Name="caret" Text="&#x25BE;" FontSize="9"
+                                           FontWeight="Normal" Foreground="#8FD4FF"
+                                           VerticalAlignment="Center" Margin="6,1,0,0" />
                             </StackPanel>
                         </Border>
                         <ControlTemplate.Triggers>
+                            <!-- The pulse is started from MainWindow.xaml.cs, not from an
+                                 EventTrigger/Storyboard here - see StartRunningChipPulse for
+                                 why. The names "chip" and "dot" above exist FOR THAT CODE:
+                                 FrameworkTemplate.FindName reaches them once ApplyTemplate has
+                                 run, the same names an in-template Storyboard would have used. -->
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="chip" Property="BorderBrush" Value="#4A9FD8" />
-                                <Setter TargetName="label" Property="Foreground" Value="#CFE6F5" />
+                                <Setter TargetName="chip" Property="BorderBrush" Value="#8FD4FF" />
+                                <Setter TargetName="caret" Property="Foreground" Value="#CFE6F5" />
                             </Trigger>
+                            <!-- IsEnabled follows Running.OpenMenuCommand's CanExecute
+                                 (Running && !Busy) automatically - WPF's own doing for a
+                                 Command-bound Button, nothing wired here for it. This is now
+                                 the ONLY signal for "busy": the text no longer changes to
+                                 "Reading...", the chip just quiets down. -->
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="chip" Property="Opacity" Value="0.55" />
                                 <Setter Property="Cursor" Value="Arrow" />
@@ -355,7 +416,9 @@
                  It is invisible unless a Heroes of the Storm client is running, and the
                  tooltip carries the whole promise - reads the account that is signed in,
                  signs nobody out. -->
-            <Button Style="{StaticResource RunningChipTheme}"
+            <!-- x:Name, so MainWindow.xaml.cs's constructor can reach its template's named
+                 parts ("chip", "dot") once and start the pulse - see StartRunningChipPulse. -->
+            <Button x:Name="RunningChip" Style="{StaticResource RunningChipTheme}"
                     Command="{Binding Running.OpenMenuCommand}"
                     Visibility="{Binding Running.Visibility}"
                     ToolTip="{Binding Running.Hint}" />

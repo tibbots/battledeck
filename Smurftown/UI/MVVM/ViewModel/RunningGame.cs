@@ -119,7 +119,9 @@ namespace Smurftown.UI.MVVM.ViewModel
             private set
             {
                 if (!SetProperty(ref _busy, value)) return;
-                OnPropertyChanged(nameof(Label));
+                // No OnPropertyChanged(nameof(GameName)) here - unlike Label before it,
+                // GameName never changes at runtime, so nothing needs to re-read it. The
+                // busy/idle distinction now lives entirely in IsEnabled - see NotifyCommands.
                 NotifyCommands();
             }
         }
@@ -154,7 +156,28 @@ namespace Smurftown.UI.MVVM.ViewModel
 
         public Visibility MenuVisibility => MenuOpen ? Visibility.Visible : Visibility.Collapsed;
 
-        public string Label => Strings.Current[Busy ? "running.busy" : "running.chip"];
+        /// <summary>
+        ///     The chip's own text since 25.08.2026: the game's name, not an instruction to
+        ///     click it. "Heroes of the Storm" says what was detected - the more useful fact
+        ///     than "Refresh", which the chip used to say regardless of what triggered it. The
+        ///     caret in the template is what now says "click me, this opens something"; the two
+        ///     questions used to share one word between them.
+        ///     <para>
+        ///         Hard-coded to Heroes of the Storm rather than derived from whichever game is
+        ///         running: this chip exists in the first place because
+        ///         <c>Backend/Automation/</c> only knows how to read that one game at all - there
+        ///         is no "which game" question here yet, unlike the row's own game panel.
+        ///     </para>
+        ///     <para>
+        ///         <b>Busy no longer changes the text</b> - it used to swap in "Reading...", and
+        ///         that wording is gone along with <c>running.busy</c>/<c>running.chip</c>. The
+        ///         chip already dims itself while busy: <see cref="OpenMenuCommand" />'s
+        ///         <c>CanExecute</c> answers <c>false</c>, WPF sets <c>IsEnabled</c> from that
+        ///         automatically, and <c>RunningChipTheme</c>'s own trigger on it is the signal
+        ///         now - one fact, one place, instead of a second copy in words.
+        ///     </para>
+        /// </summary>
+        public string GameName => GameVisuals.LabelFor(GameVisuals.Hots);
 
         public string Hint => Strings.Current["running.hint"];
 

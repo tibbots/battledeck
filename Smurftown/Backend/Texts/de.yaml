@@ -89,8 +89,6 @@ start.chests: Beutetruhen öffnen
 start.chestsHint: starten, anmelden, alle Truhen öffnen, lesen, dann beenden
 
 # =========================================================== Running client ========
-running.chip: Aktualisieren
-running.busy: Lese...
 running.hint: Heroes of the Storm läuft. Liest das Konto, das angemeldet ist - ohne es abzumelden und ohne den Client zu schließen.
 
 # The two entries of the menu under the chip. The chip carried one action until 23.08.2026

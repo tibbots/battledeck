@@ -94,8 +94,6 @@ start.chests: Abrir los cofres
 start.chestsHint: iniciar, conectarse, abrir todos los cofres, leer y cerrar
 
 # =========================================================== Running client ========
-running.chip: Actualizar
-running.busy: Leyendo...
 running.hint: Heroes of the Storm está en ejecución. Lee la cuenta conectada - sin desconectarla ni cerrar el cliente.
 
 # The two entries of the menu under the chip. The chip carried one action until 23.08.2026

@@ -92,8 +92,6 @@ start.chests: Ouvrir les coffres
 start.chestsHint: lancer, se connecter, ouvrir chaque coffre, lire, puis fermer
 
 # =========================================================== Running client ========
-running.chip: Actualiser
-running.busy: Lecture...
 running.hint: Heroes of the Storm tourne. Lit le compte connecté - sans le déconnecter ni fermer le client.
 
 # The two entries of the menu under the chip. The chip carried one action until 23.08.2026

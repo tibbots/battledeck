@@ -148,8 +148,9 @@ start.chests: Open loot chests
 start.chestsHint: start, log in, open every chest, read, then close
 
 # =========================================================== Running client ========
-running.chip: Refresh
-running.busy: Reading...
+# running.chip/running.busy are gone since 25.08.2026 - the chip shows the game's NAME now
+# (RunningGame.GameName, from GameVisuals - "Heroes of the Storm" is untranslated anyway), and
+# the busy state is the chip dimming itself, not a second wording.
 running.hint: Heroes of the Storm is running. Reads the account that is signed in - without signing it out and without closing the client.
 
 # The two entries of the menu under the chip. The chip carried one action until 23.08.2026
