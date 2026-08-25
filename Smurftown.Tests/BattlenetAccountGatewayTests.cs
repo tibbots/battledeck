@@ -358,6 +358,46 @@ namespace Smurftown.Tests
                 gateway.AccountRegionsFiltered.Cast<AccountRegion>().Select(row => row.Account.Email));
         }
 
+        /// <summary>
+        ///     The one thing <see cref="BattlenetAccountGateway.FindByBattletag" /> cannot say
+        ///     on its own - it answers "zero" and "more than one" identically with <c>null</c>.
+        ///     This is what <c>RunGuideViewModel</c> asks instead, so an ambiguous battletag
+        ///     fails the running-client read instead of getting a third account created on top
+        ///     of the two that already collide.
+        /// </summary>
+        [Fact]
+        public void Ambiguous_battletag_is_reported_and_a_unique_one_is_not()
+        {
+            var folder = FreshFolder();
+            var gateway = new BattlenetAccountGateway(folder);
+
+            var first = Account("first@example.com");
+            first.Name = "PITAPAN";
+            first.Discriminator = "2523";
+            gateway.AddOrUpdate(first);
+
+            Assert.False(gateway.IsAmbiguousBattletag("PITAPAN#2523"));
+            Assert.NotNull(gateway.FindByBattletag("PITAPAN#2523"));
+
+            var second = Account("second@example.com");
+            second.Name = "PITAPAN";
+            second.Discriminator = "2523";
+            gateway.AddOrUpdate(second);
+
+            Assert.True(gateway.IsAmbiguousBattletag("PITAPAN#2523"));
+            Assert.Null(gateway.FindByBattletag("PITAPAN#2523"));
+        }
+
+        [Fact]
+        public void An_unseen_battletag_is_not_ambiguous()
+        {
+            var folder = FreshFolder();
+            var gateway = new BattlenetAccountGateway(folder);
+            gateway.AddOrUpdate(Mail("known@example.com"));
+
+            Assert.False(gateway.IsAmbiguousBattletag("NOBODY#1111"));
+        }
+
         private static string FreshFolder()
         {
             var folder = Path.Combine(TestHome.Path, Guid.NewGuid().ToString("N"));

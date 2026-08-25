@@ -25,15 +25,27 @@ was folgt, erklärt wie.
 ## Konten
 * Battle.net-Konten anlegen und bearbeiten — eine Zeile pro Konto, sortier- und filterbar
 * Zugangsdaten speichern und E-Mail oder Passwort mit einem Klick kopieren
+* **Ein Passwort ist optional.** Lässt du es leer, funktioniert alles weiter außer dem
+  automatischen Start — melde das Konto selbst in Heroes of the Storm an und lies es danach mit
+  dem weiter unten beschriebenen Button im Fensterkopf ein. Nur das Start-Menü der Zeile
+  verschwindet: Ohne Passwort hat es nichts mehr anzubieten, das es in die Anmeldemaske des
+  Spiels eintippen könnte.
 * Konten, die du nicht mehr nutzt, archivieren statt löschen — **einen Löschen-Knopf gibt es
   nicht**, mit Absicht: Ein Fehlklick in einer Liste aus lauter gleich aussehenden Zeilen soll
   nicht der letzte Schritt sein
+* **Legst du ein Konto unter einer bereits archivierten E-Mail-Adresse neu an, kommt es
+  zurück, statt sich zu verdoppeln.** Battletag, Rang, Helden und jede Region, die je angehakt
+  war, bleiben erhalten; nur was du diesmal wirklich eintippst oder ausliest, überschreibt sie.
 * Filtern nach Name, Spiel oder Held
 * **Nach Rang filtern und die Liste sortieren.** Für Heroes of the Storm grenzen acht Rang-Chips
   — Ohne Rang bis Großmeister — die Liste auf einen oder mehrere Ränge zugleich ein; *Ohne Rang*
   deckt sowohl ein nie gelesenes Konto als auch eines ohne gesetzten Rang ab. Daneben stehen eine
   Sortierung (Zuletzt gelesen, Name, Rang, Gold, Helden gelesen, mit Klick zum Umkehren der
   Richtung) und ein Zähler der passenden Konten — für jedes Spiel, nicht nur Heroes of the Storm.
+* **Eine leere Liste erklärt sich selbst.** Noch keine Konten? Dann zeigt das Fenster die zwei
+  Wege, sie zu füllen, statt einer leeren Fläche: eins von Hand eintippen mit E-Mail und
+  Passwort, oder Heroes of the Storm selbst starten und dich anmelden — Smurftown liest es in
+  dem Moment aus dem Spiel.
 
 ![Das Zeilenmenü](docs/images/de/actions-menu.png)
 
@@ -94,6 +106,12 @@ Er kommt aus dem Spiel, sobald das Konto zum ersten Mal gelesen wird.
 
   Alles auf diesem Reiter gehört zu **einer** Region; der Umschalter oben sagt, zu welcher.
   Spielst du in zweien, pflegst du auch zwei.
+* **Oder das Start-Menü überspringen — auslesen, wer schon angemeldet ist.** Sobald Heroes of
+  the Storm läuft, erscheint oben im Fenster von Smurftown ein Button. Ein Klick darauf liest
+  das angemeldete Konto genauso aus, ohne die Anmeldung des Spiels selbst anzufassen: Er meldet
+  niemanden ab und schließt nichts. Meldest du dich mit einem Battletag an, den Smurftown noch
+  nie gesehen hat, legt der Button das Konto direkt an, statt es abzulehnen — kein gespeichertes
+  Passwort, keine eingetippte E-Mail, keine Nachfrage.
 * **Beutetruhen öffnen.** Öffnet zunächst jede ungeöffnete Truhe, sodass die Zahlen danach die
   nach dem Öffnen sind, nicht die davor.
 * **Freie Rotation.** Die Rotation wiederholt sich nach einem jährlichen Kalender, und der liegt
@@ -270,6 +288,13 @@ Ausschließlich in lokalen Dateien, im Ordner `.smurftown` in deinem Benutzerver
 **Passwörter werden im Klartext gespeichert.** Das macht Kopieren und automatisches Eintippen
 erst möglich, und es ist ein bewusster Kompromiss dieser App — behandle den Ordner wie den
 Passwort-Speicher, der er ist.
+
+### Muss ich Smurftown mein Passwort geben?
+Nein. Lass das Passwortfeld leer, wenn du ein Konto von Hand anlegst, oder überspring den Dialog
+ganz — starte Heroes of the Storm selbst, melde dich an und nutze „Aktualisieren" über den
+Button im Fensterkopf: Smurftown legt das Konto aus dem Gelesenen an und bekommt das Passwort
+nie zu sehen. Was ohne Passwort fehlt, ist nur der automatische Start; Rang, Helden und
+Währungen aus dem Spiel auslesen funktioniert genauso weiter.
 
 ### Warum steht ein Konto mehrfach in der Liste?
 Das sind seine Regionen. Ein Konto bekommt eine Zeile je Region, in der es spielt, weil Rang,

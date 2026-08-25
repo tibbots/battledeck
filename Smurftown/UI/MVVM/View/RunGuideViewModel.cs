@@ -175,6 +175,15 @@ namespace Smurftown.UI.MVVM.View
             var account = _gateway.FindByBattletag(seen);
             if (account == null)
             {
+                // FindByBattletag answers "zero" and "more than one" the same way - null.
+                // Only the first may create an account; creating one on top of an already
+                // ambiguous battletag would add a third guess to two, not resolve either.
+                if (_gateway.IsAmbiguousBattletag(seen))
+                {
+                    Fail(StepAccount, Strings.Format("problem.runAmbiguousTag", seen!));
+                    return;
+                }
+
                 account = CreateAccount(seen!, name!, discriminator!, changes);
                 if (account == null) return;
             }

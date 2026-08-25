@@ -25,14 +25,24 @@ marcha.** Todo lo que sigue explica cómo.
 ## Cuentas
 * Añade y edita cuentas de Battle.net — una fila por cuenta, ordenable y filtrable
 * Guarda las credenciales de acceso y copia el correo o la contraseña con un solo clic
+* **La contraseña es opcional.** Déjala en blanco y todo sigue funcionando salvo el inicio
+  automático — inicia sesión en la cuenta tú mismo dentro de Heroes of the Storm y luego léela
+  con el botón descrito más abajo. Lo único que desaparece es el menú de inicio de la fila: sin
+  contraseña no tiene nada que escribir en la pantalla de inicio de sesión del juego.
 * Archiva las cuentas que ya no usas en lugar de eliminarlas — **no hay botón de eliminar**, y es
   a propósito: un clic equivocado en una lista de filas parecidas no debería ser el último paso
+* **Añadir de nuevo una cuenta con un correo que ya está archivado la restaura en lugar de
+  duplicarla.** Su battletag, rango, héroes y cada región que tuvo marcada alguna vez se
+  conservan; solo lo que realmente escribas o leas esta vez los sobrescribe.
 * Filtra por nombre, por juego o por héroe
 * **Filtra por rango y ordena la lista.** Para Heroes of the Storm, ocho chips de rango — Sin
   rango hasta Gran maestro — reducen la lista a uno o varios rangos a la vez; *Sin rango* cubre
   tanto una cuenta nunca leída como una leída sin rango asignado. Al lado, un control de orden
   (última lectura, nombre, rango, oro, héroes leídos, con un clic para invertir la dirección) y un
   contador de cuentas que coinciden están disponibles para cada juego, no solo Heroes of the Storm.
+* **Una lista vacía se explica sola.** ¿Aún sin cuentas? La ventana muestra las dos formas de
+  llenarla en vez de un área vacía: escribir una a mano con su correo y contraseña, o iniciar
+  Heroes of the Storm tú mismo e iniciar sesión — Smurftown la lee del juego en ese momento.
 
 ![El menú de la fila](docs/images/es/actions-menu.png)
 
@@ -91,6 +101,12 @@ escribe: aparece la primera vez que la cuenta se lee.
 
   Todo lo que hay en esa pestaña pertenece a **una sola** región; el selector de arriba indica
   cuál. Si juegas en dos, mantienes dos.
+* **O sáltate el menú de inicio — lee quién ya ha iniciado sesión.** En cuanto Heroes of the
+  Storm está en marcha, aparece un botón en la parte superior de la ventana de Smurftown. Haz
+  clic en él y la aplicación lee esa cuenta de la misma forma, sin tocar el inicio de sesión del
+  propio juego: no cierra la sesión de nadie ni cierra nada. Inicia sesión con un battletag que
+  Smurftown nunca ha visto, y el botón crea la cuenta al instante en lugar de rechazarla — sin
+  contraseña guardada, sin correo escrito, sin preguntar nada.
 * **Abre los cofres.** Primero abre todos los cofres pendientes, así que las cifras que siguen
   son las de después de abrirlos, no las de antes.
 * **Rotación libre de héroes.** La rotación se repite según un calendario anual, y ese calendario
@@ -268,6 +284,13 @@ Solo en archivos locales, dentro de la carpeta `.smurftown` de tu directorio per
 **Las contraseñas se guardan en texto plano.** Eso es lo que permite copiarlas y escribirlas
 automáticamente, y es la contrapartida deliberada que asume esta aplicación — trata esa carpeta
 como lo que es: un almacén de contraseñas.
+
+### ¿Tengo que darle mi contraseña a Smurftown?
+No. Deja el campo de la contraseña en blanco al añadir una cuenta a mano, o sáltate el diálogo
+por completo — inicia Heroes of the Storm tú mismo, inicia sesión y usa «Actualizar» en el botón
+de la parte superior de la ventana: Smurftown crea la cuenta a partir de lo que lee y nunca llega
+a ver la contraseña. Lo único que falta sin ella es el inicio automático; leer el rango, los
+héroes y las monedas del juego sigue funcionando igual.
 
 ### ¿Por qué una misma cuenta aparece más de una vez?
 Son sus regiones. Una cuenta obtiene una fila por cada región en la que juega, porque el rango,

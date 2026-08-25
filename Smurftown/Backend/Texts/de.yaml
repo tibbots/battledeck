@@ -323,6 +323,7 @@ problem.tagAmbiguous: "Das Profil zeigte '{0}', die zweite Aufnahme '{1}' - unei
 problem.runBusy: Ein Spieldurchlauf läuft bereits - warte, bis er fertig ist.
 problem.runNotATag: "Das Profil zeigt '{0}' - das ist kein Battletag. Es wird nichts geschrieben."
 problem.runEmailTaken: "Die E-Mail '{0}' gehört bereits zu einem anderen Konto in Smurftown - prüfe auf einen Tippfehler. Es wird nichts geschrieben."
+problem.runAmbiguousTag: "Der Battletag '{0}' gehört zu mehr als einem Konto in Smurftown - mehrdeutig. Es wird nichts geschrieben."
 
 # =========================================================== Error window ==========
 error.title: Anwendungsfehler

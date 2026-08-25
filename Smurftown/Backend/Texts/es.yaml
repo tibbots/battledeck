@@ -328,6 +328,7 @@ problem.tagAmbiguous: "El perfil mostró «{0}» y la segunda captura «{1}» - 
 problem.runBusy: Ya hay una ejecución de juego en curso - espera a que termine.
 problem.runNotATag: "El perfil muestra «{0}» - eso no es un battletag. No se escribe nada."
 problem.runEmailTaken: "El correo «{0}» ya pertenece a otra cuenta en Smurftown - comprueba que no sea una errata. No se escribe nada."
+problem.runAmbiguousTag: "El battletag «{0}» pertenece a más de una cuenta en Smurftown - ambiguo. No se escribe nada."
 
 # =========================================================== Error window ==========
 error.title: Error de la aplicación

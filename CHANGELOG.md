@@ -21,6 +21,8 @@ nothing else on the line.
 
 ## [Upcoming]
 
+## [1.7.0] - 2026-08-25
+
 ### Added
 
 - **Battle.net accounts no longer need a stored password.** The password field in the account
@@ -340,7 +342,8 @@ First public release.
   Run anyway* — the checksum shipped with each release proves that the file matches the release,
   not who built it.
 
-[Upcoming]: https://github.com/tibbots/smurftown/compare/1.6.0...HEAD
+[Upcoming]: https://github.com/tibbots/smurftown/compare/1.7.0...HEAD
+[1.7.0]: https://github.com/tibbots/smurftown/releases/tag/1.7.0
 [1.6.0]: https://github.com/tibbots/smurftown/releases/tag/1.6.0
 [1.5.0]: https://github.com/tibbots/smurftown/releases/tag/1.5.0
 [1.4.0]: https://github.com/tibbots/smurftown/releases/tag/1.4.0

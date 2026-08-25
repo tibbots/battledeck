@@ -238,9 +238,21 @@ battletag read ──► shape valid (NAME#DIGITS)? ──no──► nothing, w
         │
        yes
         ▼
-   carried by exactly one account? ──no──► nothing, warn ("not in Smurftown")
-        │                                  (two accounts carrying it counts as no)
-       yes
+   carried by exactly one account? ──yes──► that account
+        │
+        no
+        ▼
+   carried by more than one? ──yes──► nothing, warn (ambiguous)
+        │
+        no
+        ▼
+   placeholder e-mail already taken? ──yes──► nothing, warn (address collision)
+        │
+        no
+        ▼
+   create it: name + discriminator + battletag from the profile,
+   password empty, e-mail is the placeholder — nothing asked
+        │
         ▼
    region settled ──cancelled──► nothing
         │
@@ -252,11 +264,27 @@ battletag read ──► shape valid (NAME#DIGITS)? ──no──► nothing, w
 the same static overlay are the same pixels and yield the same misreading — the guard would be
 theatre. What actually guards this path sits on the other side: the tag has to match a stored
 account **character for character**, and the realistic slips (`I`/`l`, `0`/`O`, `5`/`S`) turn a
-battletag into a string that matches nothing. Then nothing is written, which is the safe outcome.
+battletag into a string that matches nothing, and then nothing is written or created — the same
+safe outcome an unmatched tag always had.
 
-**Two accounts carrying the same battletag count as no answer.** Identity here is the email, so
-nothing stops two entries from carrying the same tag; picking one of the two would write a whole
-reading into an account chosen by list order.
+**Two accounts carrying the same battletag count as no answer, and it stays that way.** Identity
+here is the e-mail, so nothing stops two entries from carrying the same tag; picking one of the
+two would write a whole reading into an account chosen by list order. `FindByBattletag` answers a
+missing tag and an ambiguous one identically, with `null` — and since a missing tag now creates an
+account instead of refusing (next paragraph), the ambiguous case needs a check of its own so it
+does not fall into the same branch: `BattlenetAccountGateway.IsAmbiguousBattletag` asks the one
+question `FindByBattletag` cannot, and `RunGuideViewModel` fails the run on it before
+`CreateAccount` is ever reached.
+
+**A battletag nobody carries creates the account instead of refusing it — since 25.08.2026.**
+Whoever wants an account without ever typing a password starts Heroes of the Storm themselves,
+signs in, and this is what creates it: name, discriminator and battletag come from the profile
+overlay, the password stays empty on purpose, and the e-mail is a placeholder built from the same
+battletag (`BattlenetAccount.PlaceholderEmail`) rather than asked for — nothing is left this step
+could still need. The one way this still refuses is a placeholder address that already belongs to
+a real, hand-typed account under that exact e-mail; `RunGuideViewModel.CreateAccount` checks for
+it and warns rather than silently colliding. `AccountCardViewModel` hides such an account's start
+menu — there is no password to type into the login form with — reading still works from here.
 
 ### Which region
 

@@ -24,14 +24,25 @@ were not typed in — the app read them out of the running game.** Everything be
 ## Accounts
 * Add and edit Battle.net accounts — one row per account, sorted and filterable
 * Store login credentials and copy e-mail or password with a single click
+* **A password is optional.** Leave it blank and every feature still works except the
+  automated start — sign the account into Heroes of the Storm yourself, then read it back with
+  the header chip described further down. The row's start menu is the only thing that
+  disappears; it has nothing left to offer without a password to type into the game's login
+  form.
 * Archive accounts you stopped using instead of deleting them — **there is no delete button**,
   on purpose: one misclick in a list of look-alike rows should not be the last step
+* **Adding an account back under an e-mail that is archived restores it, rather than
+  duplicating it.** Its battletag, rank, heroes and every region it was ever ticked for come
+  back; only what you actually type or read this time overwrites them.
 * Filter by name, by game, or by hero
 * **Filter by rank and sort the list.** For Heroes of the Storm, eight rank chips — Unranked
   through Grand Master — narrow the list to one or several ranks at once; *Unranked* covers both
   an account never read and one read with no rank set. Next to it, a sort control (last read,
   name, rank, gold, heroes read, with a click to reverse the direction) and a count of matching
   accounts are available for every game, not only Heroes of the Storm.
+* **An empty list explains itself.** No accounts yet, and the window shows the two ways to fill
+  it instead of a blank area: type one in by hand with its e-mail and password, or start Heroes
+  of the Storm yourself and sign in — Smurftown reads it out of the game the moment you do.
 
 ![The row menu](docs/images/actions-menu.png)
 
@@ -87,6 +98,11 @@ out of the game the first time the account is read.
 
   Everything on that tab belongs to **one** region; the switcher at the top says which. Play in
   two, and you maintain two.
+* **Or skip the start menu — read whoever is already signed in.** The moment Heroes of the Storm
+  is running, a chip appears in Smurftown's own header. Click it and the app reads that account
+  the same way, without touching the game's own sign-in at all: it signs nobody out and closes
+  nothing. Sign into a battletag Smurftown has never seen, and the chip creates the account on
+  the spot instead of refusing it — no password stored, no e-mail typed, nothing asked.
 * **Open loot chests.** Opens every unopened chest first, so the numbers that follow are the
   ones after opening, not before.
 * **Free hero rotation.** The rotation repeats on a yearly calendar, and that calendar ships
@@ -249,6 +265,13 @@ In local files only, inside the `.smurftown` folder in your home directory
 
 **Passwords are stored in plain text.** That is what makes copying and typing them possible,
 and it is the deliberate trade this app makes — treat the folder like the password store it is.
+
+### Do I have to give Smurftown my password?
+No. Leave the password field blank when you add an account by hand, or skip the dialog
+entirely — start Heroes of the Storm yourself, sign in, and use the header chip's "Refresh":
+Smurftown creates the account from what it reads and never sees the password at all. What you
+lose without one is the automated start; reading rank, heroes and currencies back out of the
+game keeps working exactly the same.
 
 ### Why is one account listed more than once?
 Those are its regions. An account gets one row per region it plays in, because rank, heroes and

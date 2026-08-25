@@ -25,9 +25,16 @@ la partie en cours.** Tout ce qui suit explique comment.
 ## Comptes
 * Ajoutez et modifiez des comptes Battle.net — une ligne par compte, triable et filtrable
 * Enregistrez les identifiants de connexion et copiez l'e-mail ou le mot de passe en un clic
+* **Le mot de passe est facultatif.** Laissez-le vide et tout continue de fonctionner, sauf le
+  démarrage automatique — connectez le compte vous-même dans Heroes of the Storm, puis relisez-le
+  avec le bouton décrit plus bas. Seul le menu de démarrage de la ligne disparaît : sans mot de
+  passe, il n'a plus rien à proposer à saisir dans l'écran de connexion du jeu.
 * Archivez les comptes que vous n'utilisez plus au lieu de les supprimer — **il n'y a pas de
   bouton de suppression**, et c'est voulu : un clic malheureux dans une liste de lignes qui se
   ressemblent toutes ne doit pas être la dernière étape
+* **Recréer un compte sous une adresse e-mail déjà archivée le restaure au lieu de le
+  dupliquer.** Son battletag, son rang, ses héros et chaque région jamais cochée sont conservés ;
+  seul ce que vous saisissez ou lisez réellement cette fois-ci les remplace.
 * Filtrez par nom, par jeu ou par héros
 * **Filtrez par rang et triez la liste.** Pour Heroes of the Storm, huit puces de rang — Sans
   rang jusqu'à Grand Maître — réduisent la liste à un ou plusieurs rangs à la fois ; *Sans rang*
@@ -35,6 +42,10 @@ la partie en cours.** Tout ce qui suit explique comment.
   tri (dernière lecture, nom, rang, or, héros lus, avec un clic pour inverser le sens) et un
   compteur de comptes correspondants restent disponibles pour chaque jeu, pas seulement Heroes of
   the Storm.
+* **Une liste vide s'explique d'elle-même.** Pas encore de compte ? La fenêtre montre les deux
+  façons de la remplir plutôt qu'une zone vide : en saisir un à la main avec son e-mail et son
+  mot de passe, ou lancer Heroes of the Storm vous-même et vous connecter — Smurftown le lit dans
+  le jeu à cet instant.
 
 ![Le menu de la ligne](docs/images/fr/actions-menu.png)
 
@@ -94,6 +105,12 @@ affiché, pas saisi : il est lu depuis le jeu, dès la première lecture du com
 
   Tout ce qui figure dans cet onglet appartient à **une seule** région ; le sélecteur en haut
   indique laquelle. Si vous jouez dans deux régions, vous en gérez deux.
+* **Ou sautez le menu de démarrage — lisez qui est déjà connecté.** Dès que Heroes of the Storm
+  est lancé, un bouton apparaît en haut de la fenêtre de Smurftown. Cliquez dessus et
+  l'application lit ce compte de la même façon, sans toucher à la connexion du jeu lui-même :
+  elle ne déconnecte personne et ne ferme rien. Connectez-vous avec un battletag que Smurftown
+  n'a encore jamais vu, et le bouton crée le compte sur-le-champ au lieu de le refuser — aucun
+  mot de passe enregistré, aucun e-mail saisi, aucune question posée.
 * **Ouvrez les coffres.** Ouvre d'abord tous les coffres non ouverts, si bien que les chiffres qui
   suivent sont ceux d'après l'ouverture, pas d'avant.
 * **Rotation libre des héros.** La rotation se répète sur un calendrier annuel, et ce calendrier
@@ -273,6 +290,13 @@ Uniquement dans des fichiers locaux, dans le dossier `.smurftown` de votre répe
 **Les mots de passe sont stockés en clair.** C'est ce qui permet de les copier et de les saisir
 automatiquement, et c'est un compromis délibéré de cette application — traitez ce dossier comme
 le gestionnaire de mots de passe qu'il est.
+
+### Ai-je besoin de donner mon mot de passe à Smurftown ?
+Non. Laissez le champ du mot de passe vide en ajoutant un compte à la main, ou sautez le dialogue
+entièrement — lancez Heroes of the Storm vous-même, connectez-vous et utilisez « Actualiser »
+depuis le bouton en haut de la fenêtre : Smurftown crée le compte à partir de ce qu'il lit et ne
+voit jamais le mot de passe. La seule chose qui manque sans lui est le démarrage automatique ;
+lire le rang, les héros et les monnaies du jeu continue de fonctionner à l'identique.
 
 ### Pourquoi un compte est-il listé plusieurs fois ?
 Ce sont ses régions. Un compte obtient une ligne par région dans laquelle il joue, car le rang,

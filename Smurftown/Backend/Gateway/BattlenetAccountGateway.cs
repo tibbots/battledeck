@@ -397,6 +397,26 @@ namespace Smurftown.Backend.Gateway
         }
 
         /// <summary>
+        ///     Whether <paramref name="battletag" /> is carried by more than one account -
+        ///     the one thing <see cref="FindByBattletag" /> cannot say on its own, since a
+        ///     hit count of zero and of two-or-more both come back as <c>null</c> there.
+        ///     <para>
+        ///         <see cref="View.RunGuideViewModel" /> needs the distinction since
+        ///         25.08.2026: a battletag nobody carries gets a new account created on the
+        ///         spot, but an ambiguous one must not - a third account on top of two already
+        ///         colliding ones would make the mess worse, not resolve it, and it is exactly
+        ///         the broken state <see cref="FindByBattletag" />'s own guard exists for.
+        ///     </para>
+        /// </summary>
+        public bool IsAmbiguousBattletag(string? battletag)
+        {
+            if (string.IsNullOrWhiteSpace(battletag)) return false;
+
+            return BattlenetAccounts.Count(account => account.HasBattletag &&
+                string.Equals(account.Battletag(), battletag, StringComparison.OrdinalIgnoreCase)) > 1;
+        }
+
+        /// <summary>
         ///     Which account carries this e-mail - the identity itself
         ///     (<see cref="BattlenetAccount.Equals(object?)" />), and therefore the only lookup
         ///     that can ever have more than one hit be a bug rather than a state to guard
