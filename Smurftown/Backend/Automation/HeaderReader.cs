@@ -6,7 +6,25 @@ namespace Smurftown.Backend.Automation
     ///     The stats of the header bar. Each value individually <c>null</c> if it was not
     ///     read reliably - a half-read set is better than a guessed one.
     /// </summary>
-    public sealed record HeaderReading(int? Gold, int? Shards, int? Gems, int? LootChests, string Note);
+    /// <param name="ChestsPresent">
+    ///     Whether the loot tab carries at least one unopened chest - <c>true</c>/<c>false</c>
+    ///     from <see cref="LootCount.AnyLeft" /> even when <paramref name="LootChests" /> itself
+    ///     is <c>null</c>, <c>null</c> only when the loot tab was not found at all.
+    ///     <para>
+    ///         Exists because <paramref name="LootChests" /> alone cannot say "at least one, exact
+    ///         count unreadable" - a single-digit badge (1 to 9) is invisible to
+    ///         <c>Windows.Media.Ocr</c> regardless of magnification (see
+    ///         <c>HeaderReader.HasBadgeBox</c>), so <c>CountLootChestsAsync</c> falls back to a
+    ///         pixel check for presence alone. Collapsing that down to a bare <c>int?</c> here
+    ///         would throw the one bit of information that check exists to produce - and it did,
+    ///         until 25.08.2026: <c>HotsReadout.ReadHeader</c> only ever saw <c>null</c> for a 1-9
+    ///         count and, correctly by its own rule ("don't overwrite on uncertainty"), left
+    ///         <c>data.yaml</c> standing at whatever it said before - typically a confident 0 from
+    ///         an earlier read, silently wrong from then on.
+    ///     </para>
+    /// </param>
+    public sealed record HeaderReading(
+        int? Gold, int? Shards, int? Gems, int? LootChests, bool? ChestsPresent, string Note);
 
     /// <summary>
     ///     What the loot tab says. <c>Number</c> is the count when it could be read, and
@@ -91,7 +109,7 @@ namespace Smurftown.Backend.Automation
             CancellationToken token = default)
         {
             if (!TextReader.Available)
-                return new HeaderReading(null, null, null, null,
+                return new HeaderReading(null, null, null, null, null,
                     "Without text recognition gold, shards, gems and chests stay unread.");
 
             var shot = session.Capture();
@@ -108,13 +126,15 @@ namespace Smurftown.Backend.Automation
             // via the symbols next to it would be three more comparison images for
             // information that the position already provides.
             var reading = new HeaderReading(
-                Take(0, 10_000_000), Take(1, 1_000_000), Take(2, 1_000_000), chests?.Number,
+                Take(0, 10_000_000), Take(1, 1_000_000), Take(2, 1_000_000),
+                chests?.Number, chests?.AnyLeft,
                 numbers.Count >= 3
                     ? "Header bar read."
                     : $"Only {numbers.Count} of 3 header numbers read.");
 
-            Log.Information("Header: gold {Gold}, shards {Shards}, gems {Gems}, chests {Chests}",
-                reading.Gold, reading.Shards, reading.Gems, reading.LootChests);
+            Log.Information("Header: gold {Gold}, shards {Shards}, gems {Gems}, chests {Chests} " +
+                             "(present {Present})",
+                reading.Gold, reading.Shards, reading.Gems, reading.LootChests, reading.ChestsPresent);
             return reading;
         }
 

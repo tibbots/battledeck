@@ -224,9 +224,17 @@ next chest — the carousel advances on its own
 - **Four answers, and the two in the middle are the point**: a **number**, when it was read —
   **"some, but unread"**, when no digits came back and the badge box is there — **0**, when
   neither is there — and **null**, when not even the word `BEUTE` was read. In that last case the
-  screen is a different one, and "no chests" would be a claim we don't actually have. Only the
-  first and the third ever reach `data.yaml`; "some, but unread" leaves the stored value alone
-  rather than replacing it with a wrong zero.
+  screen is a different one, and "no chests" would be a claim we don't actually have.
+
+  **"Some, but unread" used to vanish between here and `data.yaml`.** `HeaderReader.ReadAsync`
+  collapsed the answer down to `LootCount.Number` alone before 25.08.2026, and that is `null` for
+  "some, but unread" exactly as it is for "not read at all" — indistinguishable once it reached
+  `HotsReadout`, which correctly refuses to overwrite on `null`. A stored `0` from an earlier
+  read, honest at the time, then kept asserting itself for as long as the count stayed in the
+  1-9 range: single-digit chests read as present via the pixel check, and were never reflected
+  anywhere. `HeaderReading` now carries `ChestsPresent` alongside the number, and `HotsReadout`
+  clears a stored `0` back to `null` the moment it is known to be wrong - not to a guessed digit,
+  which would trade one wrong number for another, but to the honest "not currently known".
 - **Opened before reading.** A chest drops shards, gold, and occasionally a hero. Reading first
   would leave the previous state in `data.yaml` — and that state is wrong from the very first
   chest opened onward.

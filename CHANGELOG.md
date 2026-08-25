@@ -49,6 +49,11 @@ nothing else on the line.
   division digit run into the rank text, and the reader mistook the two for one merged line
   starting in the wrong place. It now finds the value by the aligned word instead of the whole
   line, which reads correctly regardless of how that merge happens to fall.
+- **A single-digit loot chest count (1 to 9) went unrecognised.** The game's own rendering makes
+  such a lone digit invisible to text recognition no matter the magnification, and the pixel-based
+  fallback that already existed for exactly this case never reached the stored account: the count
+  quietly kept whatever it said before, typically a confident "0" left over from an earlier read.
+  A stale "0" is now cleared back to "unclear" instead of standing as a wrong answer.
 
 ## [1.6.0] - 2026-08-24
 

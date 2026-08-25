@@ -301,6 +301,7 @@ change.placementsDone: placement terminé
 change.penalty: Parties de pénalité {0} -> {1}
 change.valueFirst: "{0} {1}"
 change.value: "{0} {1} -> {2}"
+change.chestsUnconfirmed: "{0} : au moins un, nombre exact illisible"
 change.chestOne: 1 coffre ouvert
 change.chestMany: "{0} coffres ouverts"
 change.heroesAdded: "{0} héros ajoutés ({1} au total)"

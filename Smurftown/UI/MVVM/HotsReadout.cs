@@ -431,6 +431,21 @@ namespace Smurftown.UI.MVVM
                     v => data.Gems = v);
                 Note(Strings.Current["currency.chests"], data.LootChests, reading.LootChests,
                     v => data.LootChests = v);
+
+                // reading.LootChests alone cannot say "at least one, unreadable count" - a
+                // single-digit badge is invisible to text recognition regardless of
+                // magnification (see HeaderReader.HasBadgeBox), so the exact-count Note above
+                // never fires for it. Without this, a stored 0 from an earlier read - honest
+                // at the time - keeps asserting itself forever once chests actually appear,
+                // because "don't overwrite on uncertainty" was never meant to protect a value
+                // now known to be wrong. Clearing it back to null is the honest state to fall
+                // back to; inventing a digit between 1 and 9 would not be.
+                if (reading.LootChests == null && reading.ChestsPresent == true && data.LootChests == 0)
+                {
+                    data.LootChests = null;
+                    changes.Add(Strings.Format("change.chestsUnconfirmed",
+                        Strings.Current["currency.chests"]));
+                }
             }
             catch (Exception e)
             {

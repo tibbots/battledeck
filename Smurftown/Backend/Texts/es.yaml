@@ -303,6 +303,7 @@ change.placementsDone: clasificación completada
 change.penalty: Partidas de penalización {0} -> {1}
 change.valueFirst: "{0} {1}"
 change.value: "{0} {1} -> {2}"
+change.chestsUnconfirmed: "{0}: al menos una, cantidad exacta no legible"
 change.chestOne: 1 cofre abierto
 change.chestMany: "{0} cofres abiertos"
 change.heroesAdded: "{0} héroes añadidos ({1} en total)"

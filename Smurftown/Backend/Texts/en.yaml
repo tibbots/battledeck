@@ -383,6 +383,7 @@ change.placementsDone: placements done
 change.penalty: Penalty games {0} -> {1}
 change.valueFirst: "{0} {1}"                             # 0 = currency, 1 = value
 change.value: "{0} {1} -> {2}"                           # 0 = currency, 1 = before, 2 = now
+change.chestsUnconfirmed: "{0}: at least one, exact count unreadable"     # 0 = currency
 change.chestOne: 1 chest opened
 change.chestMany: "{0} chests opened"
 change.heroesAdded: "{0} heroes added ({1} total)"

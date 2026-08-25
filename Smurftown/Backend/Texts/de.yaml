@@ -298,6 +298,7 @@ change.placementsDone: Platzierung abgeschlossen
 change.penalty: Strafspiele {0} -> {1}
 change.valueFirst: "{0} {1}"
 change.value: "{0} {1} -> {2}"
+change.chestsUnconfirmed: "{0}: mindestens eine, genaue Anzahl nicht lesbar"
 change.chestOne: 1 Truhe geöffnet
 change.chestMany: "{0} Truhen geöffnet"
 change.heroesAdded: "{0} Helden dazu ({1} insgesamt)"
