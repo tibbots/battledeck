@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generates Smurftown/UI/Images/penalty.png - the leaver-penalty warning triangle.
+Generates Battledeck/UI/Images/penalty.png - the leaver-penalty warning triangle.
 
 Why drawn instead of cut out: the template shows the icon at roughly 26px edge
 length with clear JPEG artifacts (screenshot of the HotS message
@@ -18,7 +18,7 @@ import os
 
 from PIL import Image, ImageDraw, ImageFilter
 
-OUT = os.path.join('Smurftown', 'UI', 'Images', 'penalty.png')
+OUT = os.path.join('Battledeck', 'UI', 'Images', 'penalty.png')
 SIZE = 128
 SS = 4  # supersampling
 

@@ -4,7 +4,7 @@ OCR compares against words that appear in the game — and those are translated.
 depends on that and what does not decides how much work another language takes.
 
 > **Not to be confused with the language of the application.** Since 22.08.2026,
-> Smurftown's own interface can be switched as well, and that is an entirely different
+> Battledeck's own interface can be switched as well, and that is an entirely different
 > matter: there it is about text **we** write, here about words that appear in the
 > **game**. The former are translated, the latter are measured — whoever translates
 > within one of this file's vocabularies makes the recognition blind. Both settings are
@@ -83,7 +83,7 @@ switch.
 ## What changes
 
 **The vocabularies** — they live entirely in
-`Smurftown/Backend/Automation/GameVocabulary.cs`, and only there:
+`Battledeck/Backend/Automation/GameVocabulary.cs`, and only there:
 
 | What | German | English | French | Spanish (ES) | Spanish (AL) |
 |---|---|---|---|---|---|

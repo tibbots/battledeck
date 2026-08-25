@@ -1,6 +1,6 @@
 import io, re
 
-SRC = 'Smurftown/Backend/Entity/HotsHeroCatalog.Generated.cs'
+SRC = 'Battledeck/Backend/Entity/HotsHeroCatalog.Generated.cs'
 ids = re.findall(r'new\("([a-z0-9-]+)"', io.open(SRC, encoding='utf-8-sig').read())
 assert len(ids) == 90, len(ids)
 
@@ -186,7 +186,7 @@ account('GLASSFERN', '6647', 'glassfern@example.com', 'demo-pass-13',
 
 HEADER = """# Demo accounts for the README screenshots - NO real credentials.
 #
-# WHY THIS FILE EXISTS: tibbots/smurftown is a public repo, and the UI shows the
+# WHY THIS FILE EXISTS: tibbots/battledeck is a public repo, and the UI shows the
 # battletag and email address in plain text. An image of the real list publishes
 # them permanently - GitHub keeps every version of an image in its history, even one
 # replaced later. That is why the shots are taken against this file and not against
@@ -199,12 +199,12 @@ HEADER = """# Demo accounts for the README screenshots - NO real credentials.
 #
 #   1. set your own list aside:  ~/.smurftown/data.yaml  ->  data.yaml.real
 #   2. copy this file there as  data.yaml
-#   3. start Smurftown and go through the capture list - it is in
+#   3. start Battledeck and go through the capture list - it is in
 #      .claude/skills/readme-screenshots/. Captured with tools/capture-window.ps1.
 #      Then quit.
 #   4. rename data.yaml.real back
 #
-# IF SMURFTOWN DOES NOT START AFTER STEP 2, it is this file's fault and not the
+# IF BATTLEDECK DOES NOT START AFTER STEP 2, it is this file's fault and not the
 # app's - the reason then shows up in ~/.smurftown/logs/smurftown.log. Your own list is
 # unaffected by this: at that point it is named data.yaml.real and is not read at
 # all. Step 4 restores the starting state.

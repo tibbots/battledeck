@@ -1,0 +1,43 @@
+﻿<Application x:Class="Battledeck.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModel="clr-namespace:Battledeck.UI.MVVM.ViewModel"
+             xmlns:viewConverter="clr-namespace:Battledeck.UI.MVVM.Converter"
+             xmlns:view="clr-namespace:Battledeck.UI.MVVM.View"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="UI/Theme/BattlenetRadioButtonTheme.xaml" />
+                <ResourceDictionary Source="UI/Theme/BattlenetIconButtonTheme.xaml" />
+                <ResourceDictionary Source="UI/Theme/BattlenetButtonPrimaryTheme.xaml" />
+                <ResourceDictionary Source="UI/Theme/BattlenetButtonSecondaryTheme.xaml" />
+                <ResourceDictionary Source="UI/Theme/BattlenetMenuTheme.xaml" />
+                <ResourceDictionary Source="UI/Theme/BattlenetScrollViewerTheme.xaml" />
+                <!-- After the ScrollViewer: the ComboBox style references it via StaticResource,
+                     and StaticResource only sees what was merged before. -->
+                <ResourceDictionary Source="UI/Theme/BattlenetComboBoxTheme.xaml" />
+                <ResourceDictionary Source="UI/Theme/BattlenetTextBoxTheme.xaml" />
+                <ResourceDictionary Source="UI/Theme/BattlenetRichTextBoxTheme.xaml" />
+                <ResourceDictionary Source="UI/Theme/BattlenetToolTipTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/ToastNotifications.Messages;component/Themes/Default.xaml" />
+                <!-- The funnel row RunGuide and ReuseGuide both draw their steps with - see
+                     RunStepsTemplate.xaml for why it is not two copies. -->
+                <ResourceDictionary Source="UI/MVVM/View/RunStepsTemplate.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- One DataTemplate per tab: MainViewModel.CurrentView carries a ViewModel, and
+                 the ContentControl in MainWindow looks up the matching view here. Whoever
+                 adds a tab adds a line here - otherwise the window shows the ViewModel's
+                 class name, without anything reporting an error. -->
+            <DataTemplate DataType="{x:Type viewModel:AccountsViewModel}">
+                <view:AccountsView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type viewModel:SettingsViewModel}">
+                <view:SettingsView />
+            </DataTemplate>
+            <viewConverter:BattlenetAccountToCardViewModelConverter x:Key="BattlenetAccountToCardViewModelConverter" />
+        </ResourceDictionary>
+
+    </Application.Resources>
+</Application>

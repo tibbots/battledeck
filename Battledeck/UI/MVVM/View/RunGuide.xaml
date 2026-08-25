@@ -1,0 +1,106 @@
+﻿<Window x:Class="Battledeck.UI.MVVM.View.RunGuide"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Battledeck.UI.MVVM.View"
+        xmlns:loc="clr-namespace:Battledeck.UI.MVVM"
+        mc:Ignorable="d"
+        UseLayoutRounding="True"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        WindowStartupLocation="CenterOwner"
+        Background="#23252B"
+        BorderBrush="#313339"
+        BorderThickness="1"
+        SizeToContent="Height"
+        Title="{loc:Str run.title}" Width="520"
+        d:DataContext="{d:DesignInstance {x:Type local:RunGuideViewModel}}">
+
+    <!--
+        ======================================================================
+        THE RUN GUIDE. It walks a human through refreshing from a client that
+        is already running, and it exists because of one measured fact: the
+        client has to hold the foreground, and only a human can put it there.
+        The reasoning in full sits on RunGuideViewModel.
+        ======================================================================
+
+        HEIGHT IS NOT FIXED. SizeToContent="Height" and a fixed width of 520.
+        The region row appears only when there is something to ask, and a
+        fixed height would leave a hole the size of that row for every account
+        that plays in exactly one region - which is most of them.
+
+        520 AND NOT 440 like the region picker: the detail line under a step
+        carries sentences from the run ("25 of 31 cards read", and the German
+        equivalents, which are the longest of the four languages). At 440 they
+        would wrap to two lines and the funnel would shift down as it went.
+
+        NO ESCAPE BINDING, deliberately, unlike the region picker. Escape there
+        cancels a question that writes nothing; here it would abort a run that
+        may be halfway through a collection, and the key is one keystroke away
+        from the Alt+Tab this window keeps asking for.
+
+        NO DEFAULT BUTTON either: the single button is Cancel while the run is
+        going, and a return key that aborts a minute of reading is not a
+        convenience.
+    -->
+
+    <StackPanel Orientation="Vertical">
+        <TextBlock Text="{Binding Title}" Foreground="White" FontSize="24"
+                   FontWeight="DemiBold" HorizontalAlignment="Left" Margin="20,20,0,0" />
+
+        <!-- The sentence that says why a human is needed at all. It is not decoration: without
+             it the window is a progress bar that inexplicably refuses to progress. -->
+        <TextBlock Text="{Binding Explain}" Foreground="#8F8F92" FontSize="13"
+                   TextWrapping="Wrap" Margin="20,10,20,0" />
+
+        <Separator Background="#313339" Margin="0,18,0,0" />
+
+        <!-- THE FUNNEL. Five steps here; ReuseGuide draws the same kind of row with a
+             different step count off the identical template - see RunStepsTemplate.xaml
+             for the drawing rules, RunStep.cs for what a step is. -->
+        <ItemsControl ItemsSource="{Binding Steps}" Margin="20,14,20,0"
+                      ItemTemplate="{StaticResource RunStepTemplate}" />
+
+        <!-- THE REGION QUESTION, asked here rather than in a window of its own. A second dialog
+             would take the foreground in the middle of the run, and taking the foreground is
+             the one thing this flow cannot survive. It is hidden whenever there is nothing to
+             ask, which is the normal case: an account that plays in exactly one region has
+             already answered. -->
+        <StackPanel Orientation="Vertical" Visibility="{Binding RegionVisibility}"
+                    Margin="20,0,20,0">
+            <Separator Background="#313339" Margin="0,0,0,14" />
+            <TextBlock Text="{Binding RegionQuestion}" Foreground="#8F8F92" FontSize="13"
+                       FontWeight="DemiBold" TextWrapping="Wrap" />
+            <ItemsControl ItemsSource="{Binding RegionChoices}" Margin="0,12,0,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!-- CommandParameter BEFORE Command, and that order is not cosmetic. WPF
+                             applies attributes in document order; with Command first, the button
+                             evaluates CanExecute against a parameter that is still null - and
+                             RelayCommand<T> answers false for a null parameter as soon as T is a
+                             value type, which an enum is. The button then comes up disabled. -->
+                        <Button Style="{StaticResource BattlenetButtonPrimaryTheme}"
+                                Content="{Binding Label}" Width="140" Height="34" Margin="0,0,10,0"
+                                CommandParameter="{Binding Region}" Command="{Binding Command}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <Separator Background="#313339" Margin="0,18,0,10" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,0,20,20">
+            <!-- ONE button for two jobs - "Cancel" while it runs, "Close" when it is over.
+                 There is never a moment where both would make sense, and a second, permanently
+                 dead button would be noise on a window that is mostly waiting. -->
+            <Button Style="{StaticResource BattlenetButtonSecondaryTheme}"
+                    Content="{Binding CloseLabel}" Width="140" Height="30"
+                    Command="{Binding CloseCommand}" />
+        </StackPanel>
+    </StackPanel>
+</Window>

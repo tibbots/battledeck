@@ -33,7 +33,7 @@ jobs:
           version="$(bash ./dev version)"
           echo "tag=$tag  csproj=$version"
           if [ "$tag" != "$version" ]; then
-            echo "::error::tag '$tag' does not match <Version> '$version' in Smurftown.csproj - run './dev version $tag' first"
+            echo "::error::tag '$tag' does not match <Version> '$version' in Battledeck.csproj - run './dev version $tag' first"
             exit 1
           fi
 

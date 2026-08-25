@@ -167,7 +167,7 @@ placeholder centred on the screen. The two halves come apart:
 | click | the input window, wherever it currently is | **no** |
 
 So reading appears to work while nothing can be clicked. A click at picture coordinates goes to
-where that point sits on the *desktop* — which is Smurftown, which takes the foreground, which
+where that point sits on the *desktop* — which is Battledeck, which takes the foreground, which
 collapses the client again. That loop is what a failing run looked like: a client flickering up and
 down for half a minute while nothing happened.
 

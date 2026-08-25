@@ -1,10 +1,10 @@
 ﻿# Changelog
 
-Everything a user of Smurftown would notice from one release to the next.
+Everything a user of Battledeck would notice from one release to the next.
 
 The shape is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the numbering is
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Versions carry **no `v` prefix** —
-`1.0.0`, not `v1.0.0`. The tag, `<Version>` in `Smurftown.csproj` and the update check in every
+`1.0.0`, not `v1.0.0`. The tag, `<Version>` in `Battledeck.csproj` and the update check in every
 installed copy compare that string literally, so a prefix here would be a prefix everywhere.
 
 **An entry is written in the pull request that causes it**, under `## [Upcoming]`. Releasing
@@ -21,6 +21,8 @@ nothing else on the line.
 
 ## [Upcoming]
 
+- **Renamed the application from Smurftown to Battledeck.**
+
 ## [1.8.0] - 2026-08-25
 
 ### Changed
@@ -36,12 +38,12 @@ nothing else on the line.
 ### Added
 
 - **Battle.net accounts no longer need a stored password.** The password field in the account
-  dialog is optional now. What that costs is the automated start — Smurftown still needs a stored
+  dialog is optional now. What that costs is the automated start — Battledeck still needs a stored
   password to sign an account in and click through the login form itself — but every other feature
   keeps working: start Heroes of the Storm yourself, sign in, and use the header chip's "Refresh"
   once the client is up, exactly as if the client had been started from a row.
 - **The header chip can create a new account, not only read a known one.** Signing into a battletag
-  Smurftown has never seen and clicking "Refresh" used to refuse with "no account carries that
+  Battledeck has never seen and clicking "Refresh" used to refuse with "no account carries that
   battletag - nothing is written". It now creates the account on the spot, with no password stored
   and no question asked — the same account the point above describes.
 - **An empty account list explains the two ways to fill it**, instead of showing a blank area: add
@@ -172,10 +174,10 @@ nothing else on the line.
   format has something to hold on to instead of having to be guessed from the content.
 - **A setting saved while the app is running can no longer be overwritten by the update check.**
   Both write to the same file now, so each write reads the whole file again first and replaces only
-  its own part of it. Within one running Smurftown that is now guaranteed rather than likely. What
-  it still cannot do is protect against a **second** Smurftown running at the same time — that
+  its own part of it. Within one running Battledeck that is now guaranteed rather than likely. What
+  it still cannot do is protect against a **second** Battledeck running at the same time — that
   remains what it always was: the last one to write wins.
-- **A file written by a newer version of Smurftown is read but never written back.** An older build
+- **A file written by a newer version of Battledeck is read but never written back.** An older build
   does not know every field a newer one stores, and writing the file back would quietly delete them.
   It now says so instead and asks for the newer build.
 - **The log no longer grows without end, and it has moved.** It now lives in
@@ -227,7 +229,7 @@ nothing else on the line.
   it stayed: the count read 0, and opening therefore had nothing left to do.
 - **A count between one and nine is now recognised as "some", even when the number itself cannot
   be read.** A single digit is something the text recognition does not return at all — not at any
-  magnification, and not from any crop. Smurftown therefore no longer asks it whether the badge
+  magnification, and not from any crop. Battledeck therefore no longer asks it whether the badge
   shows a number, but whether the badge is there: present means chests are waiting, absent means
   none are. The number is still read whenever it can be, and the account keeps its previous value
   instead of dropping to zero when it cannot. Opening runs to the end either way, because it now
@@ -254,7 +256,7 @@ nothing else on the line.
   exactly as it was found, and afterwards it stands on the ARAM screen, ready to play. Until now
   refreshing meant starting the game from a row, which signed the running account out first.
 - The app finds out **by itself** which account is signed in, by reading the battletag off the
-  profile. If no account in Smurftown carries that battletag, nothing is written and the chip says
+  profile. If no account in Battledeck carries that battletag, nothing is written and the chip says
   so.
 - **Which region the client is playing in is asked** when the answer is not already known. The game
   shows it on none of its screens, and rank and heroes are stored per region — so an account that
@@ -352,12 +354,12 @@ First public release.
   Run anyway* — the checksum shipped with each release proves that the file matches the release,
   not who built it.
 
-[Upcoming]: https://github.com/tibbots/smurftown/compare/1.7.0...HEAD
-[1.7.0]: https://github.com/tibbots/smurftown/releases/tag/1.7.0
-[1.6.0]: https://github.com/tibbots/smurftown/releases/tag/1.6.0
-[1.5.0]: https://github.com/tibbots/smurftown/releases/tag/1.5.0
-[1.4.0]: https://github.com/tibbots/smurftown/releases/tag/1.4.0
-[1.3.0]: https://github.com/tibbots/smurftown/releases/tag/1.3.0
-[1.2.0]: https://github.com/tibbots/smurftown/releases/tag/1.2.0
-[1.1.0]: https://github.com/tibbots/smurftown/releases/tag/1.1.0
-[1.0.0]: https://github.com/tibbots/smurftown/releases/tag/1.0.0
+[Upcoming]: https://github.com/tibbots/battledeck/compare/1.7.0...HEAD
+[1.7.0]: https://github.com/tibbots/battledeck/releases/tag/1.7.0
+[1.6.0]: https://github.com/tibbots/battledeck/releases/tag/1.6.0
+[1.5.0]: https://github.com/tibbots/battledeck/releases/tag/1.5.0
+[1.4.0]: https://github.com/tibbots/battledeck/releases/tag/1.4.0
+[1.3.0]: https://github.com/tibbots/battledeck/releases/tag/1.3.0
+[1.2.0]: https://github.com/tibbots/battledeck/releases/tag/1.2.0
+[1.1.0]: https://github.com/tibbots/battledeck/releases/tag/1.1.0
+[1.0.0]: https://github.com/tibbots/battledeck/releases/tag/1.0.0

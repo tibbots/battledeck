@@ -7,7 +7,7 @@ gold"**.
 
 ## The Model
 
-Every point of the calibration (`Smurftown/Backend/Automation/screen-map.yaml`) names
+Every point of the calibration (`Battledeck/Backend/Automation/screen-map.yaml`) names
 
 1. an **anchor** — `topLeft`, `topCenter`, `topRight`, `bottomLeft`, ... —, and
 2. a **distance** from it, in points of the reference size **3440x1440**.

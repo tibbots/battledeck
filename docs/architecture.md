@@ -9,7 +9,7 @@ displayed in [ui-conventions.md](ui-conventions.md).
 ## Project layout
 
 ```
-Smurftown/
+Battledeck/
   App.xaml(.cs)          startup: create ~/.smurftown, configure Serilog, merge resources
   MainWindow.xaml(.cs)   chromeless window (DragMove, minimise/maximise/close by hand)
                          plus the tab bar ACCOUNTS | SETTINGS
@@ -99,7 +99,7 @@ Smurftown/
       free.png           nexus mark for the free rotation
       Ranks/             27 rank medals plus norank.png, included by wildcard
       Heroes/            90 hero portraits as JPEG (160 px), included by wildcard
-Smurftown.Tests/         xUnit, same target framework and UseWPF - it loads compiled XAML
+Battledeck.Tests/         xUnit, same target framework and UseWPF - it loads compiled XAML
   TestHome.cs            module initializer: points SMURFTOWN_HOME at a throwaway folder
                          BEFORE any test runs, so none can reach the real ~/.smurftown
   Sta.cs                 runs an action on an STA thread and rethrows what escaped it
@@ -107,7 +107,7 @@ Smurftown.Tests/         xUnit, same target framework and UseWPF - it loads comp
   TextsTests.cs          the four language files against the code and each other
   BattlenetAccountGatewayTests.cs   write, read back, compare - and two folders at once
 Setup/Setup.vdproj       MSI definition
-Smurftown.cer            UNUSED - remnant of a signing that was never enabled
+Battledeck.cer            UNUSED - remnant of a signing that was never enabled
 dev                      entry point for build and release (Bash, Windows-only)
 dev.cmd                  the same entry point from PowerShell and cmd
 .github/workflows/
@@ -129,9 +129,9 @@ tools/                   not part of the solution - asset generators and drivers
   smurftown-home.ps1       resolves the data folder the way Directories.cs does - the one
                            place the other scripts ask
   test-home.ps1            demo data into a throwaway folder, SMURFTOWN_HOME set, app started
-  capture-window.ps1       captures the Smurftown window to docs/images/<name>.png
+  capture-window.ps1       captures the Battledeck window to docs/images/<name>.png
   capture-run.ps1          walks a human through the captures, aborts on real data
-  drive-smurftown.ps1      operates the running app - click, key, wheel, capture
+  drive-battledeck.ps1      operates the running app - click, key, wheel, capture
   drive-hots.ps1           starts and operates the GAME - for calibration and language work
 ```
 
@@ -210,7 +210,7 @@ and the game flows do their reading in `Task.Run` but the gateway call after the
 the caller's thread. That is a convention nobody enforces, and one `Task.Run` around a save would
 turn the re-read from a guarantee into a race that shows up as a lost setting once a month.
 
-**The lock does not reach across processes.** Two running copies of Smurftown still interleave
+**The lock does not reach across processes.** Two running copies of Battledeck still interleave
 between their read and their write. Narrowing that window is all the re-read does; closing it would
 take a named mutex, and that has its own questions — what the second instance does while it waits,
 and what happens to a mutex a crashed instance abandoned. Not built.

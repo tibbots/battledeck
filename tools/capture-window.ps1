@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Captures the Smurftown window and saves the image under docs/images/<Name>.png.
+    Captures the Battledeck window and saves the image under docs/images/<Name>.png.
 
 .DESCRIPTION
     For the README screenshots. Captured via BitBlt from the SCREEN context and not
@@ -78,14 +78,14 @@ if ($Foreground) {
     $what = 'active window'
 }
 else {
-    $proc = Get-Process -Name 'Smurftown' -ErrorAction SilentlyContinue |
+    $proc = Get-Process -Name 'Battledeck' -ErrorAction SilentlyContinue |
             Where-Object { $_.MainWindowHandle -ne 0 } |
             Select-Object -First 1
     if (-not $proc) {
-        throw 'Smurftown is not running (or has no window yet). Start it, then call again.'
+        throw 'Battledeck is not running (or has no window yet). Start it, then call again.'
     }
     $handle = $proc.MainWindowHandle
-    $what = 'Smurftown main window'
+    $what = 'Battledeck main window'
 }
 
 # ---- Countdown ---------------------------------------------------------------------------

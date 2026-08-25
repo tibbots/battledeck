@@ -194,7 +194,7 @@ are XAML `Path` geometry, drawn directly in the row and dialog templates:
 
 At that size, a coin or a hexagon is geometry, not image material, and colours are measured
 straight from a screenshot of the in-game header bar. Four more PNG assets would each need their
-own generator script, their own `Smurftown.csproj` entry, and their own `pack://` URI — the worse
+own generator script, their own `Battledeck.csproj` entry, and their own `pack://` URI — the worse
 trade here, unlike the penalty triangle or the free-rotation mark, whose shapes cannot be stated
 in three path commands.
 
@@ -203,6 +203,6 @@ Full pixel budgets for both are in [`docs/ui-layout.md`](ui-layout.md).
 ## Adding a new image
 
 Generate it with a script under `tools/` first — never add a PNG straight from an editor or a
-screenshot crop. Then enter it in `Smurftown.csproj` as `<Resource Include>` **plus**
+screenshot crop. Then enter it in `Battledeck.csproj` as `<Resource Include>` **plus**
 `<None Remove>`. Skip the entry and the `pack://` URI loads into nothing at runtime; the build
 reports no error at all.

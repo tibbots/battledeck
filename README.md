@@ -1,4 +1,4 @@
-# Smurftown
+# Battledeck
 
 **English** · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md)
 
@@ -42,7 +42,7 @@ were not typed in — the app read them out of the running game.** Everything be
   accounts are available for every game, not only Heroes of the Storm.
 * **An empty list explains itself.** No accounts yet, and the window shows the two ways to fill
   it instead of a blank area: type one in by hand with its e-mail and password, or start Heroes
-  of the Storm yourself and sign in — Smurftown reads it out of the game the moment you do.
+  of the Storm yourself and sign in — Battledeck reads it out of the game the moment you do.
 
 ![The row menu](docs/images/actions-menu.png)
 
@@ -99,9 +99,9 @@ out of the game the first time the account is read.
   Everything on that tab belongs to **one** region; the switcher at the top says which. Play in
   two, and you maintain two.
 * **Or skip the start menu — read whoever is already signed in.** The moment Heroes of the Storm
-  is running, a chip appears in Smurftown's own header. Click it and the app reads that account
+  is running, a chip appears in Battledeck's own header. Click it and the app reads that account
   the same way, without touching the game's own sign-in at all: it signs nobody out and closes
-  nothing. Sign into a battletag Smurftown has never seen, and the chip creates the account on
+  nothing. Sign into a battletag Battledeck has never seen, and the chip creates the account on
   the spot instead of refusing it — no password stored, no e-mail typed, nothing asked.
 * **Open loot chests.** Opens every unopened chest first, so the numbers that follow are the
   ones after opening, not before.
@@ -190,7 +190,7 @@ not the one the game runs on, and every measurement comes out wrong.
 
 ## Updates
 
-Once an hour, for as long as it is open, Smurftown asks GitHub whether a newer release exists.
+Once an hour, for as long as it is open, Battledeck asks GitHub whether a newer release exists.
 The request is anonymous and carries nothing about you, your accounts or what you did with
 them — it is the same question anyone can put to a public repository. If there is something
 newer, the version chip in the top right corner says so; a click opens this:
@@ -214,9 +214,9 @@ fails silently and everything else keeps working.
 
 # Installation
 
-Grab `Smurftown_<version>_win-x64.zip` from
-[Releases](https://github.com/tibbots/smurftown/releases), unpack it anywhere and run
-`Smurftown.exe`. There is nothing to install: the app keeps everything in
+Grab `Battledeck_<version>_win-x64.zip` from
+[Releases](https://github.com/tibbots/battledeck/releases), unpack it anywhere and run
+`Battledeck.exe`. There is nothing to install: the app keeps everything in
 `C:\Users\YOUR_USER\.smurftown` and leaves the rest of your machine alone.
 
 **You need the .NET 8 Desktop Runtime.** Get it from
@@ -229,7 +229,7 @@ SmartScreen shows *"Windows protected your PC"*. Choose **More info** → **Run 
 Each release also carries a `checksums.txt`. To check what you downloaded, in PowerShell:
 
 ```powershell
-Get-FileHash .\Smurftown_1.0.0_win-x64.zip -Algorithm SHA256
+Get-FileHash .\Battledeck_1.0.0_win-x64.zip -Algorithm SHA256
 ```
 
 Requirements:
@@ -250,7 +250,7 @@ Requirements:
 # FAQ
 
 ### Where can I download the app?
-From [Releases](https://github.com/tibbots/smurftown/releases).
+From [Releases](https://github.com/tibbots/battledeck/releases).
 
 ### Is this app sending or receiving data from a server on the internet?
 Once an hour it asks `api.github.com` whether a newer release exists — anonymously, with nothing
@@ -266,10 +266,10 @@ In local files only, inside the `.smurftown` folder in your home directory
 **Passwords are stored in plain text.** That is what makes copying and typing them possible,
 and it is the deliberate trade this app makes — treat the folder like the password store it is.
 
-### Do I have to give Smurftown my password?
+### Do I have to give Battledeck my password?
 No. Leave the password field blank when you add an account by hand, or skip the dialog
 entirely — start Heroes of the Storm yourself, sign in, and use the header chip's "Refresh":
-Smurftown creates the account from what it reads and never sees the password at all. What you
+Battledeck creates the account from what it reads and never sees the password at all. What you
 lose without one is the automated start; reading rank, heroes and currencies back out of the
 game keeps working exactly the same.
 

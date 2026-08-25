@@ -1,0 +1,126 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- The Windows SDK flavour of the target framework, not plain net8.0-windows: only
+         that reaches Windows.Media.Ocr, the text recognition built into the OS. It reads the
+         hero names in the collection as well as gold, shards, gems and account level - without
+         it every one of those numbers would need a reference image to compare against. No
+         package, no file to ship; the language packs live in the system. The price is Windows
+         10 from build 19041 (May 2020). WPF is untouched by it. -->
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <!-- Must match the ProductVersion in Setup/Setup.vdproj, and app.manifest with it -
+         ./dev version sets all three at once. Without this line the built .exe reports the
+         default 1.0.0.0 while the MSI names the real version. -->
+    <Version>1.8.0</Version>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+      <ApplicationIcon>UI\Images\smurftown.ico</ApplicationIcon>
+      <Platforms>AnyCPU;x64</Platforms>
+      <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="UI\Images\add.png" />
+    <None Remove="UI\Images\copy.png" />
+    <None Remove="UI\Images\diablo4.png" />
+    <None Remove="UI\Images\hots.png" />
+    <None Remove="UI\Images\hots_full.png" />
+    <None Remove="UI\Images\overwatch.png" />
+    <None Remove="UI\Images\overwatchhots_full.png" />
+    <None Remove="UI\Images\overwatch_full.png" />
+    <None Remove="UI\Images\settings.png" />
+    <None Remove="UI\Images\wow.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The retention numbers and the sweep of the log folder are internal on purpose:
+         nothing outside this assembly has business calling them, and the moment they are
+         public they are a contract. The tests still have to reach them - a test that
+         restates "20 captures" as its own literal passes after somebody changes the
+         constant to 5. -->
+    <InternalsVisibleTo Include="Battledeck.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+      <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0-preview.5.24306.7"/>
+      <PackageReference Include="MvvmDialogs" Version="9.1.2" />
+      <PackageReference Include="Serilog" Version="4.0.0"/>
+      <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.1-dev-10391"/>
+      <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
+      <PackageReference Include="Serilog.Sinks.File" Version="5.0.1-dev-00972"/>
+    <!-- NU1701: both packages are .NET-Framework-only (net461-net481) and restore with a
+         compatibility warning under net8.0-windows - a known, accepted mismatch (see the
+         Stack table in CLAUDE.md), not something to fix by swapping the package. Suppressed
+         narrowly per package, not project-wide. -->
+    <PackageReference Include="ToastNotifications" Version="2.5.1" NoWarn="NU1701" />
+    <PackageReference Include="ToastNotifications.Messages" Version="2.5.1" NoWarn="NU1701" />
+    <PackageReference Include="YamlDotNet" Version="15.1.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="UI\Images\add.png" />
+    <Resource Include="UI\Images\copy.png" />
+    <Resource Include="UI\Images\diablo4.png" />
+    <Resource Include="UI\Images\hots.png" />
+    <Resource Include="UI\Images\hots_full.png" />
+    <Resource Include="UI\Images\overwatch.png" />
+    <Resource Include="UI\Images\overwatchhots_full.png" />
+    <Resource Include="UI\Images\overwatch_full.png" />
+    <Resource Include="UI\Images\settings.png" />
+    <None Remove="UI\Images\windows.png" />
+    <Resource Include="UI\Images\windows.png" />
+    <Resource Include="UI\Images\wow.png" />
+      <None Remove="UI\Images\lock.png" />
+      <Resource Include="UI\Images\lock.png" />
+      <None Remove="UI\Images\user.png" />
+      <Resource Include="UI\Images\user.png" />
+      <None Remove="UI\Images\smurftown.png" />
+      <Resource Include="UI\Images\smurftown.png" />
+      <None Remove="UI\Images\smurftown.ico" />
+      <Resource Include="UI\Images\smurftown.ico" />
+      <None Remove="UI\Images\penalty.png" />
+      <Resource Include="UI\Images\penalty.png" />
+          <None Remove="UI\Images\free.png" />
+      <Resource Include="UI\Images\free.png" />
+      <!-- Calibration of the game surface. Embedded rather than copied, so it cannot go
+           missing beside the application by accident; a file in ~/.smurftown beats it at
+           runtime, see ScreenMap.Load. -->
+      <None Remove="Backend\Automation\screen-map.yaml" />
+      <EmbeddedResource Include="Backend\Automation\screen-map.yaml" />
+      <!-- The free rotation as a calendar without a year. Same construction and the same
+           reasoning as the calibration above: shipped embedded, overridden by a file in
+           ~/.smurftown, see HotsRotationCalendar.Load. -->
+      <None Remove="Backend\Entity\rotation-calendar.yaml" />
+      <EmbeddedResource Include="Backend\Entity\rotation-calendar.yaml" />
+      <!-- The texts of the user interface, one file per language. A wildcard and not four
+           individual lines: a fifth language should cost one file and not a csproj entry
+           somebody forgets. Same construction as the two files above - shipped embedded,
+           overridden by ~/.smurftown/language/, see Strings.Read. -->
+      <None Remove="Backend\Texts\*.yaml" />
+      <EmbeddedResource Include="Backend\Texts\*.yaml" />
+      <!-- 28 rank medals as a wildcard instead of 28 individual lines -->
+      <None Remove="UI\Images\Ranks\*.png" />
+      <Resource Include="UI\Images\Ranks\*.png" />
+      <!-- 90 hero portraits, likewise as a wildcard. JPEG rather than PNG: photographs
+           without transparency, the circle only arises in WPF - PNG cost five times as much
+           here. -->
+      <None Remove="UI\Images\Heroes\*.jpg" />
+      <Resource Include="UI\Images\Heroes\*.jpg" />
+  </ItemGroup>
+
+    <ItemGroup>
+        <Page Update="UI\MVVM\View\Dialog\AddOrEditAccount.xaml">
+            <Generator>MSBuild:Compile</Generator>
+            <XamlRuntime>Wpf</XamlRuntime>
+            <SubType>Designer</SubType>
+        </Page>
+        <Page Update="UI\MVVM\Views\AddOrEditAccount.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </Page>
+    </ItemGroup>
+
+</Project>

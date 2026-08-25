@@ -1,4 +1,4 @@
-﻿# smurftown
+﻿# battledeck
 
 WPF desktop app for managing several Battle.net accounts on one Windows machine. The feature
 that matters beyond plain account management: **start Heroes of the Storm for an account, log
@@ -10,7 +10,7 @@ via `psexec` — has been removed. It existed to run several Battle.net instance
 the game brings its own login form when started directly, which made the whole detour
 pointless. Three of the four security trade-offs and the administrator rights went with it.
 
-Repo: `git@github.com:tibbots/smurftown.git` · default branch `main`.
+Repo: `git@github.com:tibbots/battledeck.git` · default branch `main`.
 
 Local app: no server, no account, no telemetry. All data lives in the user's home directory.
 
@@ -86,7 +86,7 @@ from outside.
 | [`release-prep`](.claude/skills/release-prep/) | version bump across three files, tag, what CI does, installer state |
 | [`readme-screenshots`](.claude/skills/readme-screenshots/) | swap in demo data, drive the app, retake the README images |
 | [`readme-translations`](.claude/skills/readme-translations/) | keep `README.{de,fr,es}.md` in sync with the English original |
-| [`drive-smurftown`](.claude/skills/drive-smurftown/) | operate the running app from outside — click, type, scroll, capture |
+| [`drive-battledeck`](.claude/skills/drive-battledeck/) | operate the running app from outside — click, type, scroll, capture |
 | [`drive-hots`](.claude/skills/drive-hots/) | start and operate the game for calibration and language measurement |
 
 ## Stack
@@ -104,12 +104,12 @@ from outside.
 | Text recognition | `Windows.Media.Ocr` — part of the OS, hence the SDK target |
 | Installer | Visual Studio setup project `Setup/Setup.vdproj` → MSI |
 
-Three projects in `Smurftown.sln`: `Smurftown` (app), `Smurftown.Tests` (xUnit) and `Setup`
+Three projects in `Battledeck.sln`: `Battledeck` (app), `Battledeck.Tests` (xUnit) and `Setup`
 (MSI). **No devcontainer, and none is possible** — see
 [Build, release, delivery](#build-release-delivery). CI runs two workflows on `windows-latest`,
 both of which run the tests before they build anything.
 
-`Smurftown.Tests` targets the same `net8.0-windows10.0.19041.0` with `UseWPF`, because it loads
+`Battledeck.Tests` targets the same `net8.0-windows10.0.19041.0` with `UseWPF`, because it loads
 the application's compiled XAML. It points `SMURFTOWN_HOME` at a throwaway folder from a module
 initializer, so **no test can reach the real `~/.smurftown`** — that file holds the passwords in
 plain text and is rewritten whole on every mutation.
@@ -124,7 +124,7 @@ ones next to it with it.
 **Why the SDK target** `net8.0-windows10.0.19041.0` and not `net8.0-windows`: only that reaches
 `Windows.Media.Ocr`. The price is Windows 10 build 19041 (May 2020) as the minimum. Whoever
 changes the target checks **three** other places that carry the name in a path:
-`.run/Publish Smurftown x64.run.xml`, `Setup/Setup.vdproj` (`SourcePath` on `apphost.exe`), and
+`.run/Publish Battledeck x64.run.xml`, `Setup/Setup.vdproj` (`SourcePath` on `apphost.exe`), and
 this section.
 
 **Mind the preview pins**: `Microsoft.Extensions.Logging 9.0.0-preview.5.24306.7`,
@@ -147,7 +147,7 @@ the place somebody reads it.
 | `./dev build` | `dotnet build -c Debug` |
 | `./dev test` | `dotnet test` — extra arguments go through, e.g. `--filter` |
 | `./dev publish` | single-file release into `dist/publish/` — framework-dependent, `win-x64` |
-| `./dev release` | `publish` + `dist/Smurftown_{version}_win-x64.zip` + `dist/checksums.txt` |
+| `./dev release` | `publish` + `dist/Battledeck_{version}_win-x64.zip` + `dist/checksums.txt` |
 | `./dev version` | prints the version from the `csproj` |
 | `./dev version 2.0.1` | sets it in `csproj`, `app.manifest` **and** `Setup.vdproj` |
 | `./dev notes` | prints the `CHANGELOG.md` section of the current version — `./dev notes 2.0.1` for another |
@@ -182,7 +182,7 @@ not match the branch filter, so there is no double run.
 
 **`windows-latest` instead of `ubuntu-latest` is a named exception** to the runner standard. Its
 justification ("GitHub meters self-hosted runner minutes") does not apply to GitHub-hosted Windows,
-and on a **public** repo — which `tibbots/smurftown` is — standard runners of all operating systems
+and on a **public** repo — which `tibbots/battledeck` is — standard runners of all operating systems
 are free.
 
 The step-by-step release procedure is the [`release-prep`](.claude/skills/release-prep/) skill.
@@ -203,14 +203,14 @@ would be the decision never to build an MSI again, and that decision has not bee
 
 Everything relevant is in the `"Product"` block of `Setup/Setup.vdproj`:
 
-- `ProductName` = `Smurftown`, `Manufacturer` = `ZrdJ`
+- `ProductName` = `Battledeck`, `Manufacturer` = `ZrdJ`
 - `UpgradeCode` `{D4E02593-…}` stays **stable** across all releases — otherwise the installer does
   not recognise the predecessor. `ProductCode` and `PackageCode` belong regenerated on every version
   bump, or `RemovePreviousVersions` / `DetectNewerInstalledVersion` do not engage cleanly.
 - `InstallAllUsers = TRUE`, `TargetPlatform = x64`
 - Prerequisite: `Microsoft.NetCore.DesktopRuntime.8.0.x64`, `FrameworkVersion = 8.0.6`
 - Install target: `[ProgramFiles64Folder][Manufacturer]\[ProductName]` →
-  `C:\Program Files\ZrdJ\Smurftown`. The manufacturer still points at the old org; changing it moves
+  `C:\Program Files\ZrdJ\Battledeck`. The manufacturer still points at the old org; changing it moves
   the installation path and is therefore a breaking change for existing installations, not a
   drive-by rename.
 
@@ -218,14 +218,14 @@ Everything relevant is in the `"Product"` block of `Setup/Setup.vdproj`:
 `"SignOutput" = "11:FALSE"` with an empty `"CertificateFile"`.
 
 This file used to claim the opposite ("signed with `signcert.pfx`"), and the README instructed users
-to put `Smurftown.cer` into "Trusted Root Certification Authorities". That was doubly wrong.
+to put `Battledeck.cer` into "Trusted Root Certification Authorities". That was doubly wrong.
 **Ineffective**, because a certificate in the root store does nothing for an *unsigned* MSI — there
 is no signature it could vouch for. And **harmful**, because a root certification authority can
 vouch for anything on the machine: the user takes a real risk and gets not a single benefit in
 return. The instruction is therefore gone from the README; in its place stands the truth —
 SmartScreen warns, "More info → Run anyway".
 
-`Smurftown.cer` (770 bytes) still lies in the repo but is referenced by nothing. The
+`Battledeck.cer` (770 bytes) still lies in the repo but is referenced by nothing. The
 `signcert.pfx` entry in `.gitignore` refers to a file that never existed. Both may go once somebody
 decides — deleting is the only irreversible line of this cleanup and therefore did not happen in
 passing.
@@ -243,7 +243,7 @@ a PR are the user's steps, not the AI's. The AI edits, builds, **tests** and rep
 
 ### Testing is the AI's job — the go-ahead is the user's
 
-**The AI starts, operates and closes both applications itself** — Smurftown and Heroes of the
+**The AI starts, operates and closes both applications itself** — Battledeck and Heroes of the
 Storm. What it does **not** do is start or drive either of them unasked. A window coming up and
 taking clicks seizes the machine the user is sitting at, and interrupting them costs more than the
 round trip saves.
@@ -257,17 +257,17 @@ per change, and it had the AI report on something it had not seen. But the user 
   one run is not a "go" for the next. Waived only while the user is demonstrably away, and only for
   as long as they are.
 - **Test against a test folder, not against the real list.** `.\tools\test-home.ps1` creates one
-  under `%TEMP%\smurftown-test-home`, fills it with the invented accounts of `tools/demo-data.yaml`,
+  under `%TEMP%\battledeck-test-home`, fills it with the invented accounts of `tools/demo-data.yaml`,
   points `SMURFTOWN_HOME` at it and starts the app against it. Nothing clicked there reaches the
   real `data.yaml` — and `BattlenetAccountGateway` rewrites that file whole on **every** mutation.
   A lock serialises that inside one process; **between two processes there is none**, so a second
-  Smurftown on the real folder is still the last writer winning.
-- **One instance at a time.** `drive-smurftown.ps1` and `capture-window.ps1` take the **first**
-  Smurftown process that owns a window; with two of them up, which window gets clicked is a coin
+  Battledeck on the real folder is still the last writer winning.
+- **One instance at a time.** `drive-battledeck.ps1` and `capture-window.ps1` take the **first**
+  Battledeck process that owns a window; with two of them up, which window gets clicked is a coin
   flip — and one of the two is showing the real list. `test-home.ps1` aborts when one is already
   running. If that one is the user's, ask before closing it.
 - **The game is the loud one.** It takes over the screen and logs an account in, so the question
-  before it says exactly that. Smurftown is a window among windows — it needs the go-ahead too, just
+  before it says exactly that. Battledeck is a window among windows — it needs the go-ahead too, just
   not the warning.
 - **Close what you started.** A stranded client keeps the account logged in, and the next run has to
   sign it out first. `test-home.ps1` prints the PID for precisely this.
@@ -282,9 +282,9 @@ per change, and it had the AI report on something it had not seen. But the user 
   with the passwords in it, so unpack into the scratchpad and not next to the repository.
 - **Report what the test showed, then ask.** Naming the steps is not the report — the result is.
 
-The two drivers are [`drive-smurftown`](.claude/skills/drive-smurftown/) and
+The two drivers are [`drive-battledeck`](.claude/skills/drive-battledeck/) and
 [`drive-hots`](.claude/skills/drive-hots/). Neither of them starts its application; starting stays a
-separate, deliberate step — for Smurftown it is `tools/test-home.ps1` that takes it.
+separate, deliberate step — for Battledeck it is `tools/test-home.ps1` that takes it.
 
 ### After every XAML change, `./dev test` — and then start the app once
 

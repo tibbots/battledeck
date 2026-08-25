@@ -91,7 +91,7 @@ TestResults/
 # cannot re-include anything whose parent directory is itself excluded.
 .claude/skills/*
 !.claude/skills/drive-hots/
-!.claude/skills/drive-smurftown/
+!.claude/skills/drive-battledeck/
 !.claude/skills/readme-screenshots/
 !.claude/skills/readme-translations/
 !.claude/skills/release-prep/

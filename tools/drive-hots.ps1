@@ -3,8 +3,8 @@
     Starts and drives Heroes of the Storm - clicks, keys, captures.
 
 .DESCRIPTION
-    Counterpart to drive-smurftown.ps1, but for the GAME. The difference is the
-    approval: the user starts Smurftown (a second instance would collide with his),
+    Counterpart to drive-battledeck.ps1, but for the GAME. The difference is the
+    approval: the user starts Battledeck (a second instance would collide with his),
     the AI is allowed to start Heroes of the Storm itself - CLAUDE.md, "Branch
     Strategy & Lifecycle", named exception from 21.08.2026. The reason is that every
     calibration here is measured against the running game, and a second-hand
@@ -69,9 +69,9 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 
 # The data folder of the application - the real one, or the test folder SMURFTOWN_HOME
-# points at. Resolved exactly once and exactly like Smurftown/Directories.cs does it; the
+# points at. Resolved exactly once and exactly like Battledeck/Directories.cs does it; the
 # reasoning is in smurftown-home.ps1.
-$SmurftownHome = & (Join-Path $PSScriptRoot 'smurftown-home.ps1')
+$BattledeckHome = & (Join-Path $PSScriptRoot 'smurftown-home.ps1')
 
 if (-not ('Ui' -as [type])) {
 Add-Type @'
@@ -202,7 +202,7 @@ function Start-Game {
     # either file, so matching it anywhere in the file is unambiguous.
     $exe = $null
     foreach ($name in 'app.yaml', 'settings.yaml') {
-        $file = Join-Path $SmurftownHome $name
+        $file = Join-Path $BattledeckHome $name
         if (-not (Test-Path $file)) { continue }
 
         $line = Select-String -Path $file -Pattern '^\s*hotsPath:\s*(.+)$' | Select-Object -First 1
@@ -279,7 +279,7 @@ function Send-Text([string] $text) {
 # via a helper script. The script reads the file the application reads anyway, and
 # types from it.
 function Get-Account([string] $battletag) {
-    $file = Join-Path $SmurftownHome 'data.yaml'
+    $file = Join-Path $BattledeckHome 'data.yaml'
     if (-not (Test-Path $file)) { throw "No data.yaml under $file" }
 
     $wanted = $battletag.Trim().ToUpperInvariant()

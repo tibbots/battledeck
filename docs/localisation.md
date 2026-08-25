@@ -1,6 +1,6 @@
 ﻿# Language
 
-Which language Smurftown speaks, and which words the text recognition compares against. Two
+Which language Battledeck speaks, and which words the text recognition compares against. Two
 questions, and the whole point of this file is that they are not one.
 
 Which language the **client** runs in — how to switch it, what a missing language pack costs, and
@@ -12,7 +12,7 @@ regularly, and each confusion costs something different:
 | Question | Answered where | What breaks if you swap them |
 |---|---|---|
 | Which language does the **client** run in? | `app.yaml` → `settings.clientLanguage`, vocabulary in `GameVocabulary` | OCR stops reading anything |
-| Which language does **Smurftown** speak? | `app.yaml` → `settings.appLanguage`, texts in `Backend/Texts/*.yaml` | the user reads a foreign language |
+| Which language does **Battledeck** speak? | `app.yaml` → `settings.appLanguage`, texts in `Backend/Texts/*.yaml` | the user reads a foreign language |
 | Which language is the **log** in? | not at all — it is always English | one message has four wordings and is no longer searchable |
 
 The first two are **independent of each other**, and that is not caution but the normal case:
@@ -53,7 +53,7 @@ channel is a key, not text.
 Until 24.08.2026 this was not so: the channel carried a string rendered once, in English, and a
 German installation saw `25 von 31 Karten gelesen` — never in the run guide, which did not exist
 yet, but in the log, against the rule that a log stays English. Read for the fix rather than
-repeated: [`Backend/Texts/ProgressStep.cs`](../Smurftown/Backend/Texts/ProgressStep.cs).
+repeated: [`Backend/Texts/ProgressStep.cs`](../Battledeck/Backend/Texts/ProgressStep.cs).
 
 **The mechanics** live in `Backend/Texts/Strings.cs` and are word for word those of
 `GameVocabulary`: a static `Current` instance, set from outside (`SettingsGateway.Apply`), read
@@ -85,7 +85,7 @@ second file would be the same file twice.
 
 **A missing key does not surface at build time.** XAML does not know the keys, C# sees only a
 string, and `Strings` falls back to English silently. Against that stands `TextsTests` in
-`Smurftown.Tests`, run by `./dev test` and by both CI workflows: it verifies that every used key
+`Battledeck.Tests`, run by `./dev test` and by both CI workflows: it verifies that every used key
 exists, that all four files have the same keys — and that **each key has the same placeholders**
 in every file. The last point is the important one: a `{2}` in a text that gets only two values
 would otherwise be permanently broken in exactly one language. `Strings.Format` does catch the

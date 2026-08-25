@@ -1,10 +1,10 @@
 ---
 name: release-prep
 version: 1
-description: Prepare and ship a Smurftown release — bump the version across csproj, app.manifest and Setup.vdproj with ./dev version, verify, tag and let GitHub Actions build and upload. Triggers on release, version bump, ship a version, tag a release, "neue Version", publish Smurftown, installer state, MSI.
+description: Prepare and ship a Battledeck release — bump the version across csproj, app.manifest and Setup.vdproj with ./dev version, verify, tag and let GitHub Actions build and upload. Triggers on release, version bump, ship a version, tag a release, "neue Version", publish Battledeck, installer state, MSI.
 ---
 
-# Preparing a Smurftown release
+# Preparing a Battledeck release
 
 Delivery runs through GitHub Actions, not from a workstation. A tag push starts
 `.github/workflows/release.yml`, which calls `./dev release` on `windows-latest` and attaches the
@@ -46,8 +46,8 @@ before:
 
 | File | What carries the version |
 |---|---|
-| `Smurftown/Smurftown.csproj` | `<Version>` |
-| `Smurftown/app.manifest` | the assembly version, under the name `MyApplication.app` |
+| `Battledeck/Battledeck.csproj` | `<Version>` |
+| `Battledeck/app.manifest` | the assembly version, under the name `MyApplication.app` |
 | `Setup/Setup.vdproj` | `ProductVersion` |
 
 Each of the three replacements aborts if it does not match **exactly once**. A silent "no match"
@@ -64,8 +64,8 @@ version or `RemovePreviousVersions` / `DetectNewerInstalledVersion` do not engag
 ```bash
 ./dev version                                   # prints what is now in the csproj
 ./dev notes                                     # prints what the release page will say
-grep -n 'Version' Smurftown/Smurftown.csproj
-grep -n 'version=' Smurftown/app.manifest
+grep -n 'Version' Battledeck/Battledeck.csproj
+grep -n 'version=' Battledeck/app.manifest
 grep -n 'ProductVersion\|ProductCode\|PackageCode\|UpgradeCode' Setup/Setup.vdproj
 ```
 
@@ -86,7 +86,7 @@ double run.
 
 **`windows-latest` is a named exception** to the workspace runner standard. WPF needs Windows
 MSBuild; a Linux container cannot build `net8.0-windows10.0.19041.0`. On a public repo — which
-`tibbots/smurftown` is — standard runners of all operating systems are free.
+`tibbots/battledeck` is — standard runners of all operating systems are free.
 
 ## What ships, and what does not
 
@@ -130,7 +130,7 @@ The ZIP's file name is *not* part of the contract: it is searched, not construct
 RID or dropping the version from the name is safe.
 
 **Nothing is signed.** Both configurations stand on `"SignOutput" = "11:FALSE"` with an empty
-`"CertificateFile"`. Do not tell users to install `Smurftown.cer` into their root store: for an
+`"CertificateFile"`. Do not tell users to install `Battledeck.cer` into their root store: for an
 unsigned MSI it vouches for nothing, and a root CA can vouch for anything on the machine — real
 risk, zero benefit. The honest line is the one in the README: SmartScreen warns, "More info → Run
 anyway".
@@ -143,7 +143,7 @@ anyway".
 - [ ] `./dev version X.Y.Z` ran and reported three successful replacements
 - [ ] the three files carry the same number
 - [ ] `UpgradeCode` unchanged, `ProductCode` + `PackageCode` fresh
-- [ ] `./dev release` produces `dist/Smurftown_X.Y.Z_win-x64.zip` and `dist/checksums.txt`
+- [ ] `./dev release` produces `dist/Battledeck_X.Y.Z_win-x64.zip` and `dist/checksums.txt`
 - [ ] exactly **one** ZIP in `dist/`, and `checksums.txt` names it — the update check in every
       installed copy depends on both
 - [ ] the README's stated requirements still match what ships

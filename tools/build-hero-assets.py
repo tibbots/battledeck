@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Generates the HotS hero portraits in Smurftown/UI/Images/Heroes/ and the matching
-hero table Smurftown/Backend/Entity/HotsHeroCatalog.Generated.cs.
+Generates the HotS hero portraits in Battledeck/UI/Images/Heroes/ and the matching
+hero table Battledeck/Backend/Entity/HotsHeroCatalog.Generated.cs.
 
 Why one script does both: the portrait and the table entry share the id
 (abathur.jpg <-> new("abathur", ...)). Two separate sources would drift apart sooner
@@ -64,11 +64,11 @@ import urllib.request
 from PIL import Image
 
 API = 'https://heroesofthestorm.fandom.com/api.php'
-UA = {'User-Agent': 'smurftown-asset-builder/1.0 (local build script)'}
+UA = {'User-Agent': 'battledeck-asset-builder/1.0 (local build script)'}
 BATCH = 25  # titles per API call; the Fandom API accepts up to 50, 25 keeps the URL short
 
-IMAGES = os.path.join('Smurftown', 'UI', 'Images', 'Heroes')
-CATALOG = os.path.join('Smurftown', 'Backend', 'Entity', 'HotsHeroCatalog.Generated.cs')
+IMAGES = os.path.join('Battledeck', 'UI', 'Images', 'Heroes')
+CATALOG = os.path.join('Battledeck', 'Backend', 'Entity', 'HotsHeroCatalog.Generated.cs')
 GERMAN_NAMES = os.path.join('tools', 'hero-names-de.json')
 SIZE = 160
 QUALITY = 88
@@ -198,7 +198,7 @@ def write_catalog(heroes):
         '//     Regenerate instead of editing here.',
         '// </auto-generated>',
         '',
-        'namespace Smurftown.Backend.Entity',
+        'namespace Battledeck.Backend.Entity',
         '{',
         '    public static partial class HotsHeroCatalog',
         '    {',

@@ -1,6 +1,6 @@
 # The update check
 
-Smurftown asks GitHub once an hour whether a newer release exists, and can put it in place itself.
+Battledeck asks GitHub once an hour whether a newer release exists, and can put it in place itself.
 This is the **only** thing the application ever sends anywhere — everything else it does happens on
 this machine. What that costs and what it does not is in [security.md](security.md#the-update-check);
 this file is about how it works.
@@ -10,7 +10,7 @@ this file is about how it works.
 ```
 App.OnStartup
   │
-  ├─ UpdateInstaller.CleanUpPrevious()     delete Smurftown.exe.old, if it is free by now
+  ├─ UpdateInstaller.CleanUpPrevious()     delete Battledeck.exe.old, if it is free by now
   │
   └─ MainWindow  ──►  UpdateOffer.Watch()
                         │
@@ -57,7 +57,7 @@ what the other cannot.
 
 The file is the clock: `update.lastCheck` in `~/.smurftown/app.yaml` holds the time of the last request, and any look
 that finds it more than an hour old does the check. That is what makes the interval survive a
-restart — Smurftown is opened, used and closed again, and an interval that lived in a timer would
+restart — Battledeck is opened, used and closed again, and an interval that lived in a timer would
 start over on every one of those, so an application opened five times in an afternoon would ask
 five times.
 
@@ -102,7 +102,7 @@ read and write are one step. The check therefore no longer writes a picture of t
 writes four fields into whatever the file says at that moment. An edit made in the meantime is in
 that "whatever", and survives.
 
-**What it does not survive is a second running Smurftown.** Two processes have no lock between
+**What it does not survive is a second running Battledeck.** Two processes have no lock between
 them, and the re-read only narrows the window — see
 [architecture.md](architecture.md#one-file-for-four-kinds-of-state).
 
@@ -114,16 +114,16 @@ will do rather than finding out once it has failed.
 | Route | Detected by | What the button does |
 |---|---|---|
 | `Replace` | none of the below | download, verify, swap, restart |
-| `DevBuild` | a `Smurftown.dll` lies beside the `.exe` | open the release page |
+| `DevBuild` | a `Battledeck.dll` lies beside the `.exe` | open the release page |
 | `NotWritable` | a write probe in the folder fails | open the release page |
 | `Unknown` | no `Environment.ProcessPath` | open the release page |
 
-**`Smurftown.dll` is the discriminator** because a single-file publish carries the managed assembly
+**`Battledeck.dll` is the discriminator** because a single-file publish carries the managed assembly
 *inside* the `.exe`. Beside it, that file only exists in `bin\Debug` or `bin\Release` — measured,
 the Debug folder holds it plus nineteen more DLLs. Replacing that `.exe` with a release would throw
 away the build whoever is sitting there is currently testing.
 
-**`NotWritable` is the old MSI installation.** `C:\Program Files\ZrdJ\Smurftown` needs
+**`NotWritable` is the old MSI installation.** `C:\Program Files\ZrdJ\Battledeck` needs
 administrator rights, and this application deliberately runs as `asInvoker` (`app.manifest`). The
 permission is probed by writing, not by reading an ACL: an ACL check answers the question for the
 account, not for the process — UAC virtualisation, a read-only attribute and a locked volume all
@@ -132,19 +132,19 @@ sit between the two.
 ## The swap
 
 This is one file move, and only because of how the release is built: `./dev release` publishes
-single-file and framework-dependent, so the whole application is `Smurftown.exe` and there is no
+single-file and framework-dependent, so the whole application is `Battledeck.exe` and there is no
 set of DLLs beside it that would have to be swapped consistently. That removes the entire class of
 half-updated installations.
 
 ```
-1. download   the release ZIP  ──►  %TEMP%\smurftown-update\
+1. download   the release ZIP  ──►  %TEMP%\battledeck-update\
 2. verify     SHA-256 against the checksums.txt of the SAME release
-3. extract    Smurftown.exe out of the ZIP, nothing else
-4. move       Smurftown.exe  ──►  Smurftown.exe.old       ← the running image
-5. move       the fresh one  ──►  Smurftown.exe
+3. extract    Battledeck.exe out of the ZIP, nothing else
+4. move       Battledeck.exe  ──►  Battledeck.exe.old       ← the running image
+5. move       the fresh one  ──►  Battledeck.exe
               └─ fails?  move .old back, then throw
 6. start      the new .exe, shut this one down
-7. next start delete Smurftown.exe.old
+7. next start delete Battledeck.exe.old
 ```
 
 **Step 4 works because Windows lets a running executable be renamed but not deleted.** That single
@@ -152,7 +152,7 @@ fact is what makes the whole procedure possible without a helper process, a sche
 batch file that outlives the application.
 
 **Step 5 has a rollback and needs one.** Between the two moves there is a moment in which no
-`Smurftown.exe` exists. If the second move fails — a virus scanner holding the fresh file, a full
+`Battledeck.exe` exists. If the second move fails — a virus scanner holding the fresh file, a full
 disk — and nothing put the old one back, the human would be left with an application that is simply
 gone.
 
@@ -161,7 +161,7 @@ out; until it is gone, Windows holds the image. The next start finds it free. Th
 cleanup swallows instead of reporting — a warning on every single update, describing a state that
 repairs itself, is worse than silence.
 
-**Only `Smurftown.exe` comes out of the ZIP.** The package also carries the `README.md` that `dev`
+**Only `Battledeck.exe` comes out of the ZIP.** The package also carries the `README.md` that `dev`
 stages beside it; that is a copy of the landing page, not part of the installation. Unpacking the
 archive wholesale would put files into a folder the human chose, from a decision made in
 `cmd_release`.
@@ -174,7 +174,7 @@ triggered from a test run would restart against the real account list.
 
 The SHA-256 of the downloaded ZIP is held against the `checksums.txt` of the same release. Both
 come over HTTPS from github.com, so **the trust anchor is that connection and the account behind
-the repository — not a signature on the file.** Nothing Smurftown ships is signed and no amount of
+the repository — not a signature on the file.** Nothing Battledeck ships is signed and no amount of
 code here makes it so; see `Setup.vdproj`, which stands on `SignOutput = FALSE` with an empty
 certificate.
 
@@ -193,7 +193,7 @@ The updater reads three things out of a release, and all three are what `./dev r
 | **exactly one** `.zip` asset | a release with two is one where somebody has to decide which, and guessing is the worse answer |
 | a `checksums.txt` asset listing that ZIP by name | there is nothing to verify against otherwise |
 
-**The ZIP's file name is searched, not constructed.** Building `Smurftown_{version}_win-x64.zip`
+**The ZIP's file name is searched, not constructed.** Building `Battledeck_{version}_win-x64.zip`
 from the version would make a file name a contract between two places that cannot see each other,
 and the day somebody changes the RID, the updater would stop finding anything with no error
 anywhere near the change. The name that comes out of the search is also the one looked up in

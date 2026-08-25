@@ -1,4 +1,4 @@
-# Smurftown
+# Battledeck
 
 [English](README.md) · [Deutsch](README.de.md) · **Français** · [Español](README.es.md)
 
@@ -44,7 +44,7 @@ la partie en cours.** Tout ce qui suit explique comment.
   the Storm.
 * **Une liste vide s'explique d'elle-même.** Pas encore de compte ? La fenêtre montre les deux
   façons de la remplir plutôt qu'une zone vide : en saisir un à la main avec son e-mail et son
-  mot de passe, ou lancer Heroes of the Storm vous-même et vous connecter — Smurftown le lit dans
+  mot de passe, ou lancer Heroes of the Storm vous-même et vous connecter — Battledeck le lit dans
   le jeu à cet instant.
 
 ![Le menu de la ligne](docs/images/fr/actions-menu.png)
@@ -106,9 +106,9 @@ affiché, pas saisi : il est lu depuis le jeu, dès la première lecture du com
   Tout ce qui figure dans cet onglet appartient à **une seule** région ; le sélecteur en haut
   indique laquelle. Si vous jouez dans deux régions, vous en gérez deux.
 * **Ou sautez le menu de démarrage — lisez qui est déjà connecté.** Dès que Heroes of the Storm
-  est lancé, un bouton apparaît en haut de la fenêtre de Smurftown. Cliquez dessus et
+  est lancé, un bouton apparaît en haut de la fenêtre de Battledeck. Cliquez dessus et
   l'application lit ce compte de la même façon, sans toucher à la connexion du jeu lui-même :
-  elle ne déconnecte personne et ne ferme rien. Connectez-vous avec un battletag que Smurftown
+  elle ne déconnecte personne et ne ferme rien. Connectez-vous avec un battletag que Battledeck
   n'a encore jamais vu, et le bouton crée le compte sur-le-champ au lieu de le refuser — aucun
   mot de passe enregistré, aucun e-mail saisi, aucune question posée.
 * **Ouvrez les coffres.** Ouvre d'abord tous les coffres non ouverts, si bien que les chiffres qui
@@ -206,7 +206,7 @@ le jeu, et chaque mesure devient fausse.
 
 ## Updates
 
-Une fois par heure, tant qu'elle est ouverte, Smurftown demande à GitHub s'il existe une
+Une fois par heure, tant qu'elle est ouverte, Battledeck demande à GitHub s'il existe une
 version plus récente. La requête est anonyme et ne transporte rien vous concernant, ni vos
 comptes, ni ce que vous en avez fait — c'est la même question que n'importe qui peut poser à
 un dépôt public. S'il y a du nouveau, la pastille de version en haut à droite le signale ; un
@@ -234,9 +234,9 @@ continue de fonctionner.
 
 # Installation
 
-Téléchargez `Smurftown_<version>_win-x64.zip` depuis
-[Releases](https://github.com/tibbots/smurftown/releases), décompressez-le où vous voulez et
-lancez `Smurftown.exe`. Il n'y a rien à installer : l'application conserve tout dans
+Téléchargez `Battledeck_<version>_win-x64.zip` depuis
+[Releases](https://github.com/tibbots/battledeck/releases), décompressez-le où vous voulez et
+lancez `Battledeck.exe`. Il n'y a rien à installer : l'application conserve tout dans
 `C:\Users\YOUR_USER\.smurftown` et ne touche à rien d'autre sur votre machine.
 
 **Vous avez besoin du .NET 8 Desktop Runtime.** Téléchargez-le depuis
@@ -251,7 +251,7 @@ Chaque version fournit aussi un fichier `checksums.txt`. Pour vérifier ce que v
 téléchargé, dans PowerShell :
 
 ```powershell
-Get-FileHash .\Smurftown_1.0.0_win-x64.zip -Algorithm SHA256
+Get-FileHash .\Battledeck_1.0.0_win-x64.zip -Algorithm SHA256
 ```
 
 Prérequis :
@@ -273,7 +273,7 @@ Prérequis :
 # FAQ
 
 ### Où puis-je télécharger l'application ?
-Depuis [Releases](https://github.com/tibbots/smurftown/releases).
+Depuis [Releases](https://github.com/tibbots/battledeck/releases).
 
 ### Cette application envoie-t-elle ou reçoit-elle des données depuis un serveur sur internet ?
 Une fois par heure, elle demande à `api.github.com` s'il existe une version plus récente — de
@@ -291,10 +291,10 @@ Uniquement dans des fichiers locaux, dans le dossier `.smurftown` de votre répe
 automatiquement, et c'est un compromis délibéré de cette application — traitez ce dossier comme
 le gestionnaire de mots de passe qu'il est.
 
-### Ai-je besoin de donner mon mot de passe à Smurftown ?
+### Ai-je besoin de donner mon mot de passe à Battledeck ?
 Non. Laissez le champ du mot de passe vide en ajoutant un compte à la main, ou sautez le dialogue
 entièrement — lancez Heroes of the Storm vous-même, connectez-vous et utilisez « Actualiser »
-depuis le bouton en haut de la fenêtre : Smurftown crée le compte à partir de ce qu'il lit et ne
+depuis le bouton en haut de la fenêtre : Battledeck crée le compte à partir de ce qu'il lit et ne
 voit jamais le mot de passe. La seule chose qui manque sans lui est le démarrage automatique ;
 lire le rang, les héros et les monnaies du jeu continue de fonctionner à l'identique.
 

@@ -3,7 +3,7 @@
 Two things that look unrelated and are the same question: what may leave this machine.
 
 The first half is the price of the functionality — the app is a password manager, and it types the
-password into a game. The second half is a fact about the repo: `tibbots/smurftown` is **public**,
+password into a game. The second half is a fact about the repo: `tibbots/battledeck` is **public**,
 and the UI shows battletags and e-mail addresses in plain text.
 
 ## Deliberate trade-offs
@@ -42,7 +42,7 @@ decided.
 running, it can download and install it. How that works is in
 [self-update.md](self-update.md) — what it costs is here.
 
-**What leaves the machine**: a URL and a user agent of the form `Smurftown/2.0.1`. The request is
+**What leaves the machine**: a URL and a user agent of the form `Battledeck/2.0.1`. The request is
 anonymous — no token, no account, no identifier, and nothing at all about the account list. The
 version in the user agent is the only thing about the installation it reveals, and it reveals it to
 GitHub, who serve the download anyway.
@@ -54,7 +54,7 @@ precise about.
   question — *is this the file the release says it is* — and no other.
 - **Nothing is signed.** `Setup.vdproj` stands on `SignOutput = FALSE` with an empty certificate,
   and it always has. **So the trust anchor is HTTPS to github.com and the account behind
-  `tibbots/smurftown`, not a signature on the file.** Whoever gets write access to that repository
+  `tibbots/battledeck`, not a signature on the file.** Whoever gets write access to that repository
   can ship an `.exe` that this application will install without asking again. The checksum does not
   change that and cannot: it is published by the same party as the file.
 - **The install is a click, never automatic.** The check finds; the human decides. An update that
@@ -85,7 +85,7 @@ the others. **English is the source** — a change goes there first, the three t
 Procedure: [`readme-translations`](../.claude/skills/readme-translations/).
 
 **The screenshots are taken against demo data and never against the real list.** The reason is not
-caution but a fact about the repo: `tibbots/smurftown` is **public**, and the UI shows battletag and
+caution but a fact about the repo: `tibbots/battledeck` is **public**, and the UI shows battletag and
 email address in plain text. A picture of the real list publishes 27 battletags and 27 addresses,
 and does so **permanently**: GitHub keeps every version of an image in the history, including one
 replaced later.
@@ -102,7 +102,7 @@ go-ahead for this run rather than a standing one.
 
 What gets started is a **test instance**: `tools/test-home.ps1` puts the demo accounts into a folder
 under `%TEMP%` and points `SMURFTOWN_HOME` there, so the real list is not moved aside for the shot
-— it is simply never opened. `drive-smurftown.ps1` still starts nothing itself; it aborts if no
+— it is simply never opened. `drive-battledeck.ps1` still starts nothing itself; it aborts if no
 instance is running, so that driving and starting stay two steps which fail separately.
 
 The full procedure, the shot list and what cannot be captured with demo data are in the

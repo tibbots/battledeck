@@ -372,10 +372,10 @@ four dropdowns scrolled.
   of a paragraph.
 - **What said the same thing twice went**: `settings.interfaceLanguageNote` ("Applies at once")
   stood beside a hint that already said so, and it is deleted rather than moved.
-- **Two cards, because one setting belongs to Smurftown and three describe the game.** That used
+- **Two cards, because one setting belongs to Battledeck and three describe the game.** That used
   to stand in the running text and now stands in the structure — which is what allowed the labels
   to get shorter: `INTERFACE LANGUAGE` became `Language`, because the card above it says
-  `SMURFTOWN`.
+  `BATTLEDECK`.
 - **The tooltip needed its own theme first.** The WPF default is a system window — light ground,
   black text — and it disappears after five seconds, which is about half of a sixty-word text. See
   `BattlenetToolTipTheme.xaml`: dark surface like the menu, wrapping at 400, `ShowDuration` two

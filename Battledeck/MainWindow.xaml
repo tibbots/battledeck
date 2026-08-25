@@ -1,0 +1,613 @@
+﻿<Window x:Class="Battledeck.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModel="clr-namespace:Battledeck.UI.MVVM.ViewModel"
+        xmlns:loc="clr-namespace:Battledeck.UI.MVVM"
+        xmlns:md="https://github.com/fantasticfiasco/mvvm-dialogs"
+        mc:Ignorable="d"
+        UseLayoutRounding="True"
+        Title="Battledeck" Height="800" Width="1340"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        md:DialogServiceViews.IsRegistered="True">
+    <Window.DataContext>
+        <viewModel:MainViewModel />
+    </Window.DataContext>
+    <Window.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#15171E" Offset="0.0" />
+            <GradientStop Color="#15171E" Offset="1.0" />
+        </LinearGradientBrush>
+    </Window.Background>
+
+    <Window.Resources>
+        <Style x:Key="WindowButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,5,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="Transparent"
+                                BorderThickness="0"
+                                CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FF3E3E3E" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#FF2D2D2D" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Top-level tabs. NO template of their own: they inherit it from
+             BattlenetIconButtonTheme, with which the four game symbols of the filter bar are
+             already drawn - blue underline (#1A73E8) across the full button width, also on
+             hover even when the tab is not the open one.
+
+             A second template alongside would be exactly the duplication where two
+             appearances drift apart: an early draft had rounded corners here, a hover surface
+             and a second blue, and with that the tabs looked like a different application than
+             the toggles two rows below.
+
+             Only what an image doesn't need and text does is added: font color and
+             size. Without the color WPF drew the text in black on dark gray. -->
+        <Style x:Key="MainTabStyle" TargetType="ToggleButton"
+               BasedOn="{StaticResource BattlenetIconButtonTheme}">
+            <Setter Property="Foreground" Value="#8F93A0" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="FontWeight" Value="DemiBold" />
+            <!-- 48 of 70 points row height - the tab bar has the row to itself now that the
+                 logo and wordmark moved up into row 0's title bar (26.08.2026). More is only
+                 possible if the row gets taller - it is set in MainWindow.xaml as
+                 RowDefinition Height="70". -->
+            <Setter Property="Height" Value="48" />
+            <!-- Fixed width, so both underlines are the same length. The bar measures the
+                 button width, not the text width - without that it would be longer under
+                 ACCOUNTS than under SETTINGS.
+
+                 160 and no longer 130: at FontSize 22, "ACCOUNTS" measures in Segoe UI DemiBold
+                 114.0 points (measured, not estimated - System.Windows.Media.FormattedText),
+                 "SETTINGS" 98.8. With the same roughly 23 points of slack per side as at 130/16,
+                 that's 160. The row carries this: it is 70 tall, and to its right stands
+                 only the version label - the three window buttons sit one row higher in the
+                 30-point-tall title bar.
+
+                 The size briefly stood at 32 (width 210) on 21.08.2026 and was scaled back
+                 by 30 percent - that was too big for a bar with a 50-point-high logo on the
+                 left. Whoever changes it again measures the width, instead of estimating
+                 it: the blue bar measures the BUTTON width. -->
+            <Setter Property="Width" Value="160" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Foreground" Value="White" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- The chip for a RUNNING game client. Local to this window for the same reason as
+             the version chip beside it: it exists exactly once.
+
+             IT IS NOT A BADGE BUT A BUTTON, and that is the difference to its neighbour. The
+             version chip says something and takes a click only in the rare case; this one
+             exists to be clicked and is not there at all otherwise - Visibility hangs on
+             whether a client is running.
+
+             THE HOTS ACCENT (#4A9FD8) IS THE SAME as the one the account rows carry for the
+             game, taken from GameVisuals. It is not decoration here: the chip is about
+             exactly one game, and the header has no other place that says which.
+
+             WHILE A RUN IS GOING ON the button is disabled - and unlike the version chip, a
+             disabled look is right here: the label beside it reads "Reading..." at the same
+             time, so the dimming carries no statement of its own that could be missed. -->
+        <!-- Design round of 25.08.2026 (see the artifact "Live Game Chip"): the chip used to be
+             the same size and quietness as the version chip beside it, which is exactly wrong
+             for the one moment it matters - a client is actually up. Grown from 26 to 32px, a
+             live-blue glow that breathes instead of a static border, and a small dot that
+             pulses on its own beat. Deliberately smaller than the mock-up's 40px - big enough
+             to catch the eye without out-sizing the tab bar beside it.
+
+             THE PULSE ITSELF IS STARTED IN CODE, from MainWindow.xaml.cs's
+             StartRunningChipPulse - not from a Storyboard declared here. An
+             EventTrigger/BeginStoryboard in ControlTemplate.Triggers targeting names in this
+             same template (tried first, both for the effect directly and for "chip" with a
+             property path into it) failed XamlLoadsTests with "Name not found in the namescope
+             of ControlTemplate" - Application.LoadComponent parses and validates a template's
+             triggers without ever applying the template to a live control, and that eager
+             validation does not see names an EventTrigger would only need once the template is
+             actually instantiated. FrameworkTemplate.FindName sidesteps the question entirely:
+             it is called from code, after ApplyTemplate, and needs no trigger to fire first. -->
+        <Style x:Key="RunningChipTheme" TargetType="Button">
+            <Setter Property="Height" Value="32" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="chip" CornerRadius="16" BorderThickness="1.5"
+                                BorderBrush="#3FB6FF">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#1C3A52" Offset="0" />
+                                    <GradientStop Color="#142433" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <!-- The glow is a DropShadowEffect with ShadowDepth 0, so it
+                                 radiates evenly instead of casting to one side - a "glow", not
+                                 a shadow. Unnamed: nothing in XAML needs to reach it, code-behind
+                                 gets there via "chip".Effect directly - see the type comment
+                                 above for why this animates from code and not from a Storyboard
+                                 declared here. -->
+                            <Border.Effect>
+                                <DropShadowEffect Color="#3FB6FF" ShadowDepth="0"
+                                                   BlurRadius="6" Opacity="0.35" />
+                            </Border.Effect>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                        Margin="12,0,14,0">
+                                <!-- The live dot: the pulse itself is the "something is
+                                     happening" signal - the icon beside it already says which
+                                     thing, the name after that says it in words too. -->
+                                <Ellipse x:Name="dot" Width="7" Height="7" Fill="#3FB6FF"
+                                         VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <Image Source="pack://application:,,,/UI/Images/hots.png"
+                                       Width="16" Height="16" Margin="0,0,7,0"
+                                       RenderOptions.BitmapScalingMode="HighQuality" />
+                                <!-- THE GAME'S NAME, not an instruction to click it - since
+                                     25.08.2026 no longer Running.Label ("Refresh"/"Reading..."),
+                                     see RunningGame.GameName. What was detected is the more
+                                     useful fact than what a click does; the caret after it is
+                                     what now says "click me, this opens something". -->
+                                <TextBlock Text="{Binding Running.GameName}"
+                                           Foreground="#E4F4FF" VerticalAlignment="Center" />
+                                <!-- The caret: a small downward triangle, U+25BE. It is the
+                                     ONLY thing in this chip that says "this is a dropdown" -
+                                     before it, nothing here looked different from a plain
+                                     button, and the menu underneath was discoverable only by
+                                     already knowing it was there. -->
+                                <TextBlock x:Name="caret" Text="&#x25BE;" FontSize="9"
+                                           FontWeight="Normal" Foreground="#8FD4FF"
+                                           VerticalAlignment="Center" Margin="6,1,0,0" />
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- The pulse is started from MainWindow.xaml.cs, not from an
+                                 EventTrigger/Storyboard here - see StartRunningChipPulse for
+                                 why. The names "chip" and "dot" above exist FOR THAT CODE:
+                                 FrameworkTemplate.FindName reaches them once ApplyTemplate has
+                                 run, the same names an in-template Storyboard would have used. -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="chip" Property="BorderBrush" Value="#8FD4FF" />
+                                <Setter TargetName="caret" Property="Foreground" Value="#CFE6F5" />
+                            </Trigger>
+                            <!-- IsEnabled follows Running.OpenMenuCommand's CanExecute
+                                 (Running && !Busy) automatically - WPF's own doing for a
+                                 Command-bound Button, nothing wired here for it. This is now
+                                 the ONLY signal for "busy": the text no longer changes to
+                                 "Reading...", the chip just quiets down. -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="chip" Property="Opacity" Value="0.55" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- The version chip. Local to this window like the two window-button styles
+             above: it exists exactly once, and a style in App.xaml would suggest otherwise.
+
+             The four states come from UpdateOffer.Display and are drawn as colour, but never
+             as colour ALONE - the text beside the dot always says the same thing in words
+             ("-> 2.2.0", the percentage, the failure), because a dot that is the only
+             carrier of a state is empty to whoever cannot tell the two hues apart. -->
+        <Style x:Key="VersionChipTheme" TargetType="Button">
+            <Setter Property="Height" Value="26" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Cursor" Value="Arrow" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="chip" CornerRadius="13" BorderThickness="1"
+                                Background="Transparent" BorderBrush="#2C303B">
+                            <Grid>
+                                <!-- The fill lies BEHIND the text and spans the whole chip,
+                                     which is why the padding sits on the panel and not on
+                                     this Border. Its left end is rounded and its right end
+                                     is not - a fill rounded on both sides reads as a
+                                     finished pill rather than as a bar that is running. The
+                                     100 % moment is never seen: at that point the step
+                                     changes to checking, whose length is unknown, and the
+                                     fill takes itself off screen.
+
+                                     MODE=ONEWAY IS NOT OPTIONAL. ProgressBar.Value comes
+                                     from RangeBase and binds TWO-WAY by default, and a
+                                     two-way binding onto a get-only property does not warn
+                                     - it throws while the template loads, which takes the
+                                     whole window with it before it is ever shown. The
+                                     build says nothing about it: it is a run-time check
+                                     against the ViewModel. Measured on 22.08.2026, twice
+                                     in a row. -->
+                                <ProgressBar Minimum="0" Maximum="1"
+                                             Value="{Binding Update.Fraction, Mode=OneWay}"
+                                             Visibility="{Binding Update.FillVisibility}"
+                                             Background="Transparent" BorderThickness="0">
+                                    <ProgressBar.Template>
+                                        <ControlTemplate TargetType="ProgressBar">
+                                            <Grid>
+                                                <Border x:Name="PART_Track" Background="Transparent" />
+                                                <Border x:Name="PART_Indicator" Background="#24457A"
+                                                        CornerRadius="12,0,0,12"
+                                                        HorizontalAlignment="Left" />
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </ProgressBar.Template>
+                                </ProgressBar>
+
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                            Margin="9,0">
+                                    <Ellipse x:Name="pip" Width="7" Height="7"
+                                             Fill="Transparent" Stroke="#4A505E" StrokeThickness="1.5"
+                                             VerticalAlignment="Center" Margin="0,0,7,0" />
+                                    <TextBlock x:Name="current" Text="{Binding Update.Current}"
+                                               Foreground="#8F93A0" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Update.OfferedText}"
+                                               Visibility="{Binding Update.OfferedVisibility}"
+                                               Foreground="#62A6FF" FontWeight="DemiBold"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock x:Name="trailer" Text="{Binding Update.Trailer}"
+                                               Visibility="{Binding Update.TrailerVisibility}"
+                                               Foreground="#8F93A0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Update.Display}" Value="Ready">
+                                <Setter TargetName="chip" Property="Background" Value="#172436" />
+                                <Setter TargetName="chip" Property="BorderBrush" Value="#24457A" />
+                                <Setter TargetName="pip" Property="Fill" Value="#1A73E8" />
+                                <Setter TargetName="pip" Property="Stroke" Value="#1A73E8" />
+                                <Setter Property="Cursor" Value="Hand" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Update.Display}" Value="Busy">
+                                <Setter TargetName="chip" Property="Background" Value="#141C29" />
+                                <Setter TargetName="chip" Property="BorderBrush" Value="#24457A" />
+                                <Setter TargetName="pip" Property="Fill" Value="#1A73E8" />
+                                <Setter TargetName="pip" Property="Stroke" Value="#1A73E8" />
+                                <Setter TargetName="trailer" Property="Foreground" Value="#DCE6F5" />
+                                <Setter Property="Cursor" Value="Hand" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Update.Display}" Value="Failed">
+                                <Setter TargetName="chip" Property="Background" Value="#2A1917" />
+                                <Setter TargetName="chip" Property="BorderBrush" Value="#6E2E28" />
+                                <Setter TargetName="pip" Property="Fill" Value="#C4453B" />
+                                <Setter TargetName="pip" Property="Stroke" Value="#C4453B" />
+                                <Setter TargetName="current" Property="Foreground" Value="#E39A93" />
+                                <Setter TargetName="trailer" Property="Foreground" Value="#E39A93" />
+                                <Setter Property="Cursor" Value="Hand" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CloseButtonStyle" BasedOn="{StaticResource WindowButtonStyle}" TargetType="Button">
+            <Setter Property="Content" Value="X" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="Transparent"
+                                BorderThickness="0"
+                                CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FFB22222" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#FF8B0000" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" />
+            <RowDefinition Height="70" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Top" LastChildFill="True"
+                   MouseLeftButtonDown="DockPanel_MouseLeftButtonDown">
+
+            <DockPanel.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#15171E" Offset="0.0" />
+                    <GradientStop Color="#15171E" Offset="1.0" />
+                </LinearGradientBrush>
+            </DockPanel.Background>
+
+            <!-- Logo + product name, top-left corner of the title bar. Moved here from row 1
+                 on 26.08.2026 after direct feedback that the earlier placement - a 50x50 logo
+                 plus a bold 20pt wordmark inline beside the tabs - was too prominent. Small on
+                 purpose: 18x18 icon, 13pt DemiBold text in the same muted grey (#9AA0AE) the
+                 update panel uses for secondary text, so it reads as a corner mark rather than
+                 a second headline competing with the tab bar one row down.
+
+                 DockPanel.Dock="Left" is explicit rather than relied upon: being the first
+                 child it would default to Left anyway, but the intent should not depend on
+                 child order surviving the next edit. No click handler here, so a press on the
+                 icon or text still bubbles up to the DockPanel's own MouseLeftButtonDown and
+                 drags the window, same as anywhere else in this row.
+
+                 20 left margin - the same edge the filter bar and account rows below use, see
+                 docs/ui-layout.md, "Main window tabs". -->
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left"
+                        VerticalAlignment="Center" Margin="20,0,0,0">
+                <Image Source="pack://application:,,,/UI/Images/smurftown.png"
+                       RenderOptions.BitmapScalingMode="HighQuality" Width="18" Height="18" />
+                <TextBlock Text="Battledeck" Foreground="#9AA0AE" FontWeight="DemiBold" FontSize="13"
+                           VerticalAlignment="Center" Margin="6,0,0,0" />
+            </StackPanel>
+
+            <Grid DockPanel.Dock="Right"
+                  HorizontalAlignment="Right">
+
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+
+                    <Button Style="{StaticResource WindowButtonStyle}" Content="_" Click="Minimize_Click" />
+                    <Button Style="{StaticResource WindowButtonStyle}" Content="[ ]" Click="Maximize_Click" />
+                    <Button Style="{StaticResource CloseButtonStyle}" Content="x" Click="Close_Click" />
+
+                </StackPanel>
+            </Grid>
+        </DockPanel>
+
+        <!-- Tab bar, alone in row 1. The logo and product name that used to stand here moved
+             up into row 0's title bar on 26.08.2026 (see the DockPanel above) after feedback
+             that the inline wordmark was too prominent; this StackPanel used to be the second
+             of three children in an outer wrapper that placed it beside them, and with only
+             one child left the wrapper was removed - it now sits in row 1 directly.
+
+             The ContentControl further below has been bound to CurrentView all along - the
+             switching was already in place and simply wasn't used by anyone. Not to be
+             confused with the game tabs that flew out of the account row on 20.08.2026: those
+             showed one game per row and were a duplication of the filter. This is about the
+             level above that.
+
+             20 left margin - the same edge the filter bar and account rows below use. It was
+             28 while this StackPanel stood beside the logo, measured off the logo's own right
+             edge rather than off row 1's left edge, which is why the tab bar never lined up
+             with what sits below it until now.
+
+             VERTICALLY CENTERED in the 70-tall row: the tabs are 48 tall, so centered they sit
+             at 11..59; bottom-aligned they would sit at 18..66 - seven points too low.
+             Whoever changes the tab height recalculates this. -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
+            <ToggleButton Content="{loc:Str main.tabAccounts}" Style="{StaticResource MainTabStyle}"
+                          IsChecked="{Binding AccountsTabActive}" />
+            <ToggleButton Content="{loc:Str main.tabSettings}" Style="{StaticResource MainTabStyle}"
+                          IsChecked="{Binding SettingsTabActive}" />
+        </StackPanel>
+
+        <!-- The version chip, top right, on the same axis as logo and tabs. Row 1 is the
+             only free space in the header: the three window buttons sit one row higher in
+             the 30-point title bar, and the left half of this row is logo plus tab bar.
+
+             THE NUMBER IS THE CONTROL, and that is the change against what stood here
+             before: a grey label with a separate button in front of it, where the button
+             carried the offered version and the label the running one, with nothing saying
+             that the two had anything to do with each other. The chip reads "v2.1.0" on the
+             overwhelming majority of starts and "v2.1.0 -> 2.2.0" on the rare one; which
+             state it is in is a colour, and the detail is one click away.
+
+             20 points from the right edge, which is where the filter bar below ends too:
+             1340 window width, 1300 left after its DockPanel margin, so 20 per side. -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal"
+                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Margin="0,0,20,0">
+            <!-- LEFT OF THE VERSION, because it comes and goes. A chip that appears would
+                 push a neighbour sideways if it stood on the right; on the left the version
+                 keeps its place at the edge, which is where the eye looks for it.
+
+                 It is invisible unless a Heroes of the Storm client is running, and the
+                 tooltip carries the whole promise - reads the account that is signed in,
+                 signs nobody out. -->
+            <!-- x:Name, so MainWindow.xaml.cs's constructor can reach its template's named
+                 parts ("chip", "dot") once and start the pulse - see StartRunningChipPulse. -->
+            <Button x:Name="RunningChip" Style="{StaticResource RunningChipTheme}"
+                    Command="{Binding Running.OpenMenuCommand}"
+                    Visibility="{Binding Running.Visibility}"
+                    ToolTip="{Binding Running.Hint}" />
+
+            <!-- IsHitTestVisible and NOT IsEnabled: in the quiet state the chip is a badge
+                 and takes no click, but a disabled button would also be DRAWN as one - grey
+                 on grey, looking like something that broke. -->
+            <Button Style="{StaticResource VersionChipTheme}"
+                    Command="{Binding Update.OpenCommand}"
+                    IsHitTestVisible="{Binding Update.CanOpen}" />
+        </StackPanel>
+
+        <ContentControl Grid.Row="2" Content="{Binding CurrentView}" />
+
+        <!-- The panel under the chip. It spans all three rows so that the backdrop behind it
+             covers the whole window - that backdrop is what closes the panel again, and a
+             click beside it may not first have to find the one row it lives in.
+
+             AN OVERLAY AND NOT A POPUP. A Popup is the obvious choice and brings two
+             problems this window would have to pay for: it opens a top-level window of its
+             own, which in a WindowStyle="None" window is placed against the screen rather
+             than against the frame, and StaysOpen="False" swallows the click that closes it
+             - including the one on the chip, which would then reopen the panel it just shut.
+             Inside the window there is nothing to clip against: the panel is 330 wide at the
+             right edge of a 1340-wide window. -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" Visibility="{Binding Update.OpenVisibility}">
+            <Button Command="{Binding Update.CloseCommand}">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <!-- Transparent, and not without a background: an element without one
+                             takes no click at all, and the panel would then only close by
+                             installing something. -->
+                        <Border Background="Transparent" />
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- 74 from the top puts it six points under the chip: the title bar is 30, the
+                 header row 70, and the 26-point chip sits centred in it - 30 + 22 = 52 to 78.
+                 10 from the right instead of 20, because the surface style carries its own
+                 room for the shadow. Whoever changes the row heights recalculates this. -->
+            <Border Style="{StaticResource BattlenetMenuSurfaceTheme}"
+                    Width="330" Padding="16" Margin="0,74,10,0"
+                    HorizontalAlignment="Right" VerticalAlignment="Top">
+                <StackPanel>
+                    <TextBlock Text="{Binding Update.Heading}" Foreground="White"
+                               FontSize="15" FontWeight="DemiBold" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Update.Body}" Foreground="#9AA0AE"
+                               FontSize="12" TextWrapping="Wrap" LineHeight="17"
+                               Margin="0,6,0,14" />
+
+                    <StackPanel Orientation="Horizontal">
+                        <!-- The label says what the click DOES - install, or open the release
+                             page - because the ViewModel knows which of the two this build is
+                             allowed to do. Two buttons of which only one ever works would
+                             leave that decision to the human, who cannot see the answer. -->
+                        <Button Content="{Binding Update.PrimaryLabel}"
+                                Command="{Binding Update.PrimaryCommand}"
+                                IsEnabled="{Binding Update.PrimaryEnabled}"
+                                Style="{StaticResource BattlenetButtonPrimaryTheme}"
+                                Height="30" Padding="14,0" FontSize="12" />
+                        <Button Content="{loc:Str update.whatsNew}"
+                                Command="{Binding Update.PageCommand}"
+                                Style="{StaticResource BattlenetButtonSecondaryTheme}"
+                                Height="30" Padding="12,0" FontSize="12" Margin="8,0,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding Update.LastCheckLine}" Foreground="#6E7484"
+                               FontSize="11" Margin="0,12,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- The menu under the RUNNING-CLIENT chip. Same construction as the update panel
+             above, and for the same reasons - an overlay and not a Popup, spanning all three
+             rows so the backdrop covers the window. Whoever changes one of the two changes
+             both; the comment above carries the reasoning.
+
+             THE TWO CANNOT BE OPEN AT ONCE, and nothing enforces it: the backdrop of
+             whichever is open swallows the click on the other chip, so that click closes a
+             panel instead of opening one.
+
+             IT IS RIGHT-ALIGNED TO THE WINDOW and not to the chip, which sits a little
+             further left - the version chip beside it is as wide as its text, and there is no
+             number in this file that would stay true after a version with more digits. At 360
+             wide the menu covers the chip anyway: the chip ends about 105 from the right edge
+             and is 90 wide, so it sits inside the span the menu occupies.
+
+             360 AND NOT 300, for the same reason as the start menu of an account row: after
+             icon (22), spacing (10) and margins (32) the subtitle has exactly surface minus
+             64. Measured with FormattedText, Segoe UI 11, in all four languages:
+
+                 German     280.7   "Rang, Helden und Waehrungen lesen - ein paar Sekunden"
+                 Spanish    278.1
+                 French     278.4
+                 English    238.9
+
+             236 points at 300 wide carried none of them; 296 at 360 carries the longest with
+             15 of reserve. The hints wrap rather than truncate on top of that - a truncated
+             subtitle is silent, it simply stands shorter and nothing reports it. -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" Visibility="{Binding Running.MenuVisibility}">
+            <Button Command="{Binding Running.CloseMenuCommand}">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" />
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- 74 from the top and 10 from the right: the same two numbers as the update
+                 panel, because it hangs off the same 26-point chip row. -->
+            <Border Style="{StaticResource BattlenetMenuSurfaceTheme}"
+                    Width="360" Margin="0,74,10,0"
+                    HorizontalAlignment="Right" VerticalAlignment="Top">
+                <StackPanel>
+                    <!-- The order is not taste: the case somebody wants most often stands on
+                         top. Reading is the everyday one - opening chests happens after a
+                         handful of matches, and it takes minutes rather than seconds. -->
+                    <Button Style="{StaticResource BattlenetMenuItemTheme}"
+                            Command="{Binding Running.RefreshCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Image Grid.Column="0"
+                                   Source="pack://application:,,,/UI/Images/hots.png"
+                                   Width="22" Height="22" Margin="0,0,10,0"
+                                   VerticalAlignment="Center"
+                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Running.MenuRefresh}" Foreground="White"
+                                           FontWeight="DemiBold" FontSize="13" />
+                                <TextBlock Text="{Binding Running.MenuRefreshHint}" Foreground="#8F93A0"
+                                           FontSize="11" Margin="0,1,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+
+                    <Button Style="{StaticResource BattlenetMenuItemTheme}"
+                            Command="{Binding Running.RefreshWithChestsCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Image Grid.Column="0"
+                                   Source="pack://application:,,,/UI/Images/hots.png"
+                                   Width="22" Height="22" Margin="0,0,10,0"
+                                   VerticalAlignment="Center"
+                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Running.MenuChests}" Foreground="White"
+                                           FontWeight="DemiBold" FontSize="13" />
+                                <TextBlock Text="{Binding Running.MenuChestsHint}" Foreground="#8F93A0"
+                                           FontSize="11" Margin="0,1,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+    </Grid>
+</Window>

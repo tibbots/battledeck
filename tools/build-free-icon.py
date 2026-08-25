@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generates Smurftown/UI/Images/free.png - the badge for heroes that are free to play
+Generates Battledeck/UI/Images/free.png - the badge for heroes that are free to play
 in the current rotation period.
 
 Ingame this is a small blue-and-white circle: a bright ring edge, inside it a deep
@@ -31,7 +31,7 @@ import re
 
 from PIL import Image, ImageDraw
 
-OUT = os.path.join('Smurftown', 'UI', 'Images', 'free.png')
+OUT = os.path.join('Battledeck', 'UI', 'Images', 'free.png')
 SIZE = 128
 SS = 4  # supersampling
 

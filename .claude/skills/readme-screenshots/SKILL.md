@@ -1,7 +1,7 @@
 ---
 name: readme-screenshots
 version: 2
-description: Retake the README screenshots for Smurftown, in all four UI languages — swap the real account list for demo data, drive the running app with drive-smurftown.ps1, capture the shot list into docs/images/ (English) and docs/images/{de,fr,es}/ (the three translations). Triggers on screenshots, README images, retake screenshots, demo data, capture-run, "Screenshots neu aufnehmen", docs/images.
+description: Retake the README screenshots for Battledeck, in all four UI languages — swap the real account list for demo data, drive the running app with drive-battledeck.ps1, capture the shot list into docs/images/ (English) and docs/images/{de,fr,es}/ (the three translations). Triggers on screenshots, README images, retake screenshots, demo data, capture-run, "Screenshots neu aufnehmen", docs/images.
 ---
 
 # Retaking the README screenshots
@@ -12,7 +12,7 @@ not one shared English set.
 
 ## Why — this is not caution
 
-`tibbots/smurftown` is a **public** repo, and the UI shows battletag and email address in plain
+`tibbots/battledeck` is a **public** repo, and the UI shows battletag and email address in plain
 text: the row shows the one, the edit dialog the other. A picture of the real list publishes those
 values permanently — GitHub keeps every version of an image in the history, including one replaced
 later. There is no taking it back by committing a new file.
@@ -24,20 +24,20 @@ safeguard which does not depend on somebody remembering. Do not disable it.
 
 ## The boundary: an instance that is already running
 
-**Claude starts Smurftown itself and closes it again — after asking.** The go-ahead is per run, not
+**Claude starts Battledeck itself and closes it again — after asking.** The go-ahead is per run, not
 per session; see `CLAUDE.md` → Working practice.
 
 What changed underneath is which danger is left. `data.yaml` is still rewritten whole on every
 mutation, and the lock around that covers one process and not two — but the capture run no longer
 works in the real folder at all, so two instances writing over each other is not the risk here any
 more. **The drivers are.**
-`drive-smurftown.ps1` and `capture-window.ps1` take the **first** Smurftown process that owns a
+`drive-battledeck.ps1` and `capture-window.ps1` take the **first** Battledeck process that owns a
 window: with two of them up, every shot is a coin flip, and one of the two is showing the real list.
 
 So one instance at a time. If the one already running is the user's, ask before closing it —
 `test-home.ps1` refuses to start beside it, which is the reminder, not the permission.
 
-`tools/drive-smurftown.ps1` still starts nothing; it aborts if no instance is running. That
+`tools/drive-battledeck.ps1` still starts nothing; it aborts if no instance is running. That
 separation stays — the one that starts is `tools/test-home.ps1`.
 
 ## One language at a time, four passes
@@ -53,11 +53,11 @@ routes shots into their own subfolder.
 3. write app.yaml by hand with the target appLanguage BEFORE the first start (see below) -
    otherwise the app picks the system UI language on first launch
 4. start the published exe (see "settings.png" below for why it must be published, not Debug)
-5. run the shot sequence with drive-smurftown.ps1 -Lang <de|fr|es> (omit -Lang for English)
+5. run the shot sequence with drive-battledeck.ps1 -Lang <de|fr|es> (omit -Lang for English)
 6. Stop-Process, then repeat from 2 for the next language
 ```
 
-`app.yaml` (written directly into `%TEMP%\smurftown-test-home\app.yaml`, before the first start):
+`app.yaml` (written directly into `%TEMP%\battledeck-test-home\app.yaml`, before the first start):
 
 ```yaml
 schemaVersion: 1
@@ -98,11 +98,11 @@ closed — what `-Fresh` seeds is what every shot below is measured against.
 ## Driving it
 
 `tools/capture-run.ps1` walks a **human** through the shots — announcement, countdown, capture; it
-does not click anything itself. `tools/drive-smurftown.ps1` does the clicking too:
+does not click anything itself. `tools/drive-battledeck.ps1` does the clicking too:
 
 ```powershell
-.\tools\drive-smurftown.ps1 -Do 'front; click:139,140; wait:600; move:660,770; shot:filter-game'
-.\tools\drive-smurftown.ps1 -Lang de -Do 'front; move:20,780; shot:overview'
+.\tools\drive-battledeck.ps1 -Do 'front; click:139,140; wait:600; move:660,770; shot:filter-game'
+.\tools\drive-battledeck.ps1 -Lang de -Do 'front; move:20,780; shot:overview'
 ```
 
 Commands: `front`, `click:X,Y`, `right:X,Y`, `move:X,Y`, `wheel:X,Y,N`, `key:NAME`, `type:TEXT`,
@@ -213,7 +213,7 @@ twelve-shot sequence above, not folded into it.
 
 ```powershell
 # stop the running instance first, then, before starting it again:
-# %TEMP%\smurftown-test-home\app.yaml, in the update: section
+# %TEMP%\battledeck-test-home\app.yaml, in the update: section
 ```
 
 ```yaml
@@ -238,10 +238,10 @@ folder whose path names nobody, and reuse that same publish for every language p
 
 ```powershell
 .\dev.cmd publish
-Copy-Item dist\publish\* C:\Users\Public\Smurftown\ -Recurse -Force
+Copy-Item dist\publish\* C:\Users\Public\Battledeck\ -Recurse -Force
 # then start it with $env:SMURFTOWN_HOME pointed at the test-home folder, e.g.:
-$env:SMURFTOWN_HOME = "$env:TEMP\smurftown-test-home"
-Start-Process 'C:\Users\Public\Smurftown\Smurftown.exe'
+$env:SMURFTOWN_HOME = "$env:TEMP\battledeck-test-home"
+Start-Process 'C:\Users\Public\Battledeck\Battledeck.exe'
 ```
 
 ## Afterwards

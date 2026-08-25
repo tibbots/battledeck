@@ -1,0 +1,360 @@
+﻿# The texts of the interface - GERMAN.
+#
+# Translation of en.yaml. That file holds the rules, the meaning of the placeholders and the
+# length limits; this file holds only the words and whatever is specific to this language.
+#
+# NOT TRANSLATED, because they are measured values or product names: the words in
+# GameVocabulary (the text that stands in the GAME), "Heroes of the Storm", "Battle.net", the
+# abbreviations EU/AM/AS - and the content of every placeholder that carries an exception text.
+
+# =========================================================== Main window =============
+# "OPTIONEN" and not "EINSTELLUNGEN": the tab is 160 px wide, the longer word
+# would need about 185. See the length limits in en.yaml.
+main.tabAccounts: KONTEN
+main.tabSettings: OPTIONEN
+
+# =========================================================== Filter bar =============
+accounts.filter: FILTER
+accounts.heroFilterHint: Nach Helden filtern - ein Konto bleibt stehen, wenn es einen der gewählten Helden besitzt
+accounts.clearHeroFilter: Heldenfilter zurücksetzen
+accounts.heroFilterEmpty: HELDEN
+accounts.heroFilterAny: "EINER VON {0}"
+accounts.heroFilterOverflow: "+{0} \xB7 EINER VON {1}"
+accounts.regionFilterHint: Zeigt {0} - Konten, die dort nicht spielen, sind ausgeblendet
+accounts.rotationUnknown: FREI ?
+accounts.rotationCount: FREI {0}
+accounts.rotationByHand: " (von Hand gesetzt)"
+accounts.rotationHint: "Freie Rotation {0} - {1} Helden{2}\nKlicken zum Bearbeiten"
+accounts.rotationHintUnknown: "Freie Rotation {0} - nicht im Kalender\nKlicken, um die freien Helden dieser Periode einzutragen"
+accounts.archiveShow: Archivierte Konten zeigen
+accounts.archiveShowing: Zeigt archivierte Konten - klicken, um zurückzugehen
+accounts.rankFilterHint: Nach Rang filtern - ein Konto bleibt stehen, wenn sein Rang eine der gewählten Stufen ist
+accounts.rankUnranked: Ohne Rang
+accounts.sortLabel: Sortierung
+accounts.sortByLastRead: Zuletzt gelesen
+accounts.sortByName: Name
+accounts.sortByRank: Rang
+accounts.sortByGold: Gold
+accounts.sortByHeroesRead: Helden gelesen
+accounts.sortDirectionHint: Sortierrichtung umkehren
+accounts.filterCount: "{0} von {1}"
+accounts.emptyTitle: Noch keine Konten
+accounts.emptyLead: Es gibt zwei Wege, ein Konto hier hineinzubekommen.
+accounts.emptyOption1Title: Konto hinzufügen
+accounts.emptyOption1Hint: "Gib die E-Mail und das Passwort ein. Battledeck kann dann Heroes of the Storm starten und es für dich anmelden."
+accounts.emptyOption1Button: Konto hinzufügen
+accounts.emptyOption2Title: Selbst anmelden
+accounts.emptyOption2Hint: "Starte Heroes of the Storm und melde dich an - so bekommt Battledeck dabei nie ein Passwort zu sehen. Sobald du im Hauptmenü bist, erscheint oben in diesem Fenster ein Button - klick ihn an und wähle 'Aktualisieren', um das Konto einzulesen, oder es hier anzulegen, wenn es neu ist. Nur einen Schritt überspringt dieser Weg: das Spiel für dich zu starten."
+accounts.noMatchesTitle: Keine Konten passen
+accounts.noMatchesHint: Passe die Suche, den Helden- oder Rangfilter oder das Spiel und die Region oben an.
+accounts.emptyArchiveTitle: Das Archiv ist leer
+accounts.emptyArchiveHint: Archivierte Konten erscheinen hier, sobald du eines über sein Zeilenmenü archivierst.
+
+# =========================================================== Account row =============
+row.noBattletagHint: Noch kein Battletag gelesen - starte das Konto mit 'Spielen und Daten holen'.
+row.noHeroes: noch keine Helden gelesen
+row.startMenuHint: Alle Wege, dieses Konto zu starten
+row.actionsMenuHint: Kopieren, bearbeiten, archivieren
+row.copyEmail: E-Mail kopieren
+row.copyPassword: Passwort kopieren
+row.editAccount: Konto bearbeiten
+row.archive: Archivieren
+row.archiveHint: Archivieren - das Konto bleibt, es verlässt nur die Liste
+row.restore: Zurückholen
+row.restoreHint: Aus dem Archiv zurückholen
+row.regionHint: "{0} - Rang, Helden und Währungen darunter gehören zu dieser Region"
+row.penaltyOne: 1 Strafspiel
+row.penaltyMany: "{0} Strafspiele"
+row.placementsPending: Platzierung offen
+row.rankPlacements: "{0} - Platzierung offen"
+row.rankClickHint: Klicken, um den Rang zu korrigieren
+row.rankProgress: "{0} ({1} / {2})"
+row.neverRead: in dieser Region nie gelesen
+row.readAt: gelesen {0}
+row.heroCount: "{0} von {1} Helden"
+row.heroesClickHint: Klicken, um die Helden zu bearbeiten
+row.noData: Noch keine {0}-Daten
+row.noDataOverwatch: Hier stünden Rang je Rolle, Empfehlungsstufe und Wettkampfpunkte.
+row.noDataWow: Hier stünden Charakter, Klasse, Gegenstandsstufe und Mythisch+-Wertung.
+row.noDataDiablo: Hier stünden Klasse, Stufe, Paragon und Qualstufe.
+
+# =========================================================== Start menu =============
+start.play: Spielen
+start.playHint: starten und anmelden - es wird nichts gelesen
+start.playRead: Spielen und Daten holen
+start.playReadHint: starten, anmelden, lesen - das Spiel bleibt offen
+start.refresh: Daten holen
+start.refreshHint: starten, anmelden, lesen, dann das Spiel beenden
+start.chests: Beutetruhen öffnen
+start.chestsHint: starten, anmelden, alle Truhen öffnen, lesen, dann beenden
+
+# =========================================================== Running client ========
+running.hint: Heroes of the Storm läuft. Liest das Konto, das angemeldet ist - ohne es abzumelden und ohne den Client zu schließen.
+
+# The two entries of the menu under the chip. The chip carried one action until 23.08.2026
+# and has two since; the hints say what each of them costs in time, because that is the
+# difference somebody weighs before clicking.
+running.menuRefresh: Daten holen
+running.menuRefreshHint: Rang, Helden und Währungen lesen - ein paar Sekunden
+running.menuChests: Beutetruhen öffnen
+running.menuChestsHint: erst alle Truhen leeren, dann lesen - dauert Minuten
+
+# =========================================================== Run guide ============
+run.title: Aktualisieren
+run.explain: "Heroes of the Storm nimmt Klicks nur an, solange es im Vordergrund ist. Hol es mit Alt+Tab nach vorn - dieses Fenster wartet, das Auslesen startet von allein."
+run.stepFront: Heroes of the Storm Fenster in den Vordergrund holen
+run.stepAccount: Konto erkennen
+run.stepRegion: Region klären
+run.stepRead: Daten lesen
+run.stepDone: Fertig
+run.bringToFront: Warte darauf, dass Heroes of the Storm vorn ist ...
+run.backToFront: Hol Heroes of the Storm wieder nach vorn ...
+run.regionWaiting: Warte auf deine Antwort
+run.cancel: Abbrechen
+run.close: Schließen
+run.timeout: "Der Client kam in {0} Sekunden nicht in den Vordergrund."
+run.cancelled: Abgebrochen.
+# region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
+region.pickQuestion: "{0} ist angemeldet. Der Client sagt nicht, in welcher Region er spielt - wähle sie."
+
+# =========================================================== Reuse guide ===========
+# The account row's version of the run guide above: reusing a client that is already
+# running to switch it to a KNOWN account, instead of reading whichever one is already
+# signed in. Steps not covered here (front, read, done, cancel, close, timeout, cancelled)
+# reuse the run.* keys - identical wording, no reason for a second translation of the same
+# sentence.
+reuse.title: Konto wechseln
+reuse.explain: "Heroes of the Storm nimmt Klicks nur an, solange es im Vordergrund ist. Hol es mit Alt+Tab nach vorn - dieses Fenster wartet, dann wird das aktuelle Konto abgemeldet und {0} angemeldet."
+reuse.stepSwitch: Konto wechseln
+
+# =========================================================== Currencies ============
+currency.gold: Gold
+currency.shards: Splitter
+currency.gems: Edelsteine
+currency.level: Stufe
+currency.chests: Beutetruhen
+
+# =========================================================== Edit dialog ===========
+dialog.title: Konto anlegen oder ändern
+dialog.nothingToConfigure: Hier gibt es noch nichts einzustellen.
+dialog.tabAccount: KONTO
+dialog.save: Speichern
+dialog.cancel: Abbrechen
+dialog.battletag: BATTLETAG
+dialog.battletagHint: "Wird aus dem Spiel gelesen, nicht getippt.\nStarte das Konto mit 'Spielen und Daten holen', damit er hier steht."
+dialog.battletagUnread: noch nicht gelesen
+dialog.email: KONTO-E-MAIL
+dialog.password: KONTO-PASSWORT
+dialog.gamesAndRegions: SPIELE UND REGIONEN
+dialog.gamesRegionsHint: Hake jede Region an, in der du ein Spiel spielst. Ein Spiel ohne Region wird nicht gespielt, und jede Region mit mindestens einem Spiel bekommt eine eigene Zeile in der Übersicht.
+dialog.regionEurope: EUROPA
+dialog.regionAmericas: AMERIKA
+dialog.regionAsia: ASIEN
+dialog.notes: NOTIZEN
+dialog.regionTabHint: Die Werte dieser Region zeigen und bearbeiten
+dialog.regionScope: Rang, Strafspiele und Helden darunter gehören zu {0}
+dialog.pickRegionFirst: Wähle zuerst im Reiter KONTO eine Region
+dialog.rank: RANG
+dialog.penaltyGames: STRAFSPIELE
+dialog.penaltyHint: "Strafspiele: {0}\nLinksklick +1, Rechtsklick -1"
+dialog.placements: PLATZIERUNG
+dialog.placementsPending: Platzierung offen
+dialog.placementsHint: "Es stehen noch Platzierungsspiele aus (meist 3).\nDer Rang bleibt gespeichert, er wird nur als noch nicht gültig gezeigt."
+dialog.needEmail: E-Mail fehlt
+dialog.needGame: wähle mindestens ein Spiel und eine Region dafür
+
+# =========================================================== Hero picker ===========
+heroes.windowTitle: Helden
+heroes.titleOwned: ERWORBENE HELDEN
+heroes.titleFilter: NACH HELDEN FILTERN
+heroes.titleRotation: FREIE ROTATION
+heroes.countOwned: "{0} / {1} erworben"
+heroes.countSelected: "{0} gewählt"
+heroes.countFree: "{0} / {1} frei"
+heroes.matchOne: 1 Zeile passt
+heroes.matchMany: "{0} Zeilen passen"
+heroes.noMatch: Kein Held dieses Namens.
+# The bulk buttons. They are named differently once narrowed down - they always only
+# act on what's currently visible.
+heroes.selectAll: alle wählen
+heroes.selectShown: sichtbare wählen
+heroes.clearAll: alle abwählen
+heroes.clearShown: sichtbare abwählen
+heroes.freeThisPeriod: diese Periode frei
+heroes.hintClickKey: Klick
+heroes.hintClickText: " wählt einen Helden \xB7 "
+heroes.hintEscKey: Esc
+heroes.hintEscText: " schließt"
+
+# =========================================================== Settings =============
+settings.interfaceLanguage: Sprache
+settings.interfaceLanguageHint: "Die Sprache, in der Battledeck selbst spricht. Unabhängig von der Clientsprache darunter: ein französischer Client mit deutscher Oberfläche ist ein gültiger Zustand, und genau dafür gibt es zwei Einstellungen statt einer. Wirkt sofort, ohne Neustart. Das Protokoll bleibt in jeder Sprache englisch - es ist für den geschrieben, der einen Fehler sucht, und dieselbe Meldung darf nicht vier Wortlaute haben."
+settings.installation: Installation
+settings.pathHint: Gestartet wird der Switcher darunter - Support64\HeroesSwitcher_x64.exe, nicht der Starter im Wurzelordner. Battle.net wird nicht gebraucht; das Spiel bringt seine eigene Anmeldemaske mit.
+settings.pathMissing: Nicht gefunden. Nimm 'Laufwerke suchen' oder installiere das Spiel.
+settings.pathGone: Diesen Pfad gibt es nicht mehr.
+settings.scanAll: Laufwerke suchen
+settings.stopScan: Anhalten
+settings.scanning: Suche in {0}
+settings.scanNone: Auf keinem festen Laufwerk gefunden.
+settings.scanOne: Eine Installation gefunden.
+settings.scanMany: "{0} Installationen gefunden."
+settings.scanFailed: "Suche fehlgeschlagen: {0}"
+settings.notSaved: "Einstellungen nicht gespeichert: {0}"
+settings.inputSpeed: Eingabetempo
+settings.inputSpeedHint: "Wie schnell die App im Spiel tippt und klickt. Ein Faktor auf jede Pause und nicht fünfundzwanzig Einzelwerte - die stehen in einem Verhältnis, das jemand einmal ertastet hat. Das Warten auf das Spiel (Fenster, Anmeldemaske, Menü) hängt nicht daran: ein knapperer Wert beschleunigt dort nichts, er gibt nur früher auf."
+settings.speedHint.fast: Halbe Pausen. Probiere das zuerst - verschluckt das Spiel Tastendrücke, geh zurück.
+settings.speedHint.normal: Der gemessene Ausgangswert.
+settings.speedHint.slow: Drei Viertel mehr. Für langsame Maschinen, oder wenn das Anmelden scheitert.
+settings.clientLanguage: Sprache des Clients
+settings.clientLanguageHint: "Die Sprache, in der dein Heroes-of-the-Storm-Client läuft. Die Texterkennung vergleicht das Gelesene gegen Wörter, die auf dem Schirm stehen - Rangstufen, den Beutereiter, Heldennamen - und die sind übersetzt. Das wirkt nur auf das Lesen: die Eichung ist sprachunabhängig, ein englischer Client verschiebt keinen Anker. Steht sie falsch, wird nichts erkannt - und damit auch nichts geschrieben."
+settings.clientLanguageMeasured: Am laufenden Client gemessen.
+settings.clientLanguageUnverified: Ungeprüft - es stand kein englischer Client zum Messen zur Verfügung. Wird nichts gelesen, gehört die Wortliste korrigiert.
+settings.savedAutomatically: Einstellungen werden beim Ändern sofort gespeichert, einen Speichern-Knopf gibt es nicht. Sie liegen in .smurftown\settings.yaml neben deiner Kontenliste.
+
+# =========================================================== Updates ==============
+# Two places show this: the version chip in the top right corner of the header, and
+# the ABOUT & UPDATES card at the foot of the settings tab. The chip carries both
+# version numbers and opens a flyout on a click; the card carries what has no room up
+# there - when GitHub was last asked, and whether this installation may replace itself.
+#
+# The two hint texts are the body of that flyout and differ in what the button DOES:
+# installHint where the app can replace itself, pageHint where it cannot and opens the
+# release page instead. The reason for the second case comes from update.reason* below
+# and is put into {1} - so the human reads WHY they have to do it by hand.
+update.available: "{0} verfügbar"
+update.installHint: "Version {0} ist verfügbar. Klicken, um sie herunterzuladen, zu prüfen und zu installieren - Battledeck startet sich selbst neu."
+update.pageHint: "Version {0} ist verfügbar. Klicken, um die Release-Seite zu öffnen - diese Installation kann sich nicht selbst ersetzen ({1})."
+update.reasonDevBuild: Entwicklungsversion
+update.reasonNotWritable: der Installationsordner ist schreibgeschützt
+update.reasonUnknown: der Installationsordner ist unbekannt
+update.preparing: Bereite vor
+update.downloading: Lade {0}% herunter
+update.verifying: Prüfe
+update.installing: Installiere
+# Both carry the text of an exception in {0}, and that stays ENGLISH - it is the same
+# string that goes into the log. Only the frame around it is translated, as with problem.* above.
+update.failed: "Aktualisierung fehlgeschlagen: {0}"
+update.failedHint: "Die Aktualisierung ist fehlgeschlagen: {0}\nKlicken, um die Release-Seite zu öffnen."
+
+update.failedShort: Update fehlgeschlagen
+
+update.section: "ÜBER & UPDATES"
+update.installed: Installierte Version
+update.latest: Neueste Version
+update.upToDate: Die neueste.
+update.lastCheck: Zuletzt geprüft
+update.lastCheckLine: "Zuletzt geprüft: {0}"
+update.lastCheckHint: "Battledeck fragt einmal pro Stunde bei GitHub nach, ob es eine neuere Version gibt - anonym, und ohne etwas über dich oder deine Konten zu senden. Das ist die einzige Anfrage, die diese Anwendung stellt. Abschalten lässt sie sich nicht; 'Jetzt prüfen' zieht die stündliche Prüfung nur vor."
+update.never: noch nie
+update.today: "heute, {0}"
+update.checkNow: Jetzt prüfen
+update.checking: Frage GitHub...
+update.install: Installieren
+update.whatsNew: Was ist neu
+update.openPage: Release-Seite
+update.selfUpdate: Selbstaktualisierung
+update.selfUpdateHint: "Ob diese Installation ihre eigene .exe ersetzen darf. Sie darf es nicht, wenn sie ein Build aus der Entwicklungsumgebung ist, wenn der Ordner schreibgeschützt ist - die alte Installation unter Programme - oder wenn der Pfad zur laufenden Datei unbekannt ist. Dann öffnet der Knopf stattdessen die Release-Seite."
+update.selfUpdateYes: möglich
+update.selfUpdateNo: "nicht möglich - {0}"
+
+# =========================================================== Progress ==============
+progress.reusing: Benutze den laufenden Client weiter
+progress.attaching: Übernehme den laufenden Client
+progress.starting: Starte Heroes of the Storm
+progress.waitLogin: Warte auf die Anmeldemaske
+progress.region: Setze die Region auf {0}
+progress.waitSettle: Warte, bis die Maske steht
+progress.signingIn: Melde {0} an
+progress.waitMenu: Warte auf das Hauptmenü
+progress.signedIn: Angemeldet
+progress.signingOut: Melde den laufenden Client ab
+progress.openCollection: Öffne die Sammlung
+progress.setFilter: Setze Filter und Sortierung
+progress.owned: "{0} von {1} Helden erworben"
+progress.cardsOf: "{0} von {1} Karten gelesen"
+progress.cards: "{0} Karten gelesen"
+progress.chest: Öffne Truhe {0} von {1}
+
+# =========================================================== Toasts ===============
+toast.accountReactivated: "{0} war archiviert - wiederhergestellt, statt ein doppeltes Konto anzulegen"
+toast.signedIn: "{0} ist angemeldet"
+toast.nothingChanged: "{0}: nichts geändert"
+toast.copied: "{0} in die Zwischenablage kopiert"
+toast.copyEmpty: "{0} ist leer - nichts kopiert"
+toast.clipboardBusy: Ein anderes Programm hält die Zwischenablage - versuch es noch einmal
+
+# =========================================================== What changed ==========
+change.battletagFirst: Battletag {0}
+change.battletagRenamed: Battletag {0} -> {1}
+change.levelFirst: Stufe {0}
+change.level: Stufe {0} -> {1}
+change.rankFirst: Rang {0}
+change.rank: Rang {0} -> {1}
+change.rankPointsFirst: Rangpunkte {0} von {1}
+change.rankPoints: Rangpunkte {0} -> {1} von {2}
+change.placementsPending: Platzierung offen
+change.placementsDone: Platzierung abgeschlossen
+change.penalty: Strafspiele {0} -> {1}
+change.valueFirst: "{0} {1}"
+change.value: "{0} {1} -> {2}"
+change.chestsUnconfirmed: "{0}: mindestens eine, genaue Anzahl nicht lesbar"
+change.chestOne: 1 Truhe geöffnet
+change.chestMany: "{0} Truhen geöffnet"
+change.heroesAdded: "{0} Helden dazu ({1} insgesamt)"
+change.heroes: Helden {0} -> {1} ({2} dazu, {3} weg)
+change.regionAdded: Region {0} hinzugefügt
+change.accountCreated: Neues Konto {0} angelegt
+change.reactivated: Nicht mehr archiviert
+
+# =========================================================== What went wrong ========
+# Only the frame is translated - what stands in {0} is an exception text or the note
+# of a reader and stays English, because the same string goes into the log.
+problem.chestsFailed: "Truhen öffnen fehlgeschlagen: {0}"
+problem.profileFailed: "Profil lesen fehlgeschlagen: {0}"
+problem.penaltyFailed: "Deserteur-Status lesen fehlgeschlagen: {0}"
+problem.statsFailed: "Kennzahlen lesen fehlgeschlagen: {0}"
+problem.heroesFailed: "Helden lesen fehlgeschlagen: {0}"
+problem.heroesMerged: Helden vereinigt statt ersetzt - {0}
+problem.tagNotATagFirst: "Das Profil zeigt '{0}' - das ist kein Battletag, für '{1}' wird nichts übernommen."
+problem.tagNotATag: "Das Profil zeigt '{0}', erwartet war '{1}' - das ist kein Battletag, es wird nichts übernommen."
+problem.tagForeign: "Das Profil zeigt '{0}' - das gehört einem anderen Konto ({1}). Für '{2}' wird nichts übernommen."
+problem.tagAmbiguous: "Das Profil zeigte '{0}', die zweite Aufnahme '{1}' - uneindeutig, für '{2}' wird nichts übernommen."
+problem.runBusy: Ein Spieldurchlauf läuft bereits - warte, bis er fertig ist.
+problem.runNotATag: "Das Profil zeigt '{0}' - das ist kein Battletag. Es wird nichts geschrieben."
+problem.runEmailTaken: "Die E-Mail '{0}' gehört bereits zu einem anderen Konto in Battledeck - prüfe auf einen Tippfehler. Es wird nichts geschrieben."
+problem.runAmbiguousTag: "Der Battletag '{0}' gehört zu mehr als einem Konto in Battledeck - mehrdeutig. Es wird nichts geschrieben."
+
+# =========================================================== Error window ==========
+error.title: Anwendungsfehler
+error.ok: OK
+error.unexpected: "Unerwarteter Fehler: {0}"
+
+# =========================================================== Enumerations ==========
+# NOTE on the rank tiers: the same words stand a second time in
+# GameVocabulary.Tiers. There they are MEASURED VALUES that text recognition compares against -
+# here it is display. Whoever merges them makes either the recognition blind or the
+# display wrong. That they read the same in German is coincidence, not a connection.
+rank.none: Kein Rang
+rank.bronze: Bronze
+rank.silver: Silber
+rank.gold: Gold
+rank.platinum: Platin
+rank.diamond: Diamant
+rank.master: Master
+rank.grandmaster: Großmeister
+
+role.tank: Tank
+role.bruiser: Bruiser
+role.meleeassassin: Nahkampf-Assassine
+role.rangedassassin: Fernkampf-Assassine
+role.healer: Heiler
+role.support: Unterstützer
+
+region.europe: Europa
+region.americas: Amerika
+region.asia: Asien
+
+speed.slow: Langsam
+speed.normal: Normal
+speed.fast: Schnell

@@ -1,0 +1,72 @@
+<Window x:Class="Battledeck.UI.MVVM.View.ReuseGuide"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Battledeck.UI.MVVM.View"
+        xmlns:loc="clr-namespace:Battledeck.UI.MVVM"
+        mc:Ignorable="d"
+        UseLayoutRounding="True"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        WindowStartupLocation="CenterOwner"
+        Background="#23252B"
+        BorderBrush="#313339"
+        BorderThickness="1"
+        SizeToContent="Height"
+        Title="{loc:Str reuse.title}" Width="520"
+        d:DataContext="{d:DesignInstance {x:Type local:ReuseGuideViewModel}}">
+
+    <!--
+        ======================================================================
+        THE REUSE GUIDE. It walks a human through switching a client that is
+        already running to a different account, and it exists for the same
+        measured fact RunGuide does: the client has to hold the foreground,
+        and only a human can put it there. The reasoning in full sits on
+        ReuseGuideViewModel; RunGuideBase carries what the two windows share.
+        ======================================================================
+
+        HEIGHT IS NOT FIXED, for the same reason as RunGuide: the step count
+        varies with the plan (two steps for plain "Play", four for "Play and
+        read data") and a fixed height would leave a hole for the shorter
+        ones.
+
+        520 WIDE, same number as RunGuide and for the same reason: the detail
+        line under a step carries full sentences, and the German ones are the
+        longest of the four languages.
+
+        NO ESCAPE BINDING and NO DEFAULT BUTTON, both for the reason RunGuide
+        has them: Escape is one keystroke away from the Alt+Tab this window
+        keeps asking for, and a return key that aborts a switch mid-sign-in
+        is not a convenience.
+    -->
+
+    <StackPanel Orientation="Vertical">
+        <TextBlock Text="{Binding Title}" Foreground="White" FontSize="24"
+                   FontWeight="DemiBold" HorizontalAlignment="Left" Margin="20,20,0,0" />
+
+        <!-- The sentence that says why a human is needed at all. It is not decoration: without
+             it the window is a progress bar that inexplicably refuses to progress. -->
+        <TextBlock Text="{Binding Explain}" Foreground="#8F8F92" FontSize="13"
+                   TextWrapping="Wrap" Margin="20,10,20,0" />
+
+        <Separator Background="#313339" Margin="0,18,0,0" />
+
+        <!-- THE FUNNEL, off the same template RunGuide uses - see RunStepsTemplate.xaml for
+             the drawing rules, RunStep.cs for what a step is. Two to four rows depending on
+             the plan; no region section here, unlike RunGuide - the row already knows which
+             region it is starting in. -->
+        <ItemsControl ItemsSource="{Binding Steps}" Margin="20,14,20,0"
+                      ItemTemplate="{StaticResource RunStepTemplate}" />
+
+        <Separator Background="#313339" Margin="0,18,0,10" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,0,20,20">
+            <!-- ONE button for two jobs - "Cancel" while it runs, "Close" when it is over.
+                 Rarely pressed once it is over: a successful switch closes the window itself,
+                 see ReuseGuideViewModel.AutoCloseOnSuccess. This is the failure path's button. -->
+            <Button Style="{StaticResource BattlenetButtonSecondaryTheme}"
+                    Content="{Binding CloseLabel}" Width="140" Height="30"
+                    Command="{Binding CloseCommand}" />
+        </StackPanel>
+    </StackPanel>
+</Window>

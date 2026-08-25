@@ -39,15 +39,15 @@ compares the README against what they see on screen, so the README has to use th
 
 | Language | Read this first |
 |---|---|
-| German | `Smurftown/Backend/Texts/de.yaml` |
-| French | `Smurftown/Backend/Texts/fr.yaml` |
-| Spanish | `Smurftown/Backend/Texts/es.yaml` |
-| all | `Smurftown/Backend/Texts/en.yaml` — the English original of the same strings |
+| German | `Battledeck/Backend/Texts/de.yaml` |
+| French | `Battledeck/Backend/Texts/fr.yaml` |
+| Spanish | `Battledeck/Backend/Texts/es.yaml` |
+| all | `Battledeck/Backend/Texts/en.yaml` — the English original of the same strings |
 
 Terms to look up rather than invent: free rotation, loot chests, shards, gems, penalty games,
 placement, rank/tier/division, archive, region, collection, settings, client language, input speed.
 
-**For in-game screens and tabs**, the authority is `Smurftown/Backend/Automation/GameVocabulary.cs`
+**For in-game screens and tabs**, the authority is `Battledeck/Backend/Automation/GameVocabulary.cs`
 — those words are measured against the real client (e.g. `COFFRES` for loot in French,
 `Ligue Storm` for the ranked league, where the league name stays English).
 
@@ -59,7 +59,7 @@ Spanish.
 
 1. **Translate** prose, headings, table cells and image alt texts.
 2. **Do not translate**: image paths (`docs/images/*.png`), file paths
-   (`C:\Users\YOUR_USER\.smurftown`, `data.yaml`, `settings.yaml`), product names (Smurftown,
+   (`C:\Users\YOUR_USER\.smurftown`, `data.yaml`, `settings.yaml`), product names (Battledeck,
    Battle.net, Heroes of the Storm, Windows, SmartScreen, .NET), version numbers, URLs, code spans.
 3. **Preserve every factual and privacy claim exactly.** The README says where the data lives,
    that passwords are stored in plain text, and that the application makes **one** request a day

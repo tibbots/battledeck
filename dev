@@ -10,10 +10,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-PROJECT="Smurftown/Smurftown.csproj"
-TESTS="Smurftown.Tests/Smurftown.Tests.csproj"
+PROJECT="Battledeck/Battledeck.csproj"
+TESTS="Battledeck.Tests/Battledeck.Tests.csproj"
 VDPROJ="Setup/Setup.vdproj"
-MANIFEST="Smurftown/app.manifest"
+MANIFEST="Battledeck/app.manifest"
 CHANGELOG="CHANGELOG.md"
 RID="win-x64"
 DIST="dist"
@@ -89,14 +89,14 @@ cmd_publish() {
         -p:PublishSingleFile=true \
         -p:IncludeNativeLibrariesForSelfExtract=true \
         -o "$out"
-    echo "==> Done: $out/Smurftown.exe"
+    echo "==> Done: $out/Battledeck.exe"
 }
 
 cmd_release() {
     local version stage zip
     version="$(read_version)"
     stage="$DIST/stage"
-    zip="$DIST/Smurftown_${version}_${RID}.zip"
+    zip="$DIST/Battledeck_${version}_${RID}.zip"
 
     cmd_publish
 
@@ -105,7 +105,7 @@ cmd_release() {
     mkdir -p "$stage"
     # Copy deliberately instead of zipping the publish folder: the .pdb sits there
     # too, and it does not belong in a release.
-    cp "$DIST/publish/Smurftown.exe" "$stage/"
+    cp "$DIST/publish/Battledeck.exe" "$stage/"
     cp README.md "$stage/"
 
     echo "==> Zipping..."
@@ -228,8 +228,8 @@ Commands:
   build              dotnet build -c Debug
   test [args...]     dotnet test - extra args go to dotnet test, e.g. --filter
   publish            Single-file Release publish for win-x64 into dist/publish/
-  release            publish + dist/Smurftown_<version>_win-x64.zip + checksums.txt
-  version            Print the version from Smurftown.csproj
+  release            publish + dist/Battledeck_<version>_win-x64.zip + checksums.txt
+  version            Print the version from Battledeck.csproj
   version <x.y.z>    Set it in csproj, app.manifest and Setup.vdproj
                      (fresh ProductCode + PackageCode, UpgradeCode untouched)
   notes [x.y.z]      Print the CHANGELOG.md section of that version (default: the

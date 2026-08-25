@@ -25,7 +25,7 @@
 .PARAMETER Lang
     Which README the run is for: 'de', 'fr' or 'es'. Passed through to capture-window.ps1 -
     shots land under docs/images/<Lang>/ instead of docs/images/. Omit it for English. Set
-    Smurftown's own UI language to match BEFORE starting it - this script only captures,
+    Battledeck's own UI language to match BEFORE starting it - this script only captures,
     it does not switch the app's language.
 
 .EXAMPLE

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Generates Smurftown/UI/Images/Ranks/norank.png - the sign for "no rank".
+"""Generates Battledeck/UI/Images/Ranks/norank.png - the sign for "no rank".
 
 SECOND USE, and that is intentional: this circle was originally drawn as the sign for
 open placement matches, because the game shows it in the profile at exactly the spot
@@ -50,7 +50,7 @@ import os
 from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join('Smurftown', 'UI', 'Images', 'Ranks', 'norank.png')
+OUT = os.path.join('Battledeck', 'UI', 'Images', 'Ranks', 'norank.png')
 REFERENCE = os.path.join(HERE, 'placement-referenz.png')
 # THE DISC SITS ON THE MEDALS' CANVAS, and that is the reason for both numbers here.
 # It stands in the same image area as they do (Image with Height 78, Width 71,

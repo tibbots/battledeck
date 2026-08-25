@@ -8,7 +8,7 @@ The documents fall into two groups, and the difference is not their subject but 
 
 ## How this application is built
 
-True for Smurftown and nowhere else. Start at the first row: it is the checklist, and it points at
+True for Battledeck and nowhere else. Start at the first row: it is the checklist, and it points at
 the rest.
 
 | File | What it covers |

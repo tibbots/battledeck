@@ -1,4 +1,4 @@
-# Smurftown
+# Battledeck
 
 [English](README.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · **Español**
 
@@ -42,7 +42,7 @@ marcha.** Todo lo que sigue explica cómo.
   contador de cuentas que coinciden están disponibles para cada juego, no solo Heroes of the Storm.
 * **Una lista vacía se explica sola.** ¿Aún sin cuentas? La ventana muestra las dos formas de
   llenarla en vez de un área vacía: escribir una a mano con su correo y contraseña, o iniciar
-  Heroes of the Storm tú mismo e iniciar sesión — Smurftown la lee del juego en ese momento.
+  Heroes of the Storm tú mismo e iniciar sesión — Battledeck la lee del juego en ese momento.
 
 ![El menú de la fila](docs/images/es/actions-menu.png)
 
@@ -102,10 +102,10 @@ escribe: aparece la primera vez que la cuenta se lee.
   Todo lo que hay en esa pestaña pertenece a **una sola** región; el selector de arriba indica
   cuál. Si juegas en dos, mantienes dos.
 * **O sáltate el menú de inicio — lee quién ya ha iniciado sesión.** En cuanto Heroes of the
-  Storm está en marcha, aparece un botón en la parte superior de la ventana de Smurftown. Haz
+  Storm está en marcha, aparece un botón en la parte superior de la ventana de Battledeck. Haz
   clic en él y la aplicación lee esa cuenta de la misma forma, sin tocar el inicio de sesión del
   propio juego: no cierra la sesión de nadie ni cierra nada. Inicia sesión con un battletag que
-  Smurftown nunca ha visto, y el botón crea la cuenta al instante en lugar de rechazarla — sin
+  Battledeck nunca ha visto, y el botón crea la cuenta al instante en lugar de rechazarla — sin
   contraseña guardada, sin correo escrito, sin preguntar nada.
 * **Abre los cofres.** Primero abre todos los cofres pendientes, así que las cifras que siguen
   son las de después de abrirlos, no las de antes.
@@ -202,7 +202,7 @@ las medidas salen mal.
 
 ## Updates
 
-Una vez a la hora, mientras está abierta, Smurftown le pregunta a GitHub si existe una versión
+Una vez a la hora, mientras está abierta, Battledeck le pregunta a GitHub si existe una versión
 más reciente. La petición es anónima y no lleva nada sobre ti, sobre tus cuentas ni sobre lo
 que hayas hecho con ellas: es la misma pregunta que cualquiera puede hacerle a un repositorio
 público. Si hay algo más nuevo, la insignia de versión de la esquina superior derecha lo
@@ -228,9 +228,9 @@ cortafuegos: la comprobación falla en silencio y todo lo demás sigue funcionan
 
 # Instalación
 
-Descarga `Smurftown_<version>_win-x64.zip` desde
-[Releases](https://github.com/tibbots/smurftown/releases), descomprímelo donde quieras y ejecuta
-`Smurftown.exe`. No hay nada que instalar: la aplicación guarda todo en
+Descarga `Battledeck_<version>_win-x64.zip` desde
+[Releases](https://github.com/tibbots/battledeck/releases), descomprímelo donde quieras y ejecuta
+`Battledeck.exe`. No hay nada que instalar: la aplicación guarda todo en
 `C:\Users\YOUR_USER\.smurftown` y no toca el resto de tu equipo.
 
 **Necesitas el .NET 8 Desktop Runtime.** Descárgalo desde
@@ -245,7 +245,7 @@ Cada versión también incluye un `checksums.txt`. Para comprobar lo que descarg
 PowerShell:
 
 ```powershell
-Get-FileHash .\Smurftown_1.0.0_win-x64.zip -Algorithm SHA256
+Get-FileHash .\Battledeck_1.0.0_win-x64.zip -Algorithm SHA256
 ```
 
 Requisitos:
@@ -267,7 +267,7 @@ Requisitos:
 # Preguntas frecuentes
 
 ### ¿Dónde puedo descargar la aplicación?
-Desde [Releases](https://github.com/tibbots/smurftown/releases).
+Desde [Releases](https://github.com/tibbots/battledeck/releases).
 
 ### ¿Esta aplicación envía o recibe datos de algún servidor en internet?
 Una vez a la hora le pregunta a `api.github.com` si existe una versión más reciente, de forma
@@ -285,10 +285,10 @@ Solo en archivos locales, dentro de la carpeta `.smurftown` de tu directorio per
 automáticamente, y es la contrapartida deliberada que asume esta aplicación — trata esa carpeta
 como lo que es: un almacén de contraseñas.
 
-### ¿Tengo que darle mi contraseña a Smurftown?
+### ¿Tengo que darle mi contraseña a Battledeck?
 No. Deja el campo de la contraseña en blanco al añadir una cuenta a mano, o sáltate el diálogo
 por completo — inicia Heroes of the Storm tú mismo, inicia sesión y usa «Actualizar» en el botón
-de la parte superior de la ventana: Smurftown crea la cuenta a partir de lo que lee y nunca llega
+de la parte superior de la ventana: Battledeck crea la cuenta a partir de lo que lee y nunca llega
 a ver la contraseña. Lo único que falta sin ella es el inicio automático; leer el rango, los
 héroes y las monedas del juego sigue funcionando igual.
 

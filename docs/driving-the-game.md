@@ -1,7 +1,7 @@
 # Driving Heroes of the Storm from the Outside
 
 What an application needs that starts the game, logs in, and reads data out of it. The
-code for this lives in `Smurftown/Backend/Automation/`; what follows is the knowledge
+code for this lives in `Battledeck/Backend/Automation/`; what follows is the knowledge
 **behind** the code — in particular, what cannot be read off it, because it consists of
 the mistakes that were made before it existed.
 

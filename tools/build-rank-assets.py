@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generates the HotS rank medals in Smurftown/UI/Images/Ranks/.
+Generates the HotS rank medals in Battledeck/UI/Images/Ranks/.
 
 Why this script exists: there is no official source with finished medals per
 division. Both source images show the tiers exclusively with a baked-in "1"; the
@@ -79,7 +79,7 @@ from collections import deque
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageSequence
 
-OUT = os.path.join('Smurftown', 'UI', 'Images', 'Ranks')
+OUT = os.path.join('Battledeck', 'UI', 'Images', 'Ranks')
 CANVAS = (160, 176)
 TIERS = ['bronze', 'silver', 'gold', 'platinum', 'diamond']
 FONT = 'C:/Windows/Fonts/seguibl.ttf'

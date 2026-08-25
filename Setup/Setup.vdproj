@@ -164,7 +164,7 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:Smurftown"
+        "ProductName" = "8:Battledeck"
         "ProductCode" = "8:{024C7A8D-30AD-4CCC-AF64-CE2FF66B36C9}"
         "PackageCode" = "8:{AE1E5DBB-0B6E-4368-A14D-A1A75FFCFB6F}"
         "UpgradeCode" = "8:{D4E02593-231C-42BB-A325-C973984FBA0D}"
@@ -288,7 +288,7 @@
         {
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_6F0E432803E24CBAA68E66495BA35040"
             {
-            "Name" = "8:Smurftown"
+            "Name" = "8:Battledeck"
             "Arguments" = "8:"
             "Description" = "8:"
             "ShowCmd" = "3:1"
@@ -701,7 +701,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_E782E2E7DA0B4AE7A84977631DCDAA28"
             {
-            "SourcePath" = "8:..\\Smurftown\\obj\\x64\\Release\\net8.0-windows10.0.19041.0\\apphost.exe"
+            "SourcePath" = "8:..\\Battledeck\\obj\\x64\\Release\\net8.0-windows10.0.19041.0\\apphost.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_3E5DCEA2FEEB40BD8F17860F6CC01960"

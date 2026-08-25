@@ -52,7 +52,7 @@ change — the build is no substitute there.
 - **New modal**: `DialogBounds.FitToMainWindow(this)` in the constructor, right after
   `InitializeComponent()`. Set the declared size in XAML to the same value so the designer does not
   lie.
-- **New image**: generate it via a script in `tools/` first, then enter it in `Smurftown.csproj` as
+- **New image**: generate it via a script in `tools/` first, then enter it in `Battledeck.csproj` as
   `<Resource Include>` **plus** `<None Remove>`. Without the entry the `pack://` URI loads into
   nothing at runtime — the build reports nothing. **`UI\Images\Ranks\*.png` is the one folder
   already covered by a wildcard**, so a new file there needs no csproj change and a removed one
@@ -152,7 +152,7 @@ change — the build is no substitute there.
   verifies it against **two years** — the same rule as measuring at two resolutions and for the same
   reason.
 - **No new framework and no DI container without asking.** The app is deliberately kept small.
-  The tests are no exception to that: `Smurftown.Tests` uses xUnit and nothing else — no mocking
+  The tests are no exception to that: `Battledeck.Tests` uses xUnit and nothing else — no mocking
   library, no assertion library, no fixture framework. A gateway is constructed with a folder,
   which is what the constructor argument is for.
 - **Changes to layout/paths in the `Setup` project cannot be verified here** — the user has to build
@@ -165,7 +165,7 @@ Known, not yet fixed. Do not touch these as drive-by cleanup — each is its own
 | Location | Problem |
 |---|---|
 | `BattlenetAccount.Equals` | identity only via email ⇒ changing the email creates a duplicate entry instead of an update. |
-| `Smurftown.csproj` | two `<Page Update>` entries on paths that do not exist (`UI\MVVM\View\Dialog\`, `UI\MVVM\Views\`). Dead configuration. |
+| `Battledeck.csproj` | two `<Page Update>` entries on paths that do not exist (`UI\MVVM\View\Dialog\`, `UI\MVVM\Views\`). Dead configuration. |
 | `Backend/ObservableHashSet.cs` | ~490 lines copied from EF Core, **completely unused**. |
 | `UI/MVVM/Controls/BindableRichTextBox.cs`, `View/RichTextBoxHelper.cs` | unused — the notes are written into the ViewModel via a code-behind `TextChanged` instead. |
 | `ErrorBox` / `ErrorBoxViewModel` | reachable only via the commented-out `ShowErrorDialog` route in `MainViewModel`. Effectively dead, errors go out as toasts. |

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Sets up a throwaway data folder with demo accounts and starts Smurftown against it.
+    Sets up a throwaway data folder with demo accounts and starts Battledeck against it.
 
 .DESCRIPTION
     Testing this app means clicking through it, and BattlenetAccountGateway rewrites the
@@ -9,7 +9,7 @@
     real account list, and "put the values back afterwards" is a step that works until the
     run that strands halfway.
 
-    So the app gets a different folder. SMURFTOWN_HOME does that (Smurftown/Directories.cs),
+    So the app gets a different folder. SMURFTOWN_HOME does that (Battledeck/Directories.cs),
     and this script fills it with the thirteen invented accounts from tools/demo-data.yaml -
     all addresses under example.com, all passwords obvious placeholders.
 
@@ -19,7 +19,7 @@
     the same one - drive-hots for the game path, capture-run for its safeguard.
 
 .PARAMETER Path
-    The folder. Default %TEMP%\smurftown-test-home. Refuses to be the real folder.
+    The folder. Default %TEMP%\battledeck-test-home. Refuses to be the real folder.
 
 .PARAMETER Fresh
     Delete the folder first. Without it an existing one is kept and only a missing
@@ -29,10 +29,10 @@
     Only set up and set the variable, start nothing.
 
 .PARAMETER Exe
-    Which build to start. Default: the newest Smurftown.exe of the known output folders.
+    Which build to start. Default: the newest Battledeck.exe of the known output folders.
 
 .PARAMETER Force
-    Start even though another Smurftown is already running. See the check below.
+    Start even though another Battledeck is already running. See the check below.
 
 .EXAMPLE
     .\tools\test-home.ps1
@@ -54,7 +54,7 @@ $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 $real = Join-Path $env:USERPROFILE '.smurftown'
 
-if (-not $Path) { $Path = Join-Path $env:TEMP 'smurftown-test-home' }
+if (-not $Path) { $Path = Join-Path $env:TEMP 'battledeck-test-home' }
 $Path = [IO.Path]::GetFullPath([Environment]::ExpandEnvironmentVariables($Path.Trim()))
 
 # THE ONE CHECK THAT MAY NOT BE SKIPPED. Everything below this line deletes files and
@@ -108,7 +108,7 @@ if (-not (Test-Path $appFile) -and -not (Test-Path $legacy)) {
 $env:SMURFTOWN_HOME = $Path
 Write-Host ''
 Write-Host "SMURFTOWN_HOME = $Path" -ForegroundColor Cyan
-Write-Host '  set for THIS shell. A Smurftown started from another one still uses the real folder.' -ForegroundColor DarkGray
+Write-Host '  set for THIS shell. A Battledeck started from another one still uses the real folder.' -ForegroundColor DarkGray
 
 if ($NoStart) { return }
 
@@ -116,24 +116,24 @@ if ($NoStart) { return }
 
 if (-not $Exe) {
     $candidates = @(
-        (Join-Path $repo 'Smurftown\bin\Debug\net8.0-windows10.0.19041.0\Smurftown.exe'),
-        (Join-Path $repo 'Smurftown\bin\Release\net8.0-windows10.0.19041.0\Smurftown.exe'),
-        (Join-Path $repo 'dist\publish\Smurftown.exe')
+        (Join-Path $repo 'Battledeck\bin\Debug\net8.0-windows10.0.19041.0\Battledeck.exe'),
+        (Join-Path $repo 'Battledeck\bin\Release\net8.0-windows10.0.19041.0\Battledeck.exe'),
+        (Join-Path $repo 'dist\publish\Battledeck.exe')
     ) | Where-Object { Test-Path $_ }
-    if (-not $candidates) { throw 'No Smurftown.exe found. Build first: ./dev build' }
+    if (-not $candidates) { throw 'No Battledeck.exe found. Build first: ./dev build' }
     $Exe = @($candidates | Sort-Object { (Get-Item $_).LastWriteTime } -Descending)[0]
 }
 
-# WHY THIS ABORTS INSTEAD OF WARNING: drive-smurftown.ps1 and capture-window.ps1 pick the
-# FIRST process named Smurftown that has a window. With two of them running, which window
+# WHY THIS ABORTS INSTEAD OF WARNING: drive-battledeck.ps1 and capture-window.ps1 pick the
+# FIRST process named Battledeck that has a window. With two of them running, which window
 # gets clicked is luck - and one of the two is showing the real list.
-$running = @(Get-Process -Name 'Smurftown' -ErrorAction SilentlyContinue)
+$running = @(Get-Process -Name 'Battledeck' -ErrorAction SilentlyContinue)
 if ($running.Count -gt 0 -and -not $Force) {
     # The parentheses around the concatenation are load-bearing: -f binds tighter than +,
     # so without them only the LAST fragment gets formatted - and that one carries no
     # placeholder. The message then names neither the count nor the PID it is telling you
     # to close, which is the one thing it exists to say.
-    throw (("ABORTED: {0} Smurftown already running (PID {1}). The drive scripts take the " +
+    throw (("ABORTED: {0} Battledeck already running (PID {1}). The drive scripts take the " +
             "first window they find and would then be clicking a coin flip. Close it, or " +
             "-Force if you know which one you mean.") -f $running.Count, ($running.Id -join ', '))
 }

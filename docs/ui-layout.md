@@ -1,6 +1,6 @@
 ﻿# UI layout budgets
 
-This page is the measured layout of Smurftown's account list and its dialogs — every width
+This page is the measured layout of Battledeck's account list and its dialogs — every width
 below is already spent. It exists so the next person who adds an element does it by subtracting
 from a budget, not by guessing at a size that merely looks comfortable. Two constraints run
 through all of it: the account row is horizontally budgeted (a pixel gained somewhere is a pixel
@@ -567,8 +567,20 @@ Two measured reasons:
 
 ### Main window tabs
 
-The main window has two tabs, **ACCOUNTS** and **SETTINGS**, top left beside the logo.
+The main window has two tabs, **ACCOUNTS** and **SETTINGS**, top left of row 1.
 
+- **Logo and product name moved to the title bar, top-left corner.** After direct feedback that
+  the earlier inline placement — a 50 px logo plus a bold 20 pt `BATTLEDECK` wordmark beside the
+  tabs — was too prominent, both now sit in row 0, the 30 px title row, instead of row 1. Small on
+  purpose: an 18×18 `Image` and a 13 pt DemiBold `TextBlock` reading `Battledeck` (normal casing,
+  not the all-caps wordmark it replaces), in the same muted `#9AA0AE` the update panel uses for
+  secondary text. Both sit in one `StackPanel` with the app's standard 20 px left margin — the
+  same edge the filter bar and account rows below use.
+- **That same 20 px margin now also applies to the tab bar itself**, which used to start around
+  98 px in — 20 for the logo's own margin, 50 for its width, then the 14 and 28 px margins of the
+  wordmark and the tab bar stacked after it. With the logo gone from row 1, the tab bar's margin
+  came down to 20, putting `ACCOUNTS` and `SETTINGS` on the same left edge as the filter bar and
+  the account rows below them — for the first time.
 - **One `DataTemplate` per tab is mandatory.** `CurrentView` carries a ViewModel, and the
   `ContentControl` looks up the matching view in `App.xaml`. Missing that line, the window shows
   the ViewModel's **class name** instead — no compiler error, no binding warning.

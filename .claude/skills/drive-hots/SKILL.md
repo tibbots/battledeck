@@ -20,9 +20,9 @@ screen and logs an account in, and that interrupts whatever the user was doing. 
 this run; the next one gets asked again. Waived only while the user is demonstrably away, and only
 for as long as they are.
 
-**What is specific to the game is what the question has to say.** Smurftown is a window among
+**What is specific to the game is what the question has to say.** Battledeck is a window among
 windows and needs the go-ahead too — just not the warning about the screen. See `CLAUDE.md` →
-Working practice for the rule both applications share, and the `drive-smurftown` skill for the app.
+Working practice for the rule both applications share, and the `drive-battledeck` skill for the app.
 
 ## Usage
 
@@ -74,7 +74,7 @@ real game client. Whoever wants to log in for real starts from a shell without t
 
 ## Coordinates are client-relative
 
-Not window-relative — this is the difference from `drive-smurftown`. In windowed mode there are 8
+Not window-relative — this is the difference from `drive-battledeck`. In windowed mode there are 8
 points horizontally and 31 vertically between window frame and client area, and those are exactly
 what you click past otherwise. A capture from `shot` shows the **client area**, so what sits at
 (x,y) in the image is hit by `click:x,y`.
@@ -102,7 +102,7 @@ The procedure, the menu path for switching the client, what the OCR needs in ter
 language packs, and what does **not** change with the language are in
 [`docs/client-language.md`](../../../docs/client-language.md).
 
-Where the measured words go: `Smurftown/Backend/Automation/GameVocabulary.cs`, in all five
+Where the measured words go: `Battledeck/Backend/Automation/GameVocabulary.cs`, in all five
 variants, with every unmeasured line marked `NOT MEASURED` until somebody has checked it.
 
 ## Related
