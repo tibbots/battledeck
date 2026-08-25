@@ -21,6 +21,16 @@ nothing else on the line.
 
 ## [Upcoming]
 
+## [1.8.0] - 2026-08-25
+
+### Changed
+
+- **Waiting for the login screen after starting the game now allows up to 100 seconds instead of
+  20.** A cold start includes the game's own loading screen, and on a slower machine or a slow
+  disk that alone can run past 20 seconds — which surfaced as "Screen 'Login' did not appear
+  within 20s" even though the game was still on its way up, not stuck. The wait still returns the
+  moment the screen appears; only the ceiling for a run that has not is longer.
+
 ## [1.7.0] - 2026-08-25
 
 ### Added
