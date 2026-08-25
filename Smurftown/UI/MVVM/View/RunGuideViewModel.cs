@@ -98,12 +98,6 @@ namespace Smurftown.UI.MVVM.View
         private IReadOnlyList<RegionChoice> _regionChoices = [];
         private TaskCompletionSource<BattlenetRegion?>? _regionAnswer;
 
-        private string _accountQuestion = "";
-        private Visibility _accountVisibility = Visibility.Collapsed;
-        private string _emailInput = "";
-        private TaskCompletionSource<string?>? _emailAnswer;
-        private RelayCommand? _confirmEmailCommand;
-
         public RunGuideViewModel(bool openChests = false) : base(
         [
             new RunStep(Strings.Current["run.stepFront"], RunStepState.Pending, ""),
@@ -140,54 +134,6 @@ namespace Smurftown.UI.MVVM.View
             get => _regionChoices;
             private set => SetProperty(ref _regionChoices, value);
         }
-
-        /// <summary>
-        ///     "{battletag} is signed in for the first time - which e-mail belongs to it?" -
-        ///     the account question, the counterpart to <see cref="RegionQuestion" />.
-        /// </summary>
-        public string AccountQuestion
-        {
-            get => _accountQuestion;
-            private set => SetProperty(ref _accountQuestion, value);
-        }
-
-        /// <summary>
-        ///     Visible for exactly one reason: the running client is signed into a battletag no
-        ///     account carries yet. The normal case - an already known account - never shows
-        ///     this at all, the same way <see cref="RegionVisibility" /> stays collapsed for an
-        ///     account with a single region.
-        /// </summary>
-        public Visibility AccountVisibility
-        {
-            get => _accountVisibility;
-            private set => SetProperty(ref _accountVisibility, value);
-        }
-
-        /// <summary>
-        ///     The typed e-mail. A real setter and not an auto-property for the same reason as
-        ///     <see cref="AddOrEditAccountViewModel.Password" />: <see cref="ConfirmEmailCommand" />'s
-        ///     <c>CanExecute</c> has to notice every keystroke, not just the one that happens to
-        ///     touch some other bound property next.
-        /// </summary>
-        public string EmailInput
-        {
-            get => _emailInput;
-            set
-            {
-                if (!SetProperty(ref _emailInput, value)) return;
-                _confirmEmailCommand?.NotifyCanExecuteChanged();
-            }
-        }
-
-        /// <summary>
-        ///     Confirms the typed e-mail. Disabled rather than validated afterward - blank is
-        ///     the only thing checked here, because it is the only thing this step can decide
-        ///     without asking the gateway; whether the address is already taken is checked once,
-        ///     after the click, in <see cref="CreateAccount" />.
-        /// </summary>
-        public ICommand ConfirmEmailCommand => _confirmEmailCommand ??= new RelayCommand(
-            () => _emailAnswer?.TrySetResult(EmailInput),
-            () => !string.IsNullOrWhiteSpace(EmailInput));
 
         protected override async Task RunAsync()
         {
@@ -229,7 +175,7 @@ namespace Smurftown.UI.MVVM.View
             var account = _gateway.FindByBattletag(seen);
             if (account == null)
             {
-                account = await CreateAccount(seen!, name!, discriminator!, changes);
+                account = CreateAccount(seen!, name!, discriminator!, changes);
                 if (account == null) return;
             }
 
@@ -388,48 +334,35 @@ namespace Smurftown.UI.MVVM.View
 
         /// <summary>
         ///     The battletag belongs to no account in Smurftown yet: whoever wants an account
-        ///     without ever typing a password starts Heroes of the Storm themselves, signs in,
-        ///     and this asks for exactly the one thing the profile overlay cannot supply.
+        ///     without ever typing a password starts Heroes of the Storm themselves, signs in, and
+        ///     this creates it on the spot - nothing is asked, because there is nothing left this
+        ///     step could still need. Name, discriminator and battletag come from the profile
+        ///     overlay; the password stays empty on purpose, the whole point of this path is an
+        ///     account that never hands its password to this application; and the e-mail is a
+        ///     placeholder built from the same battletag, see <see cref="BattlenetAccount.PlaceholderEmail" />.
+        ///     <c>AccountCardViewModel</c> hides the start menu for such an account; reading still
+        ///     works from here.
         ///     <para>
-        ///         <b>Only the e-mail is asked.</b> Name and discriminator are already known -
-        ///         they are what found this branch in the first place - and the password stays
-        ///         empty on purpose: the whole point of this path is an account that never
-        ///         hands its password to this application. <c>AccountCardViewModel</c> hides the
-        ///         start menu for exactly such an account; reading still works from here.
-        ///     </para>
-        ///     <para>
-        ///         <b>The e-mail is checked against every stored account before anything is
-        ///         built</b>, because identity in this application is the e-mail alone
-        ///         (<c>BattlenetAccount.Equals</c>). Skipping this check would let a typo collide
-        ///         silently: <c>AddOrUpdate</c> does Remove+Add by e-mail, so saving a second
-        ///         account with somebody else's address would replace that other account outright
-        ///         - not append to it, replace it, password and notes included.
-        ///     </para>
-        ///     <para>
-        ///         <b>A cancelled or rejected attempt fails the step</b> rather than looping back
-        ///         to ask again - the same shape every other check in this method already has
-        ///         (<see cref="BattlenetAccount.TrySplitBattletag" />, an unknown battletag before
-        ///         24.08.2026). Whoever mistyped clicks the header chip again.
+        ///         <b>Until 25.08.2026 this asked for a real e-mail</b>, because identity in this
+        ///         application is the e-mail alone (<c>BattlenetAccount.Equals</c>) and a typed
+        ///         typo could otherwise collide silently with somebody else's address. The
+        ///         placeholder removes the question rather than the risk: it is derived from the
+        ///         very battletag that <c>_gateway.FindByBattletag</c> just confirmed unique, so it
+        ///         can collide with nothing that address check would have caught either. The
+        ///         lookup below stays regardless, cheaply, for the one case neither of those two
+        ///         facts covers - a real account somebody once typed under this exact placeholder
+        ///         address by hand.
         ///     </para>
         /// </summary>
-        private async Task<BattlenetAccount?> CreateAccount(string battletag, string name,
+        private BattlenetAccount? CreateAccount(string battletag, string name,
             string discriminator, List<string> changes)
         {
-            var email = await AskNewAccountEmail(battletag);
-            if (email == null)
-            {
-                Log.Information("Account creation for {Battletag} cancelled - nothing written",
-                    battletag);
-                Fail(StepAccount, Strings.Current["run.cancelled"]);
-                return null;
-            }
-
-            email = email.Trim();
+            var email = BattlenetAccount.PlaceholderEmail(name, discriminator);
             if (_gateway.BattlenetAccounts.Any(existing =>
                     string.Equals(existing.Email, email, StringComparison.OrdinalIgnoreCase)))
             {
-                Log.Warning("{Battletag}: e-mail {Email} already belongs to another account - " +
-                            "nothing created", battletag, email);
+                Log.Warning("{Battletag}: placeholder e-mail {Email} already belongs to another " +
+                            "account - nothing created", battletag, email);
                 Fail(StepAccount, Strings.Format("problem.runEmailTaken", email));
                 return null;
             }
@@ -448,38 +381,6 @@ namespace Smurftown.UI.MVVM.View
             Log.Information("New account created from the running client: {Battletag} / {Email}",
                 account.Battletag(), account.Email);
             return account;
-        }
-
-        /// <summary>
-        ///     Shows the e-mail field and waits for a click on <see cref="ConfirmEmailCommand" /> -
-        ///     the same construction as <see cref="AskRegion" />, and for the same reason: a
-        ///     <c>TaskCompletionSource</c> instead of a nested dialog, because the run is one
-        ///     <c>async</c> method from the first wait to the done marker, and a second window
-        ///     taking the foreground is the one thing it cannot survive.
-        ///     <para>
-        ///         Cancelling the whole guide answers with <c>null</c>, exactly like
-        ///         <see cref="AskRegion" /> - otherwise the button would do nothing while this is
-        ///         open, which is the one moment somebody is most likely to press it.
-        ///     </para>
-        /// </summary>
-        private async Task<string?> AskNewAccountEmail(string battletag)
-        {
-            AccountQuestion = Strings.Format("account.emailQuestion", battletag);
-            _emailAnswer = new TaskCompletionSource<string?>();
-            AccountVisibility = Visibility.Visible;
-            Detail(StepAccount, Strings.Current["run.regionWaiting"]);
-
-            await using var registration = Cancel.Token.Register(() => _emailAnswer.TrySetResult(null));
-
-            try
-            {
-                return await _emailAnswer.Task;
-            }
-            finally
-            {
-                AccountVisibility = Visibility.Collapsed;
-                _emailAnswer = null;
-            }
         }
     }
 }

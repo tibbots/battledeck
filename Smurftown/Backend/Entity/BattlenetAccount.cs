@@ -41,6 +41,69 @@ namespace Smurftown.Backend.Entity
         }
 
         /// <summary>
+        ///     The domain of a placeholder e-mail - see <see cref="PlaceholderEmail" />. Chosen
+        ///     because nobody's real Battle.net address ends in it, and because the app never
+        ///     contacts it: no mail is sent anywhere by anyone, ever, so what the domain actually
+        ///     resolves to does not matter.
+        ///     <para>
+        ///         <b>Upper-case in source</b>, even though every stored e-mail ends up
+        ///         lower-case (the <see cref="Email" /> setter sees to that regardless of the
+        ///         case handed in, and <see cref="HasPlaceholderEmail" /> compares
+        ///         case-insensitively). A lower-case literal here reads as a translation key to
+        ///         <c>TextsTests.Every_key_used_in_the_code_is_in_english</c> - its scan for
+        ///         <c>Strings.Current[...]</c> calls is deliberately broad enough to also catch
+        ///         one spread across a conditional, and a plain quoted, dotted, lower-case string
+        ///         cannot be told apart from one. Upper-case fails that scan's own pattern instead
+        ///         of asking it to know about this one exception.
+        ///     </para>
+        /// </summary>
+        public const string PlaceholderEmailDomain = "CHANGE.ME";
+
+        /// <summary>
+        ///     A synthetic e-mail for an account created from a running client whose human does
+        ///     not want to hand this application a real address either - the header chip's
+        ///     account-creation branch (<c>RunGuideViewModel.CreateAccount</c>) is the only
+        ///     caller. Built from the battletag alone: <c>NAME.12345@change.me</c>.
+        ///     <para>
+        ///         <b>Why a fake address and not a genuinely optional field.</b> Identity in this
+        ///         application is the e-mail alone (see <see cref="Equals(object?)" />) - every
+        ///         lookup that finds an account by who it is (<c>FindByEmail</c>,
+        ///         <c>OwnerOf</c>) and the Remove+Add of <c>AddOrUpdate</c> depend on it being
+        ///         unique. Two accounts with a truly empty e-mail would be equal to each other,
+        ///         and saving the second would silently remove the first from the list. A
+        ///         placeholder built from the battletag sidesteps that without touching any of
+        ///         those - the battletag that produced it was already confirmed unique by
+        ///         <c>BattlenetAccountGateway.FindByBattletag</c> returning nothing for it.
+        ///     </para>
+        ///     <para>
+        ///         The caller lower-cases neither part before calling - the setter above does
+        ///         that for whatever this returns anyway.
+        ///     </para>
+        /// </summary>
+        public static string PlaceholderEmail(string name, string discriminator)
+        {
+            return $"{name}.{discriminator}@{PlaceholderEmailDomain}";
+        }
+
+        /// <summary>
+        ///     Is the stored e-mail a placeholder rather than a real address? <see cref="Automation.GameSession" />
+        ///     asks this before typing <see cref="Email" /> into Battle.net's own login form -
+        ///     without the check, an account that started passwordless and later had only a
+        ///     password added through the "+" dialog (its placeholder address left untouched)
+        ///     would have the automation type <c>puspi.123233@change.me</c> into a real login
+        ///     screen and fail there, confusingly. The row's start menu asks the same question,
+        ///     for the same reason - see <c>AccountCardViewModel.BuildStartOptions</c>.
+        ///     <para>
+        ///         A suffix check on the stored value rather than a stored flag of its own:
+        ///         nothing else in <c>data.yaml</c> needs to change for this, and the domain is
+        ///         synthetic enough that no real account collides with it by chance.
+        ///     </para>
+        /// </summary>
+        [YamlIgnore]
+        public bool HasPlaceholderEmail =>
+            _email.EndsWith("@" + PlaceholderEmailDomain, StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
         ///     Not <c>required</c> since 24.08.2026: an account whose human does not want to
         ///     hand this application their Battle.net password can leave it empty and still use
         ///     every other feature. The one thing that costs is the automated start -

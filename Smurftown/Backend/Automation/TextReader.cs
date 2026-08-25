@@ -16,8 +16,36 @@ using WpfBitmapFrame = System.Windows.Media.Imaging.BitmapFrame;
 
 namespace Smurftown.Backend.Automation
 {
-    /// <summary>A recognized text line along with its position in the given crop.</summary>
-    public sealed record TextLine(string Text, int X, int Y, int Width, int Height);
+    /// <summary>
+    ///     A recognized text line along with its position in the given crop.
+    ///     <para>
+    ///         <c>Words</c> carries the same line broken into its individual boxes - see
+    ///         <see cref="TextWord" /> for why this exists at all. Additive and defaulted to
+    ///         empty rather than a constructor parameter, so the one call site that builds a
+    ///         real <see cref="TextLine" /> (<see cref="TextReader.ReadAsync" />) is also the
+    ///         only one that has to know about it.
+    ///     </para>
+    /// </summary>
+    public sealed record TextLine(string Text, int X, int Y, int Width, int Height)
+    {
+        public IReadOnlyList<TextWord> Words { get; init; } = [];
+    }
+
+    /// <summary>
+    ///     One word of a <see cref="TextLine" />, with its own box.
+    ///     <para>
+    ///         <b>Why a line is not enough.</b> Measured 25.08.2026: the rank medal's division
+    ///         digit sits far enough left of "Sturmliga" that <c>ProfileReader.ValueUnder</c>'s
+    ///         edge check rejects it correctly - but the SAME digit next to "Bronze 2" got
+    ///         merged by <c>Windows.Media.Ocr</c> into one line, <c>"2 Bronze 2"</c>, whose box
+    ///         starts at the medal rather than at the text. A per-line box cannot tell "the
+    ///         value starts here" from "something the recognizer glued on starts here" - only
+    ///         the words inside it can, and only if their individual boxes survive past this
+    ///         point instead of being collapsed into the line's union like every box here used
+    ///         to be.
+    ///     </para>
+    /// </summary>
+    public sealed record TextWord(string Text, int X, int Y, int Width, int Height);
 
     /// <summary>
     ///     Reads text from an image crop - with the text recognition built into Windows.
@@ -146,6 +174,7 @@ namespace Smurftown.Backend.Automation
             foreach (var line in result.Lines)
             {
                 double left = double.MaxValue, top = double.MaxValue, right = 0, bottom = 0;
+                var words = new List<TextWord>();
                 foreach (var word in line.Words)
                 {
                     var box = word.BoundingRect;
@@ -153,12 +182,17 @@ namespace Smurftown.Backend.Automation
                     top = Math.Min(top, box.Y);
                     right = Math.Max(right, box.X + box.Width);
                     bottom = Math.Max(bottom, box.Y + box.Height);
+
+                    words.Add(new TextWord(word.Text,
+                        (int)Math.Round(box.X / upscale), (int)Math.Round(box.Y / upscale),
+                        (int)Math.Round(box.Width / upscale), (int)Math.Round(box.Height / upscale)));
                 }
 
                 if (right <= left) continue;
                 lines.Add(new TextLine(line.Text,
                     (int)Math.Round(left / upscale), (int)Math.Round(top / upscale),
-                    (int)Math.Round((right - left) / upscale), (int)Math.Round((bottom - top) / upscale)));
+                    (int)Math.Round((right - left) / upscale), (int)Math.Round((bottom - top) / upscale))
+                    { Words = words });
             }
 
             return lines;

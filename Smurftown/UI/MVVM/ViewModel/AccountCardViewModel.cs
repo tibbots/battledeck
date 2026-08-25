@@ -360,7 +360,7 @@ namespace Smurftown.UI.MVVM.ViewModel
                 // The strip, then the preselection. Heroes of the Storm first, because only there
                 // is any data at all; if the account doesn't have it, the choice falls back to the
                 // first game it does have.
-                SelectGame(PreferredGame(AvailableGames(account, value.Region)), account.Password.Length > 0);
+                SelectGame(PreferredGame(AvailableGames(account, value.Region)), CanAutomate(account));
 
                 OnPropertyChanged();
             }
@@ -854,15 +854,18 @@ namespace Smurftown.UI.MVVM.ViewModel
         ///         all of them end in <c>GameSession.StartAndLogin</c>, which types the stored
         ///         password into the login form. Reading such an account still works, only not
         ///         from this menu - whoever starts Heroes of the Storm and signs in themselves is
-        ///         picked up by the header chip instead.
+        ///         picked up by the header chip instead. Since 25.08.2026 the same hiding also
+        ///         covers a placeholder e-mail from header-chip account creation - see
+        ///         <see cref="CanAutomate" />, the guard both this and <c>GameSession.FillCredentials</c>
+        ///         agree on.
         ///     </para>
         /// </summary>
-        private IReadOnlyList<StartOption> BuildStartOptions(bool hots, bool hasPassword)
+        private IReadOnlyList<StartOption> BuildStartOptions(bool hots, bool canAutomate)
         {
             var command = RunStartOptionCommand;
             var options = new List<StartOption>();
 
-            if (hots && hasPassword)
+            if (hots && canAutomate)
             {
                 // The order is not just taste: a click on the game symbol takes
                 // the FIRST entry. That's why the case you want most often stands on top.
@@ -971,6 +974,18 @@ namespace Smurftown.UI.MVVM.ViewModel
         }
 
         /// <summary>
+        ///     Can the start menu offer automated sign-in at all? Both halves mirror the two
+        ///     guards <c>GameSession.FillCredentials</c> types against: a stored password, and a
+        ///     real e-mail rather than the placeholder an account created from the header chip
+        ///     carries (<see cref="BattlenetAccount.HasPlaceholderEmail" />). Checked here too and
+        ///     not only there, so the menu never offers what would throw the moment it is clicked.
+        /// </summary>
+        private static bool CanAutomate(BattlenetAccount account)
+        {
+            return account.Password.Length > 0 && !account.HasPlaceholderEmail;
+        }
+
+        /// <summary>
         ///     Switches the panel to a game - or to none at all.
         ///     <para>
         ///         <b>The start menu switches with it</b>, and that is the whole reason it is built
@@ -980,13 +995,13 @@ namespace Smurftown.UI.MVVM.ViewModel
         ///         offered the four HotS entries while the row stood on Overwatch.
         ///     </para>
         /// </summary>
-        private void SelectGame(string? game, bool hasPassword)
+        private void SelectGame(string? game, bool canAutomate)
         {
             var hots = game == GameVisuals.Hots;
 
             // Not a computed property: otherwise every switch would have to raise the
             // notification by hand.
-            StartOptions = BuildStartOptions(hots, hasPassword);
+            StartOptions = BuildStartOptions(hots, canAutomate);
             HasStartOptions = StartOptions.Count > 0;
 
             HotsPanelVisibility = hots ? Visibility.Visible : Visibility.Collapsed;

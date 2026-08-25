@@ -30,8 +30,8 @@ nothing else on the line.
   once the client is up, exactly as if the client had been started from a row.
 - **The header chip can create a new account, not only read a known one.** Signing into a battletag
   Smurftown has never seen and clicking "Refresh" used to refuse with "no account carries that
-  battletag - nothing is written". It now asks for the account's e-mail address and creates it from
-  there, with no password stored — the same account this point above describes.
+  battletag - nothing is written". It now creates the account on the spot, with no password stored
+  and no question asked — the same account the point above describes.
 - **An empty account list explains the two ways to fill it**, instead of showing a blank area: add
   one by hand with its e-mail and password, or start Heroes of the Storm yourself and sign in - the
   two points above.
@@ -41,6 +41,14 @@ nothing else on the line.
   newly ticked regions come from what was just typed, and only where those were not left blank.
   Reading such an account straight out of a running game — from its row, the header chip, or an
   already-running client — brings it back from the archive automatically, the same way.
+
+### Fixed
+
+- **Reading the rank could fail with "profile overlay not recognised" even though the overlay was
+  clearly visible.** Depending on resolution and rank, the game's own rendering let the medal's
+  division digit run into the rank text, and the reader mistook the two for one merged line
+  starting in the wrong place. It now finds the value by the aligned word instead of the whole
+  line, which reads correctly regardless of how that merge happens to fall.
 
 ## [1.6.0] - 2026-08-24
 

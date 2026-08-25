@@ -121,10 +121,6 @@ run.timeout: "El cliente no pasó al primer plano en {0} segundos."
 run.cancelled: Cancelado.
 # region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
 region.pickQuestion: "{0} ha iniciado sesión. El cliente no dice en qué región juega - elígela."
-# account.email* sit here too, for the same reason: they belong to this run guide, not to the
-# edit dialog's dialog.email further below - that one edits a known account, this one creates one.
-account.emailQuestion: "{0} ha iniciado sesión por primera vez - ninguna cuenta en Smurftown tiene todavía ese battletag. ¿Qué correo le pertenece?"
-account.emailConfirm: Continuar
 
 # =========================================================== Reuse guide ===========
 # The account row's version of the run guide above: reusing a client that is already

@@ -226,9 +226,22 @@ namespace Smurftown.Backend.Automation
                     // where its entries sat.
                     var menuPath = GameSession.SaveDiagnostic(menu, "profile-menu");
 
-                    return Nothing($"Profile overlay not recognised - the line '{RankLabel}' did not " +
-                                   $"appear in {OpenAttempts} attempts. Screenshots: {path} " +
-                                   $"and {menuPath}");
+                    // TWO DIFFERENT FAILURES have always collapsed into this one message, and
+                    // saying "the line did not appear" was flatly wrong for one of them: the
+                    // 25.08.2026 incident had "Sturmliga" reading perfectly on every one of 18
+                    // attempts, while ValueUnder still returned null because nothing aligned
+                    // underneath it. Read once more here, purely to name which case this was -
+                    // cheap, because it only runs on the rare failing path.
+                    var (x, y, width, height) = session.Layout.Area(map.Progress);
+                    var lastLines = last == null
+                        ? []
+                        : await TextReader.ReadAsync(last, x, y, width, height, 1);
+                    var reason = lastLines.Any(l => Normalise(l.Text).StartsWith(RankLabel))
+                        ? $"the line '{RankLabel}' appeared, but nothing lined up under it"
+                        : $"the line '{RankLabel}' did not appear";
+
+                    return Nothing($"Profile overlay not recognised - {reason} in {OpenAttempts} " +
+                                   $"attempts. Screenshots: {path} and {menuPath}");
                 }
 
                 try
@@ -457,21 +470,70 @@ namespace Smurftown.Backend.Automation
         ///     <para>
         ///         The edge condition is not decoration: to the left of the label sits a
         ///         circle with the same number in it once more (the account level stands in
-        ///         the medal and next to it). Without it, the number from the circle would be
-        ///         the next match, because it starts further up. The tolerance depends on the
-        ///         line height and thus scales with the window size by itself.
+        ///         the medal and next to it, the rank stands in the medal and next to it). The
+        ///         tolerance depends on the line height and thus scales with the window size
+        ///         by itself.
+        ///     </para>
+        ///     <para>
+        ///         <b>Matched by WORD, not by line</b> - since 25.08.2026, and that changed
+        ///         after a consistent failure on 25.08.2026 turned out to have nothing to do
+        ///         with recognition at all: <c>Windows.Media.Ocr</c> had merged the medal's
+        ///         digit into the same line as "Bronze 2", giving <c>"2 Bronze 2"</c> whose
+        ///         line box starts at the medal - 89 points left of the text, well outside
+        ///         tolerance. The account level survived the same hazard only because its two
+        ///         numbers happened to stay on separate lines at the resolutions this was
+        ///         checked against; nothing guaranteed that, and the rank shows it does not
+        ///         always hold. Looking at where the aligned WORD starts, rather than where
+        ///         the whole (possibly merged) line starts, finds the value regardless of how
+        ///         the recognizer chose to group that particular capture - and the medal digit,
+        ///         sitting to its left, is simply not part of what gets read out.
+        ///     </para>
+        ///     <para>
+        ///         A line with no word boxes at all (nothing currently produces one, but
+        ///         nothing built to require it either - see <see cref="TextWord" />) falls back
+        ///         to the old whole-line edge check, so this degrades rather than throws.
         ///     </para>
         /// </summary>
-        private static TextLine? ValueUnder(IReadOnlyList<TextLine> lines, string label)
+        internal static TextLine? ValueUnder(IReadOnlyList<TextLine> lines, string label)
         {
             var head = lines.FirstOrDefault(line => Normalise(line.Text).StartsWith(label));
             if (head == null) return null;
 
-            return lines.Where(line => line.Y > head.Y && Math.Abs(line.X - head.X) <= head.Height)
-                .MinBy(line => line.Y);
+            foreach (var line in lines.Where(line => line.Y > head.Y).OrderBy(line => line.Y))
+            {
+                var aligned = AlignedValue(line, head);
+                if (aligned != null) return aligned;
+            }
+
+            return null;
         }
 
-        private static bool TryRank(string text, out HotsRankTier tier, out int division)
+        /// <summary>
+        ///     Cuts a candidate value line down to the words that actually align with the
+        ///     label, dropping anything the recognizer glued on further left (a medal digit,
+        ///     for instance). <c>null</c> when nothing in this line aligns - the caller then
+        ///     tries the next line down, exactly as the old whole-line check did.
+        /// </summary>
+        private static TextLine? AlignedValue(TextLine line, TextLine head)
+        {
+            if (line.Words.Count == 0)
+                return Math.Abs(line.X - head.X) <= head.Height ? line : null;
+
+            var ordered = line.Words.OrderBy(word => word.X).ToList();
+            var index = ordered.FindIndex(word => Math.Abs(word.X - head.X) <= head.Height);
+            if (index < 0) return null;
+
+            var kept = ordered.Skip(index).ToList();
+            var left = kept.Min(word => word.X);
+            var top = kept.Min(word => word.Y);
+            var right = kept.Max(word => word.X + word.Width);
+            var bottom = kept.Max(word => word.Y + word.Height);
+
+            return new TextLine(string.Join(" ", kept.Select(word => word.Text)),
+                left, top, right - left, bottom - top);
+        }
+
+        internal static bool TryRank(string text, out HotsRankTier tier, out int division)
         {
             tier = HotsRankTier.None;
             division = 0;
@@ -498,7 +560,7 @@ namespace Smurftown.Backend.Automation
         ///     "Großmeister" the same as "Grossmeister" - and text recognition delivers
         ///     either, depending on how the eszett is hit.
         /// </summary>
-        private static string Normalise(string text)
+        internal static string Normalise(string text)
         {
             // Strip accents BEFORE filtering: otherwise "maître" would stay with its accent,
             // and a circumflex missed by the recognition would turn a match into a miss. The

@@ -178,10 +178,6 @@ run.timeout: "The client did not come to the front within {0} seconds."   # 0 = 
 run.cancelled: Cancelled.
 # region.pick* sit here, not with region.europe/americas/asia below - they belong to this dialog, not to the enum.
 region.pickQuestion: "{0} is signed in. The client does not say which region it is playing in - pick it."   # 0 = Battletag
-# account.email* sit here too, for the same reason: they belong to this run guide, not to the
-# edit dialog's dialog.email further below - that one edits a known account, this one creates one.
-account.emailQuestion: "{0} is signed in for the first time - no account in Smurftown carries that battletag yet. Which e-mail belongs to it?"   # 0 = Battletag
-account.emailConfirm: Continue
 
 # =========================================================== Reuse guide ===========
 # The account row's version of the run guide above: reusing a client that is already

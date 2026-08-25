@@ -810,6 +810,16 @@ namespace Smurftown.Backend.Automation
                     "automatically. Start Heroes of the Storm yourself and sign in; the header " +
                     "chip reads it from there.");
 
+            // Same reasoning, second field: an account created from the header chip's account
+            // creation carries a placeholder e-mail (BattlenetAccount.PlaceholderEmail), not a
+            // real one. Typing it into Battle.net's own form would fail the sign-in instead of
+            // refusing cleanly here - see BattlenetAccount.HasPlaceholderEmail.
+            if (account.HasPlaceholderEmail)
+                throw new InvalidOperationException(
+                    $"{account.Battletag()} has no real e-mail stored - only the placeholder " +
+                    "from account creation. Replace it in the edit dialog before starting " +
+                    "automatically.");
+
             Window.BringToFront();
 
             // Clear both fields first: the form pre-fills the email address with the last

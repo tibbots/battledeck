@@ -114,10 +114,17 @@ then "View Profile". Both are calibration points, both measured at two resolutio
 the X — not Esc; whether that key works there hasn't been checked.
 
 **The whole block is read, not two narrow crops.** The lines carry their own labels, so
-`ValueUnder` finds the value above each label instead of via a fixed coordinate: the next line
+`ValueUnder` finds the value above each label instead of via a fixed coordinate: the aligned word
 below that starts at the same edge. The edge condition is necessary — a circle sits to the left
 with the same number repeated inside it. The block shifts down by a good dozen points depending
 on content; a narrow crop wouldn't follow that.
+
+**Matched by word, not by whole line — since 25.08.2026.** A profile read consistently failed
+with "the line 'Sturmliga' did not appear", even though it read cleanly on every attempt: the OCR
+had merged the rank medal's division digit into the same line as the rank text, `2 Bronze 2`,
+whose line box starts at the medal rather than the text — well outside the edge tolerance. Looking
+at the aligned *word* instead of the aligned *line* finds the value regardless of how the
+recognizer happened to group that capture, and drops the medal digit rather than tripping over it.
 
 **It stays language-dependent, but cheaper.** Instead of an image asset per rank there is now a
 table of seven words (Bronze, Silver, Gold, Platinum, Diamond, Master, Grand Master) that lives
