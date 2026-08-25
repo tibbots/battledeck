@@ -32,11 +32,11 @@ namespace Smurftown.Backend.Automation
     public sealed class GameSession : IDisposable
     {
         /// <summary>
-        ///     Every ceiling in this class stands at 20s (<see cref="RestoreTimeout" /> below is
-        ///     the one exception, already shorter). None of them is felt on a run that goes
-        ///     right - each is the upper bound of a poll that returns the moment its condition is
-        ///     met, not a wait that is sat out. What it buys is how long a run that has genuinely
-        ///     gone wrong sits there before the window's own message says so.
+        ///     Most ceilings in this class stand at 20s (<see cref="RestoreTimeout" /> below is
+        ///     shorter, <see cref="LoginScreenTimeout" /> longer). None of them is felt on a run
+        ///     that goes right - each is the upper bound of a poll that returns the moment its
+        ///     condition is met, not a wait that is sat out. What it buys is how long a run that
+        ///     has genuinely gone wrong sits there before the window's own message says so.
         /// </summary>
         private static readonly TimeSpan WindowTimeout = TimeSpan.FromSeconds(20);
 
@@ -47,7 +47,13 @@ namespace Smurftown.Backend.Automation
         ///     restoration to take effect.
         /// </summary>
         private static readonly TimeSpan RestoreTimeout = TimeSpan.FromSeconds(15);
-        private static readonly TimeSpan LoginScreenTimeout = TimeSpan.FromSeconds(20);
+
+        /// <summary>
+        ///     How long the login screen is waited for after the game process starts - longer than
+        ///     the other ceilings in this class because a cold start includes the game's own
+        ///     loading screen, and that alone can outlast 20s.
+        /// </summary>
+        private static readonly TimeSpan LoginScreenTimeout = TimeSpan.FromSeconds(100);
         private static readonly TimeSpan MenuTimeout = TimeSpan.FromSeconds(20);
 
         /// <summary>Minimum wait time after the region change, before any measurement happens at all.</summary>
