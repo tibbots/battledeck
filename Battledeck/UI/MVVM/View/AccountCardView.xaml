@@ -447,17 +447,25 @@
                                           Style="{StaticResource RankZoneTheme}"
                                           IsChecked="{Binding RankMenuOpen, Mode=TwoWay}"
                                           ToolTip="{Binding RankHint}">
-                                <!-- 71x78 as before, because the asset is 160x176 and a
-                                     squashed medal stands out at once. The element draws
-                                     THREE things into that box - picture, unlit ring and the
-                                     division digit - and the numbers that place them sit in
-                                     RankMedal once, not once per call site. -->
+                                <!-- 76x84, and the height is the number that matters: the row
+                                     is 91 with a 1 px frame, so 89 are free and 84 leaves 2.5
+                                     above and below. Anything taller sets the ROW's height,
+                                     and that costs scrolling - 27 accounts run to 3.7 screens
+                                     at 91 px against 2.5 at 60 (docs/ui-layout.md).
+
+                                     76 is 84x160/176, the aspect of the asset. Fit() would
+                                     centre a wrong one rather than squash it, so a mismatch
+                                     shows up as air around the medal, not as a distortion.
+
+                                     The element draws THREE things into that box - picture,
+                                     unlit ring and the division digit - and the numbers that
+                                     place them sit in RankMedal once, not once per call site. -->
                                 <loc:RankMedal Tier="{Binding RankTier}"
                                                Division="{Binding RankDivision}"
                                                Progress="{Binding RankProgress}"
                                                ShowProgress="{Binding RankShowProgress}"
                                                Opacity="{Binding RankOpacity}"
-                                               Height="78" Width="71" />
+                                               Height="84" Width="76" />
                             </ToggleButton>
 
                             <!-- Three levels: columns, rows inside them, medals inside those.

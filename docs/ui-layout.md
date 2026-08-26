@@ -191,20 +191,21 @@ Two states stacked, exactly one visible at a time, both laid out **horizontally*
 | Side | Element | Width |
 |---|---|---|
 | right | Currencies, 4×59 | 236 |
-| left | Medal, 71+10 | 81 |
+| left | Medal, 76+10 | 86 |
 | left | Hero strip, 11×47, overlap 13 | 387 |
 | left | `+n` | 28 |
 | left | Counter | 56 |
-| | **Total** | **552 of 707 — 155 px free** |
+| | **Total** | **557 of 707 — 150 px free** |
 
 The free space is deliberate: a row filled edge to edge reads harder than one with a pause before
 the currencies. The `+n` and counter figures above are text-width **estimates, not
 measurements** — both sit generously; what's actually used is closer to 25 and 44.
 
-**Row height is the second constraint.** The medal is 78 tall inside a 91-tall row, the hero
-strip's separator ring 51 — leaving 6.5 and 20 px of headroom respectively. Enlarging the emblems
-further means a taller row, and that costs screens: 27 accounts need roughly **3.7** screens at
-91 px versus **2.5** at 60 px.
+**Row height is the second constraint.** The medal is 84 tall inside a 91-tall row whose 1 px
+frame leaves 89 usable, the hero strip's separator ring 51 — leaving 2.5 and 19 px of headroom
+respectively. The medal is thus the tallest thing in the row and the next one to set its height:
+enlarging it past 89 means a taller row, and that costs screens: 27 accounts need roughly **3.7**
+screens at 91 px versus **2.5** at 60 px.
 
 **No text sits beside the medal anymore.** The medal carries stage, division **and** the progress
 inside the division, and it dims when placement games are pending. The plain-text version survives

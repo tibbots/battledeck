@@ -24,6 +24,9 @@ nothing else on the line.
 - **The division number on a rank medal now carries a dark edge and stays readable on the bright
   tiers.** Diamond's gem is nearly white, and a bright digit with a bright halo on it sank into its
   own medal; the edge closes around the whole digit rather than shading one side of it.
+- **The rank medal in the account list is larger** — it now fills the height the row already had
+  instead of leaving a finger's width of air above and below. The row itself is unchanged, so the
+  list still shows as many accounts per screen as before.
 
 ## [1.9.0] - 2026-08-26
 
