@@ -21,9 +21,16 @@ nothing else on the line.
 
 ## [Upcoming]
 
+## [1.9.0] - 2026-08-26
+
 - **Renamed the application from Smurftown to Battledeck.**
 - **Added a proper app icon** — an animated faceted gem mark in the header, plus a matching
   taskbar icon.
+- **Self-update works again for anyone still on 1.8.0 or an earlier, pre-rename install.** Those
+  copies look for `Smurftown.exe` inside the downloaded update and had started failing with "the
+  package holds no Smurftown.exe" the moment a release stopped shipping a file by that name. This
+  release carries the executable under both names once, so those installs update normally and move
+  onto the current naming with everyone else.
 
 ## [1.8.0] - 2026-08-25
 
@@ -356,7 +363,9 @@ First public release.
   Run anyway* — the checksum shipped with each release proves that the file matches the release,
   not who built it.
 
-[Upcoming]: https://github.com/tibbots/battledeck/compare/1.7.0...HEAD
+[Upcoming]: https://github.com/tibbots/battledeck/compare/1.9.0...HEAD
+[1.9.0]: https://github.com/tibbots/battledeck/releases/tag/1.9.0
+[1.8.0]: https://github.com/tibbots/battledeck/releases/tag/1.8.0
 [1.7.0]: https://github.com/tibbots/battledeck/releases/tag/1.7.0
 [1.6.0]: https://github.com/tibbots/battledeck/releases/tag/1.6.0
 [1.5.0]: https://github.com/tibbots/battledeck/releases/tag/1.5.0

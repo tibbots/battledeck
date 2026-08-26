@@ -43,9 +43,12 @@ separation stays — the one that starts is `tools/test-home.ps1`.
 ## One language at a time, four passes
 
 Layout is language-independent — pixel positions come from fixed budgets (`docs/ui-layout.md`),
-not text length, so the **same click coordinates work in all four languages**. What changes between
-passes is only: `app.yaml` → `settings.appLanguage`, and the `-Lang` flag on the capture tools that
-routes shots into their own subfolder.
+not text length, so the **same click coordinates work in all four languages** — with one exception:
+the hero picker's **`clear all`** button is sized to its own translated label, not to a budget, so
+its position moves with the language exactly like the hero-filter chip does. That single click is
+called out below, where the sequence uses it. Otherwise what changes between passes is only:
+`app.yaml` → `settings.appLanguage`, and the `-Lang` flag on the capture tools that routes shots
+into their own subfolder.
 
 ```
 1. close any running instance
@@ -109,7 +112,9 @@ Commands: `front`, `click:X,Y`, `right:X,Y`, `move:X,Y`, `wheel:X,Y,N`, `key:NAM
 `wait:MS`, `shot:NAME`. `-Lang de|fr|es` routes every `shot:` in that call to
 `docs/images/<lang>/<name>.png`; omit it for English (`docs/images/<name>.png`).
 
-The full sequence for the twelve non-`update-offer` shots, unchanged across all four languages:
+The full sequence for the twelve non-`update-offer` shots, unchanged across all four languages
+except the one `click:<clear-all-x>,52` marked below — substitute the language's own value from the
+table further down before running it:
 
 ```
 front; move:20,780; shot:overview;
@@ -119,14 +124,14 @@ click:409,139; wait:300; click:104,202; wait:400; click:193,478; wait:200;
 wheel:600,400,-4; wait:300; click:785,577; wait:300; wheel:600,400,10; wait:300;
 move:1250,650; shot:hero-filter;
 key:escape; wait:400; move:20,780; shot:hero-filter-result;
-click:100,202; wait:400; click:642,52; wait:300; key:escape; wait:300;
+click:100,202; wait:400; click:<clear-all-x>,52; wait:300; key:escape; wait:300;
 click:588,139; wait:400; move:20,780; shot:rotation;
 key:escape; wait:300; click:980,139; wait:400; move:20,780; shot:archive;
 click:980,139; wait:400; click:1291,291; wait:400; shot:actions-menu;
 key:escape; wait:300; click:1249,291; wait:400; shot:start-menu;
 key:escape; wait:300; click:100,485; wait:500; shot:edit-account;
 click:321,112; wait:400; move:1200,20; shot:edit-hots;
-click:381,736; wait:400; click:347,66; wait:400; move:20,780; shot:settings
+click:381,736; wait:400; click:270,66; wait:400; move:20,780; shot:settings
 ```
 
 Rules that cost time when ignored:
@@ -141,14 +146,45 @@ Rules that cost time when ignored:
   SETTINGS leaves every click in this sequence landing on the wrong screen — and nothing reports
   it, every `shot:` just quietly captures the same Settings frame. Measured: an entire redo of a
   language pass, caught only because every file came out the same byte size.
+- **The SETTINGS tab click is `270,66`, not `347,66`.** `ACCOUNTS` and `SETTINGS` are each a
+  fixed-width 160 px button (`docs/ui-layout.md`, "Main window tabs"), but the visible label sits
+  well short of that box's own right edge — `347` cleared the word and landed in the button's own
+  blank margin, and a click that lands on nothing reports nothing: no error, no different frame, the
+  view simply stays wherever it already was. `270` sits on the label itself and is verified against
+  all four languages in this pass, since the tab bar — unlike the hero picker below — is governed by
+  the fixed layout budget and not by translated text width.
 - **Clear the hero filter through the picker, not through the chip's `×`.** The chip's own width
   depends on the translated label (`ANY OF 2` in English, `EINER VON 2` in German — visibly wider),
   so a fixed pixel for the `×` that works in English lands on the chip's middle in German and
   reopens the picker instead of clearing it — while everything downstream (rotation, archive,
   actions-menu, start-menu, the account dialog) silently keeps filtering on the two picked heroes.
-  The sequence above avoids this: it reopens the picker (`click:100,202`, safe — well inside the
-  chip regardless of label width) and clicks **`clear all`** inside the modal (`click:642,52`,
-  fixed position, independent of outer state) before closing with `Escape`.
+  The sequence above avoids the chip for exactly this reason: it reopens the picker (`click:100,202`,
+  safe — well inside the chip regardless of label width) and clicks **`clear all`** inside the modal
+  before closing with `Escape`.
+
+  **That inner button carries the same disease, one level down — an earlier version of this
+  document claimed the opposite.** "Fixed position, independent of outer state" was wrong: the pill
+  is sized to its own translated text exactly like the chip it exists to be safer than, so its centre
+  moves with the label just the same. Measured against the running app, one hero-picker header at a
+  time:
+
+  | Language | Label | `clear-all-x` |
+  |---|---|---|
+  | English | "clear all" | 556 |
+  | German | "alle abwählen" | 642 |
+  | French | "tout effacer" | 638 |
+  | Spanish | "borrar todo" | 638 |
+
+  **Measured wrong once already**: clicking German's `642` while the app spoke English landed on
+  `select all` instead, which ticks all 90 heroes rather than none — the hero filter then matches
+  every account instead of two, and every shot after it is silently wrong in a way that looks
+  identical to a correct one until read closely.
+
+  **How to re-measure it** — for a language not in the table, or after the header changes again:
+  open the hero picker, take a check-shot, and read the button's own left and right border off the
+  image rather than eyeballing the label. Its centre is `clear-all-x`. Click it, take a second
+  check-shot, and confirm the counter actually reads **zero selected** (whatever that string is in
+  the language at hand) before trusting the value and moving on to the shots that depend on it.
 - **Grid positions are computed, not searched.** Where a hero sits in the picker follows from
   `HotsHeroCatalog`: groups in role order, alphabetical within. Illidan is Melee Assassin slot 2,
   Lúcio Healer slot 10 — both fixed regardless of the picker's scroll position or the app's

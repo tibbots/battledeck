@@ -204,6 +204,35 @@ with "no", and it does so silently, on the one release where it finally matters.
 not `x.y.z` is not a tag this repository produces and is therefore not an update either — see
 `AppVersion.IsNewerThanCurrent`.
 
+## The Smurftown bridge
+
+Release `1.8.0` and everything before it were built while the application was still called
+Smurftown, and `UpdateInstaller.ExeName` held the string `"Smurftown.exe"` at the time. That
+constant is now inside an already-shipped binary sitting on whoever's machine installed it, and
+nothing reachable from here can change it after the fact — the rename to `Battledeck.exe` in this
+repository does not travel backwards into a compiled copy.
+
+Left alone, that is a hard break rather than a cosmetic one. The next release after the rename
+compares tags and version numbers exactly as before, so a pre-rename client still correctly detects
+it, downloads the ZIP and verifies its checksum — every step up to `Extract()` succeeds. Only there
+does it go looking for `Smurftown.exe` inside a ZIP that, built the ordinary way, carries only
+`Battledeck.exe`, and throws `"the package holds no Smurftown.exe"` instead of updating. The
+download was fine; the install never happens.
+
+The fix is a single release that ships the executable under both names, so both generations of
+`ExeName` find what they are looking for in the same ZIP. `cmd_release` in `dev` stages one extra
+byte-identical copy of `Battledeck.exe` as `Smurftown.exe` before zipping. That is enough on its
+own because `Swap()` (see [The swap](#the-swap) above) replaces the path of the *currently running*
+process — it never reads back the name the update ZIP happened to use. A pre-rename client that
+extracted `Smurftown.exe` swaps it in over whatever its own `.exe` is called on disk, restarts, and
+is from then on running code where `ExeName` already says `"Battledeck.exe"`.
+
+**This is a one-time bridge, not a mechanism.** It exists to cover exactly the clients that already
+have `"Smurftown.exe"` baked in, and every one of them is caught by the first post-rename release
+that carries the duplicate — there is no client left afterwards that still needs it. The comment in
+`cmd_release` says so directly: once that release has shipped, the extra `cp` line is dead weight
+and should be deleted, not kept around as a general safety net for the next rename that comes along.
+
 ## There is no setting
 
 The check runs every hour and the human cannot switch it off. That is a decision, and it was taken

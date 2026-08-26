@@ -106,6 +106,17 @@ cmd_release() {
     # Copy deliberately instead of zipping the publish folder: the .pdb sits there
     # too, and it does not belong in a release.
     cp "$DIST/publish/Battledeck.exe" "$stage/"
+    # One-time bridge for anyone still on 1.8.0 or earlier: their UpdateInstaller was compiled
+    # with ExeName = "Smurftown.exe", and that constant sits in an already-shipped binary - it
+    # cannot be patched after the fact. Without a file by that name in this ZIP, Extract() on
+    # those clients throws "the package holds no Smurftown.exe" the moment they try to update
+    # past 1.8.0, even though the download and its checksum are fine. A second, byte-identical
+    # copy under the old name costs nothing at runtime: Swap() replaces the path of the running
+    # process, not a fixed file name, so it does not care what the ZIP called the file it just
+    # extracted. Delete this line once this bridge release has shipped - every client that
+    # received it is then running code that looks for Battledeck.exe like everyone else. See
+    # docs/self-update.md.
+    cp "$DIST/publish/Battledeck.exe" "$stage/Smurftown.exe"
     cp README.md "$stage/"
 
     echo "==> Zipping..."
