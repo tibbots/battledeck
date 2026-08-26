@@ -17,7 +17,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-      <ApplicationIcon>UI\Images\smurftown.ico</ApplicationIcon>
+      <ApplicationIcon>UI\Images\battledeck.ico</ApplicationIcon>
       <Platforms>AnyCPU;x64</Platforms>
       <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
@@ -78,10 +78,8 @@
       <Resource Include="UI\Images\lock.png" />
       <None Remove="UI\Images\user.png" />
       <Resource Include="UI\Images\user.png" />
-      <None Remove="UI\Images\smurftown.png" />
-      <Resource Include="UI\Images\smurftown.png" />
-      <None Remove="UI\Images\smurftown.ico" />
-      <Resource Include="UI\Images\smurftown.ico" />
+      <None Remove="UI\Images\battledeck.ico" />
+      <Resource Include="UI\Images\battledeck.ico" />
       <None Remove="UI\Images\penalty.png" />
       <Resource Include="UI\Images\penalty.png" />
           <None Remove="UI\Images\free.png" />

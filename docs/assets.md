@@ -182,7 +182,30 @@ In the picker, the circle itself comes from an `Ellipse` with an `ImageBrush`
 the portraits are plain square JPEG without an alpha channel: about 819 KiB for all 90 combined,
 against several MB had they been PNG.
 
+## The app icon (`build-logo.py`)
+
+`battledeck.ico` is the "Low-Poly Gem" mark: an 8-facet faceted diamond, fan-triangulated from a
+centre point, flat-shaded per facet, dark edge strokes, light source fixed upper-left. It is the
+app's icon everywhere Windows shows one — taskbar, `.exe`, alt-tab.
+
+Unlike every other asset on this page, the geometry is not measured from a game screenshot. It
+comes from a separate design-review artifact (SVG mockups, several rounds, not part of this
+repo) — the 8 triangles' points and fill colors in `tools/build-logo.py`'s `FACETS` constant are
+the approved values, copied verbatim rather than eyeballed off a picture. Rendered at 4×
+supersampling and downscaled, same reasoning as `build-free-icon.py` and `build-penalty-icon.py`
+— Pillow does not anti-alias polygon edges on its own. Pillow's `Image.save(..., format='ICO',
+sizes=[...])` produces the standard 16/32/48/256 multi-resolution set from the one high-res
+source in a single call.
+
 ## What is NOT an asset
+
+The header's animated gem is **not** a second generated bitmap. `MainWindow.xaml`'s row-0 corner
+carries the same 8 facets as native `Polygon` elements — points and fills copied from the same
+approved geometry `build-logo.py` reads — plus a shimmer band animated by a `Storyboard`-style
+`DoubleAnimation` in `MainWindow.xaml.cs`. A vector redraws crisply at any DPI and can be
+animated directly; a PNG can do neither. Only the static `.ico` goes through a script — whoever
+changes the gem's shape or colors changes both places, since they are meant to look like the
+same gem.
 
 The four currency icons (gold, shards, gems, chests) and the archive icon are **not** PNGs. They
 are XAML `Path` geometry, drawn directly in the row and dialog templates:

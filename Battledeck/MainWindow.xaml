@@ -372,9 +372,73 @@
                  docs/ui-layout.md, "Main window tabs". -->
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left"
                         VerticalAlignment="Center" Margin="20,0,0,0">
-                <Image Source="pack://application:,,,/UI/Images/smurftown.png"
-                       RenderOptions.BitmapScalingMode="HighQuality" Width="18" Height="18" />
-                <TextBlock Text="Battledeck" Foreground="#9AA0AE" FontWeight="DemiBold" FontSize="13"
+                <!-- The "Low-Poly Gem" mark, native XAML and not a bitmap - it is animated (a
+                     shimmer sweep, see below) and a vector redraws crisply at any DPI, which an
+                     18px PNG would not. 8 facets, fan-triangulated from the centre point
+                     (100,95), points and fills taken verbatim from the approved review artifact
+                     - the same geometry tools/build-logo.py renders into the static .ico, see
+                     that script's docstring. Whoever changes one changes the other; they are
+                     meant to look like the same gem. -->
+                <Viewbox Width="22" Height="22" Stretch="Uniform">
+                    <Canvas Width="200" Height="200">
+                        <!-- Clips the shimmer (and, harmlessly, the facets - they already tile
+                             the same silhouette) to the diamond's own outline, so the sweep
+                             below cannot spill into the header's background the way an
+                             unclipped rectangle would. Points are the outer silhouette from the
+                             approved artifact, in order. -->
+                        <Canvas.Clip>
+                            <PathGeometry>
+                                <PathFigure StartPoint="100,18" IsClosed="True">
+                                    <LineSegment Point="150,50" />
+                                    <LineSegment Point="168,100" />
+                                    <LineSegment Point="140,155" />
+                                    <LineSegment Point="102,185" />
+                                    <LineSegment Point="65,150" />
+                                    <LineSegment Point="35,105" />
+                                    <LineSegment Point="58,55" />
+                                </PathFigure>
+                            </PathGeometry>
+                        </Canvas.Clip>
+
+                        <Polygon Points="100,18 150,50 100,95" Fill="#7FD4FF"
+                                 Stroke="#081B2E" StrokeThickness="1.5" />
+                        <Polygon Points="100,18 100,95 58,55" Fill="#BFEFFF"
+                                 Stroke="#081B2E" StrokeThickness="1.5" />
+                        <Polygon Points="58,55 100,95 35,105" Fill="#4FC3F0"
+                                 Stroke="#081B2E" StrokeThickness="1.5" />
+                        <Polygon Points="150,50 168,100 100,95" Fill="#35A8E0"
+                                 Stroke="#081B2E" StrokeThickness="1.5" />
+                        <Polygon Points="35,105 100,95 65,150" Fill="#2B86C4"
+                                 Stroke="#081B2E" StrokeThickness="1.5" />
+                        <Polygon Points="168,100 140,155 100,95" Fill="#1F6BA3"
+                                 Stroke="#081B2E" StrokeThickness="1.5" />
+                        <Polygon Points="65,150 100,95 102,185" Fill="#164E7D"
+                                 Stroke="#081B2E" StrokeThickness="1.5" />
+                        <Polygon Points="140,155 102,185 100,95" Fill="#0F3A5E"
+                                 Stroke="#081B2E" StrokeThickness="1.5" />
+
+                        <!-- The shimmer: a thin, semi-transparent white band, rotated to a
+                             diagonal and swept left to right by MainWindow.xaml.cs's
+                             StartLogoShimmer on a 3s loop - see that method for why it is
+                             started from code and not an in-template EventTrigger/Storyboard,
+                             mirroring StartRunningChipPulse's reasoning for the same choice.
+                             Kept deliberately faint (18% alpha): this corner sits next to muted
+                             gray text and must read as understated, not as an attention-getter.
+                             Width 40 and height 320 so the rotated band still fully covers the
+                             200-tall canvas at its widest; the Canvas.Clip above keeps it from
+                             ever showing outside the gem's own outline. -->
+                        <Rectangle x:Name="LogoShimmer" Width="40" Height="320"
+                                   Fill="#2EFFFFFF">
+                            <Rectangle.RenderTransform>
+                                <TransformGroup>
+                                    <RotateTransform Angle="35" CenterX="20" CenterY="160" />
+                                    <TranslateTransform x:Name="LogoShimmerTransform" X="-140" />
+                                </TransformGroup>
+                            </Rectangle.RenderTransform>
+                        </Rectangle>
+                    </Canvas>
+                </Viewbox>
+                <TextBlock Text="Battledeck" Foreground="#9AA0AE" FontWeight="DemiBold" FontSize="15"
                            VerticalAlignment="Center" Margin="6,0,0,0" />
             </StackPanel>
 

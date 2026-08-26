@@ -23,6 +23,33 @@ namespace Battledeck
         {
             InitializeComponent();
             StartRunningChipPulse();
+            StartLogoShimmer();
+        }
+
+        /// <summary>
+        ///     Starts the header gem's shimmer sweep - once, for the lifetime of the window.
+        ///     Runs from code, mirroring <see cref="StartRunningChipPulse"/> below for one
+        ///     convention across this window rather than two: every looping animation here
+        ///     starts from code-behind after <c>InitializeComponent</c>, none from an in-XAML
+        ///     <c>EventTrigger</c>/<c>Storyboard</c>.
+        ///     <para>
+        ///         The specific failure that forced the pulse into code-behind -
+        ///         <c>Storyboard.TargetName</c> resolving against a <c>ControlTemplate</c>'s
+        ///         namescope that does not exist until the template is applied to a live
+        ///         control - does not actually apply to <c>LogoShimmerTransform</c>: it sits
+        ///         directly in <c>MainWindow</c>'s own visual tree, not inside a
+        ///         <c>Style</c>'s template, so <c>Application.LoadComponent</c> already
+        ///         resolves its name when the window's markup is parsed. It is done the same
+        ///         way anyway, on purpose - not because <c>XamlLoadsTests</c> would catch the
+        ///         alternative here, but so a reader does not have to work out from the failure
+        ///         mode which of two animation styles a given loop uses.
+        ///     </para>
+        /// </summary>
+        private void StartLogoShimmer()
+        {
+            var sweep = new DoubleAnimation(-140, 340, TimeSpan.FromSeconds(3))
+                { RepeatBehavior = RepeatBehavior.Forever };
+            LogoShimmerTransform.BeginAnimation(TranslateTransform.XProperty, sweep);
         }
 
         /// <summary>

@@ -22,6 +22,8 @@ nothing else on the line.
 ## [Upcoming]
 
 - **Renamed the application from Smurftown to Battledeck.**
+- **Added a proper app icon** — an animated faceted gem mark in the header, plus a matching
+  taskbar icon.
 
 ## [1.8.0] - 2026-08-25
 

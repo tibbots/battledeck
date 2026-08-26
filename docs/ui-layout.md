@@ -572,10 +572,26 @@ The main window has two tabs, **ACCOUNTS** and **SETTINGS**, top left of row 1.
 - **Logo and product name moved to the title bar, top-left corner.** After direct feedback that
   the earlier inline placement — a 50 px logo plus a bold 20 pt `BATTLEDECK` wordmark beside the
   tabs — was too prominent, both now sit in row 0, the 30 px title row, instead of row 1. Small on
-  purpose: an 18×18 `Image` and a 13 pt DemiBold `TextBlock` reading `Battledeck` (normal casing,
-  not the all-caps wordmark it replaces), in the same muted `#9AA0AE` the update panel uses for
+  purpose: an 18×18 mark and a 13 pt DemiBold `TextBlock` reading `Battledeck` (normal casing, not
+  the all-caps wordmark it replaces), in the same muted `#9AA0AE` the update panel uses for
   secondary text. Both sit in one `StackPanel` with the app's standard 20 px left margin — the
   same edge the filter bar and account rows below use.
+- **The mark is the "Low-Poly Gem", drawn as native XAML, not a bitmap.** A `Viewbox` scales an
+  8-facet faceted diamond — 8 `Polygon` elements fanned out from a centre point, flat-shaded,
+  dark-stroked, lit from the upper left — from its 200×200 design space down to 18×18. A vector
+  redraws crisply at any DPI and can carry an animation directly; a PNG could do neither.
+  `tools/build-logo.py` renders the same geometry into the static `.ico` used for the taskbar
+  and `.exe` icon — see [`assets.md`](assets.md#the-app-icon-build-logopy) — and the two are
+  meant to look like the same gem.
+- **A shimmer sweeps across the gem on a 3-second loop**, a thin semi-transparent white band
+  rotated to a diagonal and translated across via a `DoubleAnimation` on a `TranslateTransform`,
+  clipped to the gem's own outline so it cannot spill into the header background. Deliberately
+  faint (18% alpha, `#2EFFFFFF`): this corner sits beside muted gray text and reads as a quiet
+  detail, not a second attention-getter next to the pulsing "live game" chip. Started from
+  `MainWindow.xaml.cs`'s `StartLogoShimmer`, mirroring `StartRunningChipPulse`'s code-behind
+  convention for every looping animation in this window — see that method's own comment for why,
+  and for why the specific reason behind the chip's pulse does not actually force the same choice
+  here.
 - **That same 20 px margin now also applies to the tab bar itself**, which used to start around
   98 px in — 20 for the logo's own margin, 50 for its width, then the 14 and 28 px margins of the
   wordmark and the tab bar stacked after it. With the logo gone from row 1, the tab bar's margin
