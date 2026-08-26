@@ -21,6 +21,10 @@ nothing else on the line.
 
 ## [Upcoming]
 
+- **The division number on a rank medal now carries a dark edge and stays readable on the bright
+  tiers.** Diamond's gem is nearly white, and a bright digit with a bright halo on it sank into its
+  own medal; the edge closes around the whole digit rather than shading one side of it.
+
 ## [1.9.0] - 2026-08-26
 
 - **Renamed the application from Smurftown to Battledeck.**

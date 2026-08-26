@@ -151,6 +151,21 @@ public sealed class RankMedal : FrameworkElement
         [(7.0, 0.16), (4.5, 0.24), (2.5, 0.32)];
 
     /// <summary>
+    ///     The dark edge that closes around the digit, drawn <b>over</b> the glow and under
+    ///     the fill. Without it the digit is bright on a bright ground with a bright halo
+    ///     around it, and Diamond's near-white gem swallows all three; the shade below is a
+    ///     drop shadow and therefore only ever covers one side of the shape.
+    /// </summary>
+    private static readonly Brush DigitOutline = Frozen(Color.FromArgb(235, 12, 10, 8));
+
+    /// <summary>
+    ///     Width of that edge, on the 160x176 canvas. Half of it lands outside the glyph -
+    ///     the fill covers the inner half - so the digit reads 1.5 units wider, and the glow
+    ///     still stands as a ring beyond it, reaching 3.5 out.
+    /// </summary>
+    private const double OutlineWidth = 3.0;
+
+    /// <summary>
     ///     Loaded once per file. A row rebuilds its medal on every filter change, and
     ///     without this each one would decode a PNG again.
     /// </summary>
@@ -263,6 +278,12 @@ public sealed class RankMedal : FrameworkElement
             pen.Freeze();
             dc.DrawGeometry(null, pen, glyph);
         }
+
+        // Then the dark edge, over the glow rather than under it: what has to touch the
+        // digit is the dark, and what is left of the glow reads as a ring around that.
+        var outline = new Pen(DigitOutline, OutlineWidth * scale) { LineJoin = PenLineJoin.Round };
+        outline.Freeze();
+        dc.DrawGeometry(null, outline, glyph);
 
         dc.DrawGeometry(DigitFill, null, glyph);
     }
