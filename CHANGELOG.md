@@ -21,6 +21,8 @@ nothing else on the line.
 
 ## [Upcoming]
 
+## [1.10.0] - 2026-10-03
+
 - **A "New season" button in the settings.** When a new Heroes of the Storm season starts, it marks
   every account that has a rank as "placements pending" in one go, so you no longer have to tick it
   account by account. The old rank stays visible, dimmed, and the rank progress is cleared. It asks
@@ -374,7 +376,8 @@ First public release.
   Run anyway* — the checksum shipped with each release proves that the file matches the release,
   not who built it.
 
-[Upcoming]: https://github.com/tibbots/battledeck/compare/1.9.0...HEAD
+[Upcoming]: https://github.com/tibbots/battledeck/compare/1.10.0...HEAD
+[1.10.0]: https://github.com/tibbots/battledeck/releases/tag/1.10.0
 [1.9.0]: https://github.com/tibbots/battledeck/releases/tag/1.9.0
 [1.8.0]: https://github.com/tibbots/battledeck/releases/tag/1.8.0
 [1.7.0]: https://github.com/tibbots/battledeck/releases/tag/1.7.0
