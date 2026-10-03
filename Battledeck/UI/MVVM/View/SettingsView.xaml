@@ -313,6 +313,26 @@
                                        Style="{StaticResource SettingsStateTheme}" />
                         </StackPanel>
                     </DockPanel>
+                    <Border Style="{StaticResource SettingsSeparatorTheme}" />
+
+                    <!-- ============================================== new season ======= -->
+                    <DockPanel Margin="18,0" MinHeight="52">
+                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Width="240">
+                            <TextBlock Text="{loc:Str settings.newSeason}"
+                                       Style="{StaticResource SettingsLabelTheme}" />
+                            <ContentControl Style="{StaticResource SettingsInfoTheme}"
+                                            ToolTip="{loc:Str settings.newSeasonHint}" />
+                        </StackPanel>
+                        <!-- The first click only changes this text, the second executes - see
+                             SettingsViewModel.NewSeasonCommand. Width 220 carries the longest
+                             confirm wording in the four languages. -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="{Binding NewSeasonLabel}"
+                                    Command="{Binding NewSeasonCommand}"
+                                    Style="{StaticResource BattlenetButtonSecondaryTheme}"
+                                    Width="220" Height="30" FontSize="12" HorizontalAlignment="Left" />
+                        </StackPanel>
+                    </DockPanel>
                 </StackPanel>
             </Border>
 

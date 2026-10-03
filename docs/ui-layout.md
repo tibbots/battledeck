@@ -661,9 +661,9 @@ takes 30 and the header row 70.
 | Separator | 1 |
 | Gap between cards | 14 |
 | Outer margin | 10 top, 20 bottom |
-| **Three cards, nine rows** | **≈ 620 of 700** |
+| **Three cards, ten rows** | **≈ 673 of 700** |
 
-- **Roughly 80 points spare, and they are the language reserve.** The numbers above are computed
+- **Roughly 27 points spare, and they are the language reserve.** The numbers above are computed
   from the markup, not measured on screen; a state text is one line in German and can be two in
   French. The `ScrollViewer` stays for exactly that case — it costs nothing while nothing
   overflows.

@@ -120,7 +120,7 @@ change — the build is no substitute there.
   setting has to reach somewhere at run time, it is pushed there by `SettingsGateway.Apply` rather
   than fetched from the gateway — see [Layer rules](architecture.md#layer-rules).
   In the tab it becomes **one row in one of the cards** — label docked left at 240, control beside
-  it — and its explanation goes on the info sign, not on the screen; the tab has around 80 points
+  it — and its explanation goes on the info sign, not on the screen; the tab has around 27 points
   of height left, see [ui-layout.md](ui-layout.md#the-settings-tab). What stays visible is only
   what changes with the chosen value.
 - **Changing what a release ships breaks the updater, and only at run time.** `UpdateInstaller`

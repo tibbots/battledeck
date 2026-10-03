@@ -28,6 +28,8 @@ namespace Battledeck.UI.MVVM.ViewModel
         private CancellationTokenSource? _scan;
         private RelayCommand? _scanCommand;
         private RelayCommand? _stopScanCommand;
+        private RelayCommand? _newSeasonCommand;
+        private bool _newSeasonArmed;
         private string _scanStatus = "";
         private bool _scanning;
         private string? _selectedPath;
@@ -255,6 +257,42 @@ namespace Battledeck.UI.MVVM.ViewModel
         public ICommand ScanCommand => _scanCommand ??= new RelayCommand(async void () => await ScanAll());
 
         public ICommand StopScanCommand => _stopScanCommand ??= new RelayCommand(() => _scan?.Cancel());
+
+        /// <summary>
+        ///     Two clicks instead of a dialog: the first arms the button and changes its wording,
+        ///     the second executes. There is no timer - the armed state ends when the command
+        ///     runs. A button that stays armed until somebody comes back to the tab is a question
+        ///     still waiting for its answer, and the wording says what the next click does.
+        /// </summary>
+        public ICommand NewSeasonCommand => _newSeasonCommand ??= new RelayCommand(NewSeason);
+
+        public string NewSeasonLabel => Strings.Current[_newSeasonArmed
+            ? "settings.newSeasonConfirm"
+            : "settings.newSeasonButton"];
+
+        private void NewSeason()
+        {
+            if (!_newSeasonArmed)
+            {
+                _newSeasonArmed = true;
+                OnPropertyChanged(nameof(NewSeasonLabel));
+                return;
+            }
+
+            _newSeasonArmed = false;
+            OnPropertyChanged(nameof(NewSeasonLabel));
+
+            try
+            {
+                var changed = BattlenetAccountGateway.Instance.StartNewSeason();
+                Dialogs.Toast.ShowInformation(Strings.Format("toast.newSeason", changed));
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Starting a new season failed");
+                Dialogs.Toast.ShowError(e.Message);
+            }
+        }
 
         /// <summary>
         ///     Scan all fixed drives. Runs in the background and reports where it currently is -

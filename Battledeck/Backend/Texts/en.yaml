@@ -277,6 +277,10 @@ settings.clientLanguage: Client language
 settings.clientLanguageHint: "The language your Heroes of the Storm client runs in. Text recognition compares what it reads against words that stand on screen - rank tiers, the loot tab, hero names - and those are translated. This affects reading only: the calibration is language-independent, an English client moves no anchor. Set it wrong and nothing is recognised, which also means nothing is written."
 settings.clientLanguageMeasured: Measured against the running client.
 settings.clientLanguageUnverified: Not verified - no English client was available to measure against. If nothing is read, the word list needs correcting.
+settings.newSeason: New season
+settings.newSeasonHint: "Marks every account as having its placement matches still to play, because a new season has started. Tier and division stay as they are - they show last season's rank, dimmed - and the points are cleared. Regions that were never read stay empty, archived accounts are included. The next read from the game sets the real rank again."
+settings.newSeasonButton: Start new season
+settings.newSeasonConfirm: Click again to confirm
 settings.savedAutomatically: Settings are saved as you change them - there is no save button. They live in .smurftown\settings.yaml next to your account list.
 
 # =========================================================== Updates ==============
@@ -359,6 +363,7 @@ progress.cards: "{0} cards read"
 progress.chest: Opening chest {0} of {1}
 
 # =========================================================== Toasts ===============
+toast.newSeason: "New season started - {0} ranks now have placements pending."   # 0 = number of region entries changed
 toast.accountReactivated: "{0} was archived - restored instead of adding a duplicate"   # 0 = Battletag or e-mail
 toast.signedIn: "{0} is signed in"                       # 0 = Battletag
 toast.nothingChanged: "{0}: nothing changed"

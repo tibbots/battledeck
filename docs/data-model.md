@@ -243,6 +243,13 @@ placementsPending: true   # rank is set but not yet valid
   dimmed. Without that fallback the state would be invisible in the row, because `PathFor` yields
   `null` there. Without a rank **and** without placements the spot stays empty — the rank is then
   simply nothing the row has to say.
+- **The "New season" button** in the Heroes of the Storm card of the settings tab sets the flag for
+  every region entry that already exists, on every account, archived ones included
+  (`BattlenetAccountGateway.StartNewSeason`, one save for the whole list). It also clears
+  `rankPoints` and `rankPointsMax`, because last season's progress means nothing in the new one.
+  It does **not** touch `tier` and `division`, and it does **not** create entries: a region that was
+  never read stays without one. A click arms the button, the second click executes; there is no
+  dialog and no timer. The next successful read of a profile resets the flag as described above.
 
 ## Heroes
 

@@ -210,6 +210,10 @@ settings.clientLanguage: Sprache des Clients
 settings.clientLanguageHint: "Die Sprache, in der dein Heroes-of-the-Storm-Client läuft. Die Texterkennung vergleicht das Gelesene gegen Wörter, die auf dem Schirm stehen - Rangstufen, den Beutereiter, Heldennamen - und die sind übersetzt. Das wirkt nur auf das Lesen: die Eichung ist sprachunabhängig, ein englischer Client verschiebt keinen Anker. Steht sie falsch, wird nichts erkannt - und damit auch nichts geschrieben."
 settings.clientLanguageMeasured: Am laufenden Client gemessen.
 settings.clientLanguageUnverified: Ungeprüft - es stand kein englischer Client zum Messen zur Verfügung. Wird nichts gelesen, gehört die Wortliste korrigiert.
+settings.newSeason: Neue Saison
+settings.newSeasonHint: "Markiert jedes Konto so, dass die Platzierungsspiele noch offen sind, weil eine neue Saison begonnen hat. Stufe und Division bleiben stehen - sie zeigen den Rang der letzten Saison, abgedunkelt - die Punkte werden gelöscht. Regionen, die nie gelesen wurden, bleiben leer, archivierte Konten sind eingeschlossen. Das nächste Lesen aus dem Spiel setzt den echten Rang wieder."
+settings.newSeasonButton: Saison starten
+settings.newSeasonConfirm: Erneut klicken zum Bestätigen
 settings.savedAutomatically: Einstellungen werden beim Ändern sofort gespeichert, einen Speichern-Knopf gibt es nicht. Sie liegen in .smurftown\settings.yaml neben deiner Kontenliste.
 
 # =========================================================== Updates ==============
@@ -277,6 +281,7 @@ progress.cards: "{0} Karten gelesen"
 progress.chest: Öffne Truhe {0} von {1}
 
 # =========================================================== Toasts ===============
+toast.newSeason: "Neue Saison gestartet - bei {0} Rängen ist die Platzierung jetzt offen."
 toast.accountReactivated: "{0} war archiviert - wiederhergestellt, statt ein doppeltes Konto anzulegen"
 toast.signedIn: "{0} ist angemeldet"
 toast.nothingChanged: "{0}: nichts geändert"

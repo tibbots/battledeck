@@ -398,6 +398,59 @@ namespace Battledeck.Tests
             Assert.False(gateway.IsAmbiguousBattletag("NOBODY#1111"));
         }
 
+        /// <summary>
+        ///     The season button: placements pending and points gone where a rank was read,
+        ///     nothing created where none was - and the file, not only the list in memory,
+        ///     carries it.
+        /// </summary>
+        [Fact]
+        public void A_new_season_marks_placements_and_clears_points_but_keeps_the_rank()
+        {
+            var folder = FreshFolder();
+            var gateway = new BattlenetAccountGateway(folder);
+
+            var active = Account("active@example.com");
+            active.SetRegions(Games.Hots, [BattlenetRegion.Europe, BattlenetRegion.Americas]);
+            var europe = active.HotsFor(BattlenetRegion.Europe);
+            europe.Tier = HotsRankTier.Gold;
+            europe.Division = 3;
+            europe.RankPoints = 497;
+            europe.RankPointsMax = 1000;
+            gateway.AddOrUpdate(active);
+
+            var archived = Account("archived@example.com");
+            archived.SetRegions(Games.Hots, [BattlenetRegion.Europe]);
+            archived.Inactive = true;
+            var old = archived.HotsFor(BattlenetRegion.Europe);
+            old.Tier = HotsRankTier.Diamond;
+            old.Division = 1;
+            old.RankPoints = 12;
+            old.RankPointsMax = 1000;
+            gateway.AddOrUpdate(archived);
+
+            Assert.Equal(2, gateway.StartNewSeason());
+
+            // A second gateway, as above: the file is under test, not the list in memory.
+            var read = new BattlenetAccountGateway(folder).BattlenetAccounts;
+            var back = read.Single(a => a.Email == "active@example.com");
+            var backEurope = back.HotsFor(BattlenetRegion.Europe);
+            Assert.Equal(HotsRankTier.Gold, backEurope.Tier);
+            Assert.Equal(3, backEurope.Division);
+            Assert.True(backEurope.PlacementsPending);
+            Assert.Null(backEurope.RankPoints);
+            Assert.Null(backEurope.RankPointsMax);
+
+            // Played in the Americas, never read there: still no entry.
+            Assert.Null(back.HotsIn(BattlenetRegion.Americas));
+
+            var backArchived = read.Single(a => a.Email == "archived@example.com");
+            var backOld = backArchived.HotsFor(BattlenetRegion.Europe);
+            Assert.True(backArchived.Inactive);
+            Assert.Equal(HotsRankTier.Diamond, backOld.Tier);
+            Assert.True(backOld.PlacementsPending);
+            Assert.Null(backOld.RankPoints);
+        }
+
         private static string FreshFolder()
         {
             var folder = Path.Combine(TestHome.Path, Guid.NewGuid().ToString("N"));

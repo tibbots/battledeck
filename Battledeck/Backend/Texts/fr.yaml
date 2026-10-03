@@ -213,6 +213,10 @@ settings.clientLanguage: Langue du client
 settings.clientLanguageHint: "La langue dans laquelle tourne votre client Heroes of the Storm. La reconnaissance de texte compare ce qu'elle lit à des mots affichés à l'écran - paliers de rang, onglet des coffres, noms de héros - et ceux-ci sont traduits. Cela ne concerne que la lecture\xA0: l'étalonnage est indépendant de la langue, un client anglais ne déplace aucun repère. Mal réglée, rien n'est reconnu - donc rien n'est écrit non plus."
 settings.clientLanguageMeasured: Mesuré sur le client en cours d'exécution.
 settings.clientLanguageUnverified: Non vérifié - aucun client anglais n'était disponible pour la mesure. Si rien n'est lu, la liste de mots doit être corrigée.
+settings.newSeason: Nouvelle saison
+settings.newSeasonHint: "Marque chaque compte comme ayant encore ses parties de placement à jouer, parce qu'une nouvelle saison a commencé. Le palier et la division restent - ils montrent le rang de la saison précédente, atténué - et les points sont effacés. Les régions jamais lues restent vides, les comptes archivés sont inclus. La prochaine lecture depuis le jeu remet le vrai rang."
+settings.newSeasonButton: Lancer la saison
+settings.newSeasonConfirm: Cliquez pour confirmer
 settings.savedAutomatically: Les réglages sont enregistrés au fur et à mesure, il n'y a pas de bouton d'enregistrement. Ils se trouvent dans .smurftown\settings.yaml à côté de votre liste de comptes.
 
 # =========================================================== Updates ==============
@@ -280,6 +284,7 @@ progress.cards: "{0} cartes lues"
 progress.chest: Ouverture du coffre {0} sur {1}
 
 # =========================================================== Toasts ===============
+toast.newSeason: "Nouvelle saison lancée - {0} rangs en placement en cours."
 toast.accountReactivated: "{0} était archivé - restauré au lieu de créer un compte en double"
 toast.signedIn: "{0} est connecté"
 toast.nothingChanged: "{0}\xA0: aucun changement"

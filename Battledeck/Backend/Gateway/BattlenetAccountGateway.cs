@@ -485,6 +485,41 @@ namespace Battledeck.Backend.Gateway
             AccountRegionsFiltered.Refresh();
         }
 
+        /// <summary>
+        ///     A new season has begun: every region that already holds Heroes of the Storm
+        ///     data goes back to "placements pending", and the points of the old season are
+        ///     dropped. Returns how many region entries were changed.
+        ///     <para>
+        ///         <b>Tier and division stay</b> - last season's rank is what the dimmed medal
+        ///         shows. <b>A region that was never read stays without an entry</b>, which is
+        ///         why this walks <c>HotsByRegion</c> and never calls <c>HotsFor</c>: that one
+        ///         creates. Archived accounts are included, they come back with last season's
+        ///         numbers otherwise.
+        ///     </para>
+        ///     <para>
+        ///         One save for the whole list, not one per account. Nothing is written when
+        ///         there was nothing to change.
+        ///     </para>
+        /// </summary>
+        public int StartNewSeason()
+        {
+            var changed = 0;
+            foreach (var account in BattlenetAccounts)
+            foreach (var data in account.HotsByRegion.Values)
+            {
+                data.PlacementsPending = true;
+                data.RankPoints = null;
+                data.RankPointsMax = null;
+                changed++;
+            }
+
+            if (changed == 0) return 0;
+
+            SaveToConfigFile();
+            RebuildRows();
+            return changed;
+        }
+
         public void Remove(BattlenetAccount account)
         {
             BattlenetAccounts.Remove(account);
