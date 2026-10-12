@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
@@ -30,6 +31,8 @@ namespace Battledeck.UI.MVVM.ViewModel
         private RelayCommand? _stopScanCommand;
         private RelayCommand? _newSeasonCommand;
         private bool _newSeasonArmed;
+        private RelayCommand? _supportBundleCommand;
+        private bool _bundling;
         private string _scanStatus = "";
         private bool _scanning;
         private string? _selectedPath;
@@ -291,6 +294,40 @@ namespace Battledeck.UI.MVVM.ViewModel
             {
                 Log.Error(e, "Starting a new season failed");
                 Dialogs.Toast.ShowError(e.Message);
+            }
+        }
+
+        public ICommand SupportBundleCommand =>
+            _supportBundleCommand ??= new RelayCommand(async void () => await CreateSupportBundle());
+
+        public bool SupportBundleIdle => !_bundling;
+
+        private async Task CreateSupportBundle()
+        {
+            if (_bundling) return;
+
+            _bundling = true;
+            OnPropertyChanged(nameof(SupportBundleIdle));
+
+            try
+            {
+                var bundle = await Task.Run(() => SupportBundle.Create(Directories.UserPath));
+
+                // Not through the shell: explorer.exe takes /select only as its own argument.
+                Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{bundle}\"")
+                {
+                    UseShellExecute = false
+                });
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "The support bundle could not be created");
+                Dialogs.Toast.ShowError(Strings.Format("settings.supportBundleFailed", e.Message));
+            }
+            finally
+            {
+                _bundling = false;
+                OnPropertyChanged(nameof(SupportBundleIdle));
             }
         }
 

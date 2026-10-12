@@ -382,6 +382,25 @@ four dropdowns scrolled.
   minutes, `InitialShowDelay` 150. `ToolTipService.*` belongs on the **owner** of the tooltip, not
   in the tooltip's own style — WPF reads it from the element that was pointed at.
 
+### The support bundle button
+
+`Create support bundle` sits in the `ABOUT & UPDATES` card, in the `Installed version` row — the
+two things somebody asks for when a problem is reported. It is an action and not a setting:
+nothing is stored, `Store()` is not involved.
+
+- **It builds off the UI thread and then shows the file.** `SupportBundle.Create` runs in
+  `Task.Run`; afterwards `explorer.exe /select,"path"` opens the `support/` folder with the new
+  ZIP selected. The button is disabled while it runs (`SupportBundleIdle`).
+- **A failure is a toast** (`settings.supportBundleFailed`, with the exception text) and a log
+  line with the stack trace, like every other error here.
+- **What the bundle contains stands visibly beside the button**, not on an info sign: battletags
+  and e-mail addresses, no passwords. That is the rule of this tab applied, not bent — the
+  sentence is read before every hand-over of the file, not once. What the bundle *is* — logs and
+  captures of 7 days, written locally, nothing sent — is the explanation, and it hangs on the
+  button's tooltip (`settings.supportBundleHint`).
+- **It has no row of its own because the tab cannot pay for one**, see
+  [ui-layout.md](ui-layout.md#the-settings-tab).
+
 **`clientLanguage` and `appLanguage` are two questions**, see [Language](localisation.md). The app-language
 dropdown therefore sits **at the top** of the tab and not next to the client language: it is the only
 setting there that has nothing to do with Heroes of the Storm.

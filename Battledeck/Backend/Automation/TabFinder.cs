@@ -58,12 +58,20 @@ namespace Battledeck.Backend.Automation
             }
 
             var (x, y, width, height) = session.Layout.Area(area);
+            Screenshot? last = null;
 
             for (var attempt = 1; attempt <= Attempts; attempt++)
             {
                 token.ThrowIfCancellationRequested();
 
-                var lines = await TextReader.ReadAsync(session.Capture(), x, y, width, height);
+                last = session.Capture();
+                var lines = await TextReader.ReadAsync(
+                    last,
+                    x,
+                    y,
+                    width,
+                    height
+                );
 
                 // The SHORTEST match, not the first. In the collection's sub-tab row,
                 // "Packs de héros" stands to the LEFT of "Héros" - likewise on German
@@ -117,7 +125,17 @@ namespace Battledeck.Backend.Automation
             Log.Warning("Tab '{What}' not found in {Attempts} attempts - looked for '{Word}' in " +
                         "the {Language} vocabulary", what, Attempts, word,
                 GameVocabulary.Current.Language);
+
+            // The crop goes beside the window unscaled: the area the recognition was handed,
+            // at a size that shows whether it had to be magnified to be read at all.
+            var reason = DiagnosticReason(what);
+            GameSession.SaveDiagnostic(last, reason);
+            GameSession.SaveDiagnostic(last?.Crop(x, y, width, height), $"{reason}-crop");
             return false;
         }
+
+        internal static string DiagnosticReason(string what) =>
+            "tab-not-found-" + string.Concat(
+                what.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : '-'));
     }
 }

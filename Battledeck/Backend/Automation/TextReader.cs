@@ -162,10 +162,18 @@ namespace Battledeck.Backend.Automation
         ///     it costs nothing.
         /// </summary>
         public static async Task<IReadOnlyList<TextLine>> ReadAsync(
-            Screenshot shot, int x, int y, int width, int height, int upscale = 1)
+            Screenshot shot,
+            int x,
+            int y,
+            int width,
+            int height,
+            int upscale = 1
+        )
         {
             var engine = Engine();
             if (engine == null) return [];
+
+            upscale = EffectiveUpscale(width, height, upscale);
 
             using var bitmap = await ToSoftwareBitmap(shot.Crop(x, y, width, height), upscale);
             var result = await engine.RecognizeAsync(bitmap);
@@ -196,6 +204,18 @@ namespace Battledeck.Backend.Automation
             }
 
             return lines;
+        }
+
+        // Below this, Windows.Media.Ocr returns an empty result instead of a misread.
+        internal const int MinimumShorterSide = 40;
+
+        internal static int EffectiveUpscale(int width, int height, int upscale)
+        {
+            var shorter = Math.Min(width, height);
+            if (shorter <= 0) return upscale;
+
+            var needed = (MinimumShorterSide + shorter - 1) / shorter;
+            return Math.Max(upscale, needed);
         }
 
         /// <summary>The whole text of a crop, lines separated by spaces.</summary>

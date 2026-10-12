@@ -357,9 +357,20 @@
                             <TextBlock Text="{loc:Str update.installed}"
                                        Style="{StaticResource SettingsLabelTheme}" />
                         </StackPanel>
-                        <TextBlock Text="{Binding Update.Installed}" Foreground="#C3C8D4"
-                                   FontSize="13" VerticalAlignment="Center"
-                                   HorizontalAlignment="Left" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Update.Installed}" Foreground="#C3C8D4"
+                                       FontSize="13" VerticalAlignment="Center" />
+                            <!-- No row of its own: that costs 53 points and the tab has 27 left.
+                                 The contents stay visible - they are read before every hand-over. -->
+                            <Button Content="{loc:Str settings.supportBundle}"
+                                    Command="{Binding SupportBundleCommand}"
+                                    IsEnabled="{Binding SupportBundleIdle}"
+                                    ToolTip="{loc:Str settings.supportBundleHint}"
+                                    Style="{StaticResource SettingsRowButtonTheme}"
+                                    Margin="16,0,0,0" />
+                            <TextBlock Text="{loc:Str settings.supportBundleContents}"
+                                       Style="{StaticResource SettingsStateTheme}" />
+                        </StackPanel>
                     </DockPanel>
                     <Border Style="{StaticResource SettingsSeparatorTheme}" />
 

@@ -39,7 +39,7 @@
     <!-- The retention numbers and the sweep of the log folder are internal on purpose:
          nothing outside this assembly has business calling them, and the moment they are
          public they are a contract. The tests still have to reach them - a test that
-         restates "20 captures" as its own literal passes after somebody changes the
+         restates "10 backups" as its own literal passes after somebody changes the
          constant to 5. -->
     <InternalsVisibleTo Include="Battledeck.Tests" />
   </ItemGroup>

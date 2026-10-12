@@ -21,8 +21,19 @@ reasons" without asking, but do not make it worse either:
   nothing. The price for getting at the stored password at all: the app can only type it itself for
   Heroes of the Storm. The error path deliberately logs only the battletag, never the value.
 - **Captures on failure** (`~/.smurftown/shots/`) show the game screen. On the login form the
-  password is masked, but the email address is legible. The newest 20 are kept and nothing older
-  than 30 days — a bound on how long that address lies around, not a reason it may be shared.
+  password is masked, but the email address is legible. A capture written because a tab was not
+  found shows the main menu or the collection, and there the **battletag** is legible; it comes
+  with a second file holding only the tab row. Every capture of the last 7 days is kept and
+  nothing older — a bound on how long address and battletag lie around, not a reason either may
+  be shared.
+- **A support bundle carries those captures out of the folder.** The button in the settings tab
+  packs `logs/` and `shots/` of the last 7 days into `support/Battledeck-support-{time}.zip`. The
+  log names accounts by battletag and e-mail address, and the captures show both; a capture of
+  the login form shows the password masked. **No password is in it**: the bundle is built from
+  those two folders and from nothing else, so `data.yaml`, `app.yaml` and `backups/` cannot get
+  in by being forgotten in an exclusion. It is written locally and shown in Explorer — nothing is
+  uploaded, and who receives the file is the human's decision. The settings tab says what it
+  contains beside the button, visibly, and bundles go after 7 days like the captures in them.
 - **Every backup holds the passwords too.** `backups/{version}.zip` contains a complete
   `data.yaml`, so up to ten copies of the credential file live beside the current one. The ZIP
   carries no password and is not meant to: it makes the folder countable, it protects nothing.
@@ -74,7 +85,7 @@ that nobody has to discover it. Whoever does not want it blocks `api.github.com`
 executable, which is a decision at the level where such decisions belong.
 
 **A second outbound request would be a change to what this application is.** There is exactly one
-today, and the sentence in [`../CLAUDE.md`](../CLAUDE.md) says so. Whoever adds another names it in
+today — the support bundle is a file on disk and sends nothing — and the sentence in [`../CLAUDE.md`](../CLAUDE.md) says so. Whoever adds another names it in
 both places before building it — not afterwards.
 
 ## README and screenshots

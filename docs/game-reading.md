@@ -133,6 +133,35 @@ in `GameVocabulary` — together with the labels `Sturmliga` and `Spielerstufe` 
 recognized and nothing written. `~/.smurftown/references/` is no longer read or written — the
 folder may be removed, the app won't recreate it.
 
+## The 40-pixel floor
+
+`Windows.Media.Ocr` returns **nothing** for an image whose shorter side is below 40 pixels — an
+empty result, not a misread and not an error. Measured with a synthetic strip, `de-DE` engine,
+the same glyph size throughout:
+
+| Strip height | Magnification | Read |
+|---|---|---|
+| 30, 34, 39 | 1 | nothing |
+| 40, 45, 60 | 1 | everything |
+| 30, 34 | 2 | everything |
+
+What counts is the size of the image handed to the engine, not the size of the glyphs in it.
+
+`TextReader.ReadAsync` therefore never hands over less: if the shorter side of the crop times the
+requested magnification is below `MinimumShorterSide` (40), the magnification is raised to the
+smallest whole factor that reaches it, and the returned boxes are divided back by that same
+factor. A caller sees coordinates in the crop it asked for and never learns the factor changed.
+
+It lives in `TextReader` because the crops in `screen-map.yaml` are points at a window height of
+1440 and shrink with the window. At 1920×1080 (factor 0.75) `collection.heroesBar` is 34 pixels
+high and `play.modeBar` 30; a 720-pixel window halves every crop. No reading site and no entry in
+`screen-map.yaml` has to know the limit.
+
+The floor is necessary, not sufficient: the same engine reads a single word standing alone in a
+400-pixel-wide strip erratically at every height and every magnification, while a row of four
+words in the same strip reads cleanly from 16 pixels up. `TextReaderTests` uses the row for that
+reason.
+
 ## Opening loot chests
 
 Mode 4 of the start menu. **The whole flow hangs on one key** — three presses of the space bar

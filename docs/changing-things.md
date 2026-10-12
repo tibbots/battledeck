@@ -137,7 +137,9 @@ change — the build is no substitute there.
   because the edit button sits in the row.
 - **New point in `screen-map.yaml`**: measure at **two** resolutions, otherwise the anchor is guessed.
   How to get to a second resolution — and which two obvious routes do **not** lead there — is in
-  [`calibration.md`](calibration.md).
+  [`calibration.md`](calibration.md). A crop that is read as text may come out lower than 40 pixels
+  in a small window — `TextReader` magnifies it past that limit by itself, see
+  [The 40-pixel floor](game-reading.md#the-40-pixel-floor).
 - **Not everything is calibratable.** Elements whose position depends on a text width move with the
   language. Such elements are searched by their **word** — `TabFinder` does that, `HeaderReader`
   always did. Whoever needs a new tab enters its word in `GameVocabulary` and **no coordinate** in

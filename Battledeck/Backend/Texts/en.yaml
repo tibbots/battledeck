@@ -282,6 +282,10 @@ settings.newSeasonHint: "Marks every account as having its placement matches sti
 settings.newSeasonButton: Start new season
 settings.newSeasonConfirm: Click again to confirm
 settings.savedAutomatically: Settings are saved as you change them - there is no save button. They live in .smurftown\settings.yaml next to your account list.
+settings.supportBundle: Create support bundle
+settings.supportBundleContents: Contains the battletags and e-mail addresses of your accounts, no passwords.
+settings.supportBundleHint: Packs the logs and game captures of the last 7 days into one ZIP in .smurftown\support and shows it in Explorer. Nothing is sent anywhere - you decide who gets the file. Bundles older than 7 days are removed.
+settings.supportBundleFailed: "Support bundle not created: {0}"   # 0 = exception text, stays English
 
 # =========================================================== Updates ==============
 # Two places show this: the version chip in the top right corner of the header, and

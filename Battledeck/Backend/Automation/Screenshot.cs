@@ -61,6 +61,15 @@ namespace Battledeck.Backend.Automation
             return new Screenshot(buffer, width, height);
         }
 
+        // Tests draw text into a buffer; Solid cannot carry any.
+        internal static Screenshot FromBgra(byte[] pixels, int width, int height)
+        {
+            if (pixels.Length != width * height * BytesPerPixel)
+                throw new ArgumentException("Buffer does not match the dimensions.", nameof(pixels));
+
+            return new Screenshot(pixels, width, height);
+        }
+
         /// <summary>
         ///     Captures a section of the screen. The coordinates are screen points, not
         ///     window-relative.

@@ -9,8 +9,8 @@ namespace Battledeck.Tests
     ///     What the data folder keeps and what it drops.
     ///     <para>
     ///         <b>Every case reads its bound from the constant</b> rather than restating it.
-    ///         A test that writes 20 as its own literal keeps passing after somebody lowers
-    ///         <see cref="Housekeeping.ShotsKept" /> to five - it would then be testing a
+    ///         A test that writes 10 as its own literal keeps passing after somebody lowers
+    ///         <see cref="Housekeeping.BackupsKept" /> to five - it would then be testing a
     ///         number that exists nowhere else.
     ///     </para>
     ///     <para>
@@ -22,26 +22,20 @@ namespace Battledeck.Tests
     public class HousekeepingTests
     {
         [Fact]
-        public void The_newest_captures_survive_and_the_rest_go()
+        public void Every_capture_inside_its_age_stays_however_many_there_are()
         {
             var folder = FreshFolder();
-            var extra = 5;
-            for (var i = 0; i < Housekeeping.ShotsKept + extra; i++)
-                Shot(folder, $"shot-{i:00}.png", TimeSpan.FromMinutes(i));
+            const int written = 60;
+            for (var i = 0; i < written; i++)
+                Shot(folder, $"shot-{i:00}.png", -TimeSpan.FromMinutes(i));
 
             Housekeeping.Run(folder);
 
-            var left = Shots(folder);
-            Assert.Equal(Housekeeping.ShotsKept, left.Length);
-
-            // Written oldest first, so the highest indices are the newest and the ones that
-            // have to be there.
-            Assert.Contains($"shot-{Housekeeping.ShotsKept + extra - 1:00}.png", left);
-            Assert.DoesNotContain("shot-00.png", left);
+            Assert.Equal(written, Shots(folder).Length);
         }
 
         [Fact]
-        public void A_capture_past_its_age_goes_even_when_there_is_room()
+        public void A_capture_past_its_age_goes()
         {
             var folder = FreshFolder();
             Shot(folder, "yesterday.png", -TimeSpan.FromDays(1));
@@ -53,15 +47,29 @@ namespace Battledeck.Tests
         }
 
         [Fact]
-        public void Captures_are_left_alone_while_they_fit()
+        public void A_capture_just_inside_its_age_stays_and_one_just_past_it_goes()
         {
             var folder = FreshFolder();
-            Shot(folder, "one.png", TimeSpan.Zero);
-            Shot(folder, "two.png", TimeSpan.FromMinutes(1));
+            Shot(folder, "inside.png", -(Housekeeping.ShotsMaxAge - TimeSpan.FromHours(1)));
+            Shot(folder, "past.png", -(Housekeeping.ShotsMaxAge + TimeSpan.FromHours(1)));
 
             Housekeeping.Run(folder);
 
-            Assert.Equal(2, Shots(folder).Length);
+            Assert.Equal(["inside.png"], Shots(folder));
+        }
+
+        [Fact]
+        public void A_support_bundle_past_its_age_goes_and_a_fresh_one_stays()
+        {
+            var folder = FreshFolder();
+            var support = SupportBundle.Root(folder);
+            Directory.CreateDirectory(support);
+            Stamp(Path.Combine(support, "fresh.zip"), -TimeSpan.FromDays(1));
+            Stamp(Path.Combine(support, "old.zip"), -(Housekeeping.ShotsMaxAge + TimeSpan.FromDays(1)));
+
+            Housekeeping.Run(folder);
+
+            Assert.Equal(["fresh.zip"], Directory.GetFiles(support).Select(Path.GetFileName));
         }
 
         [Fact]
@@ -134,7 +142,7 @@ namespace Battledeck.Tests
         public void A_folder_with_nothing_in_it_is_not_a_failure()
         {
             // The first start of a fresh installation lands here before anything has been
-            // written. None of the three steps may throw over a folder that is not there.
+            // written. None of the steps may throw over a folder that is not there.
             Housekeeping.Run(FreshFolder());
         }
 

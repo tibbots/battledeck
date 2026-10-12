@@ -368,6 +368,15 @@ Searching goes through `TabFinder` + `GameVocabulary`, at four sites: collection
 - **No fallback to a coordinate.** A calibrated point would be right for exactly one language;
   the same reasoning by which `LoginLocator` searches for the login form instead of typing
   somewhere on failure. Found or aborted.
+- **Giving up leaves two captures in `~/.smurftown/shots/`**, both cut from the capture of the
+  last attempt: `… tab-not-found-{tab}.png`, the whole game window, and
+  `… tab-not-found-{tab}-crop.png`, the strip that was handed to text recognition. The window
+  shows which screen the client was on. **The crop is exactly the area the engine was given, at
+  the size it has in the window** — saved before any magnification, so it answers two questions
+  at a glance: whether the word stood inside the strip at all, and how many pixels high the strip
+  was (below 40, `TextReader` magnified it, see
+  [The 40-pixel floor](game-reading.md#the-40-pixel-floor)). `{tab}` is the name the call site
+  gives the tab: `collection`, `heroes`, `loot`, `aram`.
 - **`play.tab` stays calibrated** and is the exception within the exception: the tab is the first
   of the row, clings to the left edge, and is clicked near its **start**. That start is in the
   same place in every language, however long the word after it.

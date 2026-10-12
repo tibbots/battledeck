@@ -7,12 +7,12 @@ namespace Battledeck.Backend.Gateway
     ///     What the data folder keeps, and for how long. Everything this application ever
     ///     deletes on its own is decided here.
     ///     <para>
-    ///         <b>Why one class and not a number at each site</b>: three different things grow
-    ///         without bound - the log, the diagnostic captures and the backups - and each of
-    ///         them was written by somebody solving a different problem. A retention policy
-    ///         spread over three files is one nobody can state, and the question asked about
-    ///         it is always the same one: "how much of my disk does this take". The answer
-    ///         stands at the top of this file, in four constants.
+    ///         <b>Why one class and not a number at each site</b>: four different things grow
+    ///         without bound - the log, the diagnostic captures, the backups and the support
+    ///         bundles - and each of them was written by somebody solving a different problem.
+    ///         A retention policy spread over four files is one nobody can state, and the
+    ///         question asked about it is always the same one: "how much of my disk does this
+    ///         take". The answer stands at the top of this file, in four constants.
     ///     </para>
     ///     <para>
     ///         <b>Nothing here is a safety net for the data itself.</b> <c>data.yaml</c>,
@@ -44,21 +44,15 @@ namespace Battledeck.Backend.Gateway
         internal const long LogSizeLimitBytes = 10L * 1024 * 1024;
 
         /// <summary>
-        ///     How many captures of a stranded automation run survive. A full-screen PNG is
-        ///     around 5 MB, so this is the number that decides the size of the folder - not
-        ///     <see cref="ShotsMaxAge" />, which only takes what the count already spared.
+        ///     Above this age a capture goes, and a support bundle with it. A screenshot
+        ///     answers "was the calibration outdated or was the game slow" - a week later
+        ///     nobody asks that question about that run any more. <see cref="SupportBundle" />
+        ///     selects by the same span.
         /// </summary>
-        internal const int ShotsKept = 20;
+        internal static readonly TimeSpan ShotsMaxAge = TimeSpan.FromDays(7);
 
         /// <summary>
-        ///     Above this age a capture goes even when the count would have kept it. A
-        ///     screenshot answers "was the calibration outdated or was the game slow" - a
-        ///     month later nobody asks that question about that run any more.
-        /// </summary>
-        internal static readonly TimeSpan ShotsMaxAge = TimeSpan.FromDays(30);
-
-        /// <summary>
-        ///     How many version backups survive. Higher than the other two on purpose: each
+        ///     How many version backups survive. Higher than the log count on purpose: each
         ///     one is some 10 KB compressed, and the one nobody kept is the one that would
         ///     have been needed.
         /// </summary>
@@ -70,14 +64,15 @@ namespace Battledeck.Backend.Gateway
         ///     wrote is already among the ones being counted.
         ///     <para>
         ///         Every step carries its own <c>try</c>. A folder that cannot be read is no
-        ///         reason to skip the other two, and none of the three is a reason to refuse
+        ///         reason to skip the others, and none of them is a reason to refuse
         ///         the start: what fails here is housekeeping, and the application works
         ///         without it - only fuller.
         ///     </para>
         /// </summary>
         public static void Run(string folder)
         {
-            Step("captures", () => PruneShots(Path.Combine(folder, "shots")));
+            Step("captures", () => PruneByAge(Path.Combine(folder, SupportBundle.ShotsFolder), ".png"));
+            Step("support bundles", () => PruneByAge(SupportBundle.Root(folder), ".zip"));
             Step("backups", () => PruneBackups(DataBackup.BackupRoot(folder)));
             Step("log of the previous layout", () => ArchiveLegacyLog(folder));
         }
@@ -95,28 +90,25 @@ namespace Battledeck.Backend.Gateway
         }
 
         /// <summary>
-        ///     Count first, age second - both applied to the same list, so a capture goes if
-        ///     either says so. Sorted newest first, which is what makes the count a "keep the
-        ///     newest 20" and not an arbitrary twenty.
+        ///     By age alone: whatever was written within <see cref="ShotsMaxAge" /> stays,
+        ///     however many that is.
         /// </summary>
-        private static void PruneShots(string shots)
+        private static void PruneByAge(string folder, string suffix)
         {
-            if (!Directory.Exists(shots)) return;
-
-            var files = Named(shots, ".png")
-                .Select(path => new FileInfo(path))
-                .OrderByDescending(f => f.LastWriteTimeUtc)
-                .ToList();
+            if (!Directory.Exists(folder)) return;
 
             var cutoff = DateTime.UtcNow - ShotsMaxAge;
-            var doomed = files
-                .Where((file, index) => index >= ShotsKept || file.LastWriteTimeUtc < cutoff)
-                .ToList();
+            var files = Named(folder, suffix).Select(path => new FileInfo(path)).ToList();
+            var doomed = files.Where(file => file.LastWriteTimeUtc < cutoff).ToList();
 
             foreach (var file in doomed) Delete(file);
             if (doomed.Count > 0)
-                Log.Debug("Removed {Count} capture(s), {Kept} left",
-                    doomed.Count, files.Count - doomed.Count);
+                Log.Debug(
+                    "Removed {Count} file(s) past their age from {Folder}, {Kept} left",
+                    doomed.Count,
+                    folder,
+                    files.Count - doomed.Count
+                );
         }
 
         /// <summary>

@@ -32,8 +32,11 @@ Battledeck/
     Gateway/             BattlenetAccountGateway, HotsRotationGateway, SettingsGateway
       AppFile.cs           owns app.yaml; every write re-reads it and replaces one section
       DataBackup.cs        zips the YAML files to backups/{version}.zip before a migration
-      Housekeeping.cs      what the folder keeps: 5 logs, 20 captures, 10 backups
+      Housekeeping.cs      what the folder keeps: 5 logs, 10 backups, and 7 days of captures
+                           and support bundles
       LogArchive.cs        compresses a log as soon as the sink stops writing to it
+      SupportBundle.cs     zips the logs and captures of the last 7 days into support/ -
+                           from an allow-list of those two folders, never data.yaml
     Update/              the hourly update check - see self-update.md
       GithubReleases.cs    asks api.github.com for the newest release; the app's ONLY request
       UpdateGateway.cs     owns the update section of app.yaml, decides whether an hour has passed
@@ -175,6 +178,9 @@ By default everything under `%USERPROFILE%\.smurftown\` (defined in `Directories
 - `backups/{version}.zip` — copies of every YAML file, set aside once per version
 - `logs/` — `smurftown.log` plus up to four compressed predecessors
 - `shots/` — captures written when an automation run strands
+- `support/` — `Battledeck-support-{yyyy-MM-dd HH.mm.ss}.zip`, written by the button in the
+  settings tab: the files of `logs/` and `shots/` from the last 7 days, under those two entry
+  folders, and nothing else
 
 `BattlenetAccountGateway` rewrites the whole list on **every** mutation (`SaveToConfigFile`). No
 diff. Inside one process the write is serialised and reads the file again first; two parallel app
@@ -273,7 +279,8 @@ App.OnStartup
   ├─ DataBackup.BeforeMigrations()      app.yaml : appVersion != running version?
   │        └─ yes ──► *.yaml  ──►  backups/{the version in the file, else "unknown"}.zip
   │                                (an existing archive is NOT overwritten)
-  ├─ Housekeeping.Run()                   caps captures, backups and the old flat log
+  ├─ Housekeeping.Run()                   caps captures, support bundles, backups and the
+  │                                        old flat log
   ├─ SettingsGateway.Apply()
   ├─ BattlenetAccountGateway.Instance    ← forced here, so an unreadable data.yaml stops
   │                                        the start and not the first window
@@ -314,15 +321,16 @@ a `YamlException` in an older one.
 
 ### What the folder keeps
 
-Three things in here grow without an end of their own: the log is appended to on every run, a
-stranded automation leaves a full-screen PNG of some 5 MB, and every version adds a backup.
-`Housekeeping` is where all three bounds stand, and it is the only code in this application that
-deletes anything by itself.
+Four things in here grow without an end of their own: the log is appended to on every run, a
+stranded automation leaves a full-screen PNG of some 5 MB, every version adds a backup, and every
+press of the support button adds a bundle. `Housekeeping` is where all four bounds stand, and it
+is the only code in this application that deletes anything by itself.
 
 | What | Bound | Why that one |
 |---|---|---|
 | `logs/` | 5 files, roll at 10 MB, all but the current one compressed | Serilog's defaults are worse than they look: one file, 1 GB, no rolling — on reaching it the sink stops writing, silently |
-| `shots/` | the newest 20, and nothing older than 30 days | the count decides the size of the folder, the age takes what the count spared |
+| `shots/` | everything written within the last 7 days, **no** count limit | a capture answers a question about one run, and a week later nobody asks it; a run that strands often must not push its own evidence out |
+| `support/` | everything written within the last 7 days | a bundle is a copy of what the two rows above still hold — older than them it holds what was meant to be gone |
 | `backups/` | the newest 10, **no** age limit | the age of a version says nothing about whether somebody still needs to get back to it |
 
 - **Compressed as ZIP and not GZip**, although a log is one file and GZip is made for exactly that.
@@ -333,6 +341,16 @@ deletes anything by itself.
   files uncompressed for as long as the window stays open — and that session is the one somebody is
   trying to debug. The same hook is the recovery path after a crash: the next start opens a file and
   thus lands in it.
+- **The 7 days are one constant**, `Housekeeping.ShotsMaxAge`. `SupportBundle` selects by it and
+  `Housekeeping` prunes captures and bundles by it, so a bundle holds exactly the captures the
+  folder still keeps.
+- **The bundle reads the log while the sink writes it.** Serilog holds `smurftown.log` open for
+  writing and shares it for reading only; `SupportBundle` therefore opens every file granting
+  `FileShare.ReadWrite`, which `ZipArchive.CreateEntryFromFile` does not. A file that still cannot
+  be read fails the whole bundle — the button reports it as a toast — instead of leaving a bundle
+  that silently lacks the one file it was made for.
+- **Nothing recent is not an error**: missing `logs/` or `shots/` folders are skipped, and a
+  bundle without entries is still a valid ZIP.
 - **Nothing in `LogArchive` logs.** It runs inside the sink while the logger is being built or a
   roll is under way; a `Log.Warning` from there would re-enter the very sink that is mid-open.
 - **A ZIP is not protection.** Every backup holds a complete `data.yaml`, and that file carries the

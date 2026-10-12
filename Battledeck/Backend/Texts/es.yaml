@@ -220,6 +220,10 @@ settings.newSeasonHint: "Marca todas las cuentas con las partidas de clasificaci
 settings.newSeasonButton: Iniciar temporada
 settings.newSeasonConfirm: Pulsa de nuevo para confirmar
 settings.savedAutomatically: Los ajustes se guardan según los cambias, no hay botón de guardar. Están en .smurftown\settings.yaml junto a tu lista de cuentas.
+settings.supportBundle: Crear paquete de soporte
+settings.supportBundleContents: Contiene los battletags y los correos de tus cuentas, ninguna contraseña.
+settings.supportBundleHint: Reúne los registros y las capturas del juego de los últimos 7 días en un ZIP en .smurftown\support y lo muestra en el Explorador. No se envía nada - tú decides a quién le das el archivo. Los paquetes de más de 7 días se eliminan.
+settings.supportBundleFailed: "Paquete de soporte no creado: {0}"
 
 # =========================================================== Updates ==============
 # Two places show this: the version chip in the top right corner of the header, and

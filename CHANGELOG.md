@@ -21,6 +21,21 @@ nothing else on the line.
 
 ## [Upcoming]
 
+- **Heroes and the ARAM tab are found again when the game window is lower than 1440 pixels**, for
+  example at 1920×1080. In such a window the read opened the collection, reported that the heroes
+  tab was not there, and read no heroes at all.
+- **When a tab is not found, Battledeck now keeps a capture for troubleshooting.** Two images land
+  in `shots/` in the data folder: the game window, and the strip of it in which the tab was looked
+  for. The first one shows the main menu or the collection, so your battletag is legible in it —
+  look before you pass it on.
+- **Captures of a stranded game run are kept for 7 days, all of them.** Before, only the newest
+  twenty stayed and they could lie around for 30 days.
+- **A "Create support bundle" button in the settings**, in the About & Updates card. It packs the
+  logs and captures of the last 7 days into one ZIP under `support/` in the data folder and shows
+  it in Explorer, ready to attach to a bug report. The bundle contains the battletags and e-mail
+  addresses of your accounts and no passwords. Nothing is sent anywhere — you decide who gets the
+  file — and bundles older than 7 days are removed.
+
 ## [1.10.0] - 2026-10-03
 
 - **A "New season" button in the settings.** When a new Heroes of the Storm season starts, it marks

@@ -676,6 +676,11 @@ takes 30 and the header row 70.
   `TextBlock` still reserves a whole line, so without the `DataTrigger` on `Value=""` they would
   cost 34 points permanently — in the state that is the normal one. `Visibility` is set in the
   style **alone**: an attribute on the element beats the trigger, silently.
+- **The support bundle button shares the `Installed version` row and costs no height.** A row of
+  its own is 52 plus a separator, 53 points against the 27 that are spare — the tab would scroll in
+  every language. Beside the version it takes width only: 240 label, the version, 16, the button
+  (about 190 in French, the longest), 12, and the contents sentence wrapping at 430 — around 950 of
+  1264. Two lines of that sentence at font size 11.5 stay inside the row's 52.
 - **What made the budget work is not the cards but what left the screen**: four explanation
   paragraphs at 700 wide, worth around 340 points. They now hang on the info signs — see
   [ui-conventions.md](ui-conventions.md#an-explanation-is-read-once-a-state-is-read-every-time).
