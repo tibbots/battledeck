@@ -21,6 +21,8 @@ nothing else on the line.
 
 ## [Upcoming]
 
+## [1.11.0] - 2026-10-12
+
 - **Heroes and the ARAM tab are found again when the game window is lower than 1440 pixels**, for
   example at 1920×1080. In such a window the read opened the collection, reported that the heroes
   tab was not there, and read no heroes at all.
@@ -391,7 +393,8 @@ First public release.
   Run anyway* — the checksum shipped with each release proves that the file matches the release,
   not who built it.
 
-[Upcoming]: https://github.com/tibbots/battledeck/compare/1.10.0...HEAD
+[Upcoming]: https://github.com/tibbots/battledeck/compare/1.11.0...HEAD
+[1.11.0]: https://github.com/tibbots/battledeck/releases/tag/1.11.0
 [1.10.0]: https://github.com/tibbots/battledeck/releases/tag/1.10.0
 [1.9.0]: https://github.com/tibbots/battledeck/releases/tag/1.9.0
 [1.8.0]: https://github.com/tibbots/battledeck/releases/tag/1.8.0
