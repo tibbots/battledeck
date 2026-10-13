@@ -17,7 +17,7 @@ namespace Battledeck.UI.MVVM.View;
 ///     <see cref="HeroPickerMode" /> and affects only the label and the counter.
 ///     <para>
 ///         Why a separate window and not an overlay like the rank: the rank overlay sits in the
-///         Grid of the account dialog, and that is <c>SizeToContent="Height"</c> - 90 circles
+///         Grid of the account dialog, and that is <c>SizeToContent="Height"</c> - 91 circles
 ///         would tear it open on opening. Also, the filter bar calls it from an entirely
 ///         different window. A separate window solves both and lets the surface stay a single
 ///         one.
@@ -161,7 +161,7 @@ public class HeroPickerViewModel : ObservableObject, IModalDialogViewModel
 
     private int SelectedCount => _all.Count(choice => choice.IsSelected);
 
-    /// <summary>"73 / 90 owned" in the dialog, "4 selected" in the filter, "14 / 14 free" for the rotation.</summary>
+    /// <summary>"73 / 91 owned" in the dialog, "4 selected" in the filter, "14 / 14 free" for the rotation.</summary>
     public string CountLabel => _mode switch
     {
         HeroPickerMode.Filter => Strings.Format("heroes.countSelected", SelectedCount),
@@ -301,7 +301,7 @@ public enum HeroPickerMode
 
     /// <summary>
     ///     From the filter bar via right mouse button: which heroes are free in the current
-    ///     period. The counter goes toward 14 instead of toward 90.
+    ///     period. The counter goes toward 14 instead of toward 91.
     /// </summary>
     Rotation
 }
@@ -368,7 +368,7 @@ public class HeroChoiceViewModel : ObservableObject
     ///         free rotation is open to every account, so it stays bright even when not
     ///         purchased. In the filter bar, on the other hand, bright means "selected by me" -
     ///         there fourteen bright circles without a selection would be a false statement,
-    ///         hence the mode condition. The counter remains unaffected by this: "73 / 90 owned"
+    ///         hence the mode condition. The counter remains unaffected by this: "73 / 91 owned"
     ///         keeps counting ownership.
     ///     </para>
     /// </summary>

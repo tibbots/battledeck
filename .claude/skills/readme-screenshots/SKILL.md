@@ -176,7 +176,7 @@ Rules that cost time when ignored:
   | Spanish | "borrar todo" | 638 |
 
   **Measured wrong once already**: clicking German's `642` while the app spoke English landed on
-  `select all` instead, which ticks all 90 heroes rather than none — the hero filter then matches
+  `select all` instead, which ticks all 91 heroes rather than none — the hero filter then matches
   every account instead of two, and every shot after it is silently wrong in a way that looks
   identical to a correct one until read closely.
 

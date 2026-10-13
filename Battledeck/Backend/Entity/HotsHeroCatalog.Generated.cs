@@ -96,6 +96,7 @@ namespace Battledeck.Backend.Entity
             new("valla", "Valla", "Valla", HotsHeroRole.RangedAssassin),
             new("varian", "Varian", "Varian", HotsHeroRole.Bruiser),
             new("whitemane", "Whitemane", "Weißsträhne", HotsHeroRole.Healer),
+            new("xalatath", "Xal'atath", "Xal'atath", HotsHeroRole.RangedAssassin),
             new("xul", "Xul", "Xul", HotsHeroRole.Bruiser),
             new("yrel", "Yrel", "Yrel", HotsHeroRole.Bruiser),
             new("zagara", "Zagara", "Zagara", HotsHeroRole.RangedAssassin),

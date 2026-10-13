@@ -22,7 +22,7 @@
 
          Until 21.08.2026 SizeToContent="Height" stood here, and two decisions hung on it:
          the rank selection had to be an overlay, and the hero selection its own
-         window (90 circles tore the dialog open when opening). With tabs and a fixed
+         window (91 circles tore the dialog open when opening). With tabs and a fixed
          height, both fall away - what doesn't fit scrolls in the tab.
 
          HEIGHT 752, AND IT IS NOT CHOSEN, BUT CALCULATED: the main window measures

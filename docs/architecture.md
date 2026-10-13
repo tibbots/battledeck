@@ -61,7 +61,7 @@ Battledeck/
       TextNormalisation.cs the one rule for how accents leave recognised text
       TabFinder.cs         clicks tabs by their WORD - the counterpart to calibration
       GameVocabulary.cs    every word that must be recognised in-game - five variants
-      HeroNameMatcher.cs   recognised text -> hero(es), over the 90 names of the client language
+      HeroNameMatcher.cs   recognised text -> hero(es), over the 91 names of the client language
       CollectionReader.cs  owned heroes from the collection
       HeaderReader.cs      gold, shards, gems, chest counter
       ProfileReader.cs     rank, placement state, account level, battletag - all as text
@@ -101,7 +101,7 @@ Battledeck/
       penalty.png        warning triangle for penalty games
       free.png           nexus mark for the free rotation
       Ranks/             27 rank medals plus norank.png, included by wildcard
-      Heroes/            90 hero portraits as JPEG (160 px), included by wildcard
+      Heroes/            91 hero portraits as JPEG (160 px), included by wildcard
 Battledeck.Tests/         xUnit, same target framework and UseWPF - it loads compiled XAML
   TestHome.cs            module initializer: points SMURFTOWN_HOME at a throwaway folder
                          BEFORE any test runs, so none can reach the real ~/.smurftown

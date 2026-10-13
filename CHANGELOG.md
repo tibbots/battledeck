@@ -21,6 +21,10 @@ nothing else on the line.
 
 ## [Upcoming]
 
+- **Xal'atath, the 91st hero, is in the hero list.** She can be ticked in the hero picker and
+  chosen in the hero filter, and reading the collection recognises her card. Every counter now
+  runs to 91.
+
 ## [1.11.0] - 2026-10-12
 
 - **Heroes and the ARAM tab are found again when the game window is lower than 1440 pixels**, for

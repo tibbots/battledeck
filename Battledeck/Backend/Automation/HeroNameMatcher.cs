@@ -11,7 +11,7 @@ namespace Battledeck.Backend.Automation
     ///         Text recognition does not read error-free: measured results included "Arth"" instead of
     ///         "Arthas", "Funke/chen" instead of "Funkelchen", and - four times in a single run - a 'v' instead
     ///         of a 'y' ("Svlvanas", "Tvchus", "Ravnor"). That is immaterial as long as the answer
-    ///         has to come from a known list of 90 names - the nearest neighbor is then
+    ///         has to come from a known list of 91 names - the nearest neighbor is then
     ///         practically always the right one. Hit rate checked on a full page: 10 out of
     ///         10, including the two mangled ones.
     ///     </para>
@@ -51,8 +51,8 @@ namespace Battledeck.Backend.Automation
         ///     </para>
         ///     <para>
         ///         <b>Consequence for the expected count</b>: the sidebar counts cards, our catalog
-        ///         counts heroes. An account with all heroes therefore reports 89 acquired cards
-        ///         at 90 catalog entries. <see cref="CollectionReader" /> therefore compares
+        ///         counts heroes. An account with all heroes therefore reports 90 acquired cards
+        ///         at 91 catalog entries. <see cref="CollectionReader" /> therefore compares
         ///         cards with cards - not heroes with cards.
         ///     </para>
         /// </summary>

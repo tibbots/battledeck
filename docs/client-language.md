@@ -166,7 +166,7 @@ not a single name appears in the delivered HTML). They are therefore measured at
 client and kept as a **deviation table** in `GameVocabulary`; whoever is missing there
 carries the English name.
 
-**Only the deviations, not all ninety.** A complete list per language would, nine-tenths
+**Only the deviations, not all ninety-one.** A complete list per language would, nine-tenths
 of the time, be the same row five times over — and in that noise a wrong entry would go
 unnoticed by anyone. Accents don't need an entry anyway: `Fénix`, `Léoric`, `Méphisto`,
 `Orphéa`, `Tyraël` and `Malthaël` normalize to the same key as their English name.
@@ -231,7 +231,7 @@ would still be read, just worse, and nobody would know why.
 
 **On the running client, not from memory.** Of eight guessed English words, one was
 wrong: under a collection card it reads `OWNED`, not `Collected`. The error would never
-have surfaced — the word only serves to save, per card, a comparison against 90 names;
+have surfaced — the word only serves to save, per card, a comparison against 91 names;
 it doesn't abort anything and logs nothing.
 
 **One account per state.** The tier words are shown only by an account with a valid
@@ -244,7 +244,7 @@ expression that reads a tier word as `[a-z]+` fails on this — silently, becaus
 unrecognized line is the same case as a missing one.
 
 **Calculate what a new word does, to counter-check.** The filler words are checked
-against every card line. Before adding one, check that none of the 90 names contains the
+against every card line. Before adding one, check that none of the 91 names contains the
 word as a substring — otherwise you filter out real cards. Two further calculations go
 with this: that no two names normalize to the same key, and how many pairs fall below
 the matching threshold of 0.34.

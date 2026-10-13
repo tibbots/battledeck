@@ -9,18 +9,22 @@ or later - exactly like the battletag-to-Windows-user derivation, which already
 exists in two places in the project. One run, one source of truth.
 
 Generated:
-  UI/Images/Heroes/{id}.jpg              90 portraits, 160x160, JPEG
-  Backend/Entity/HotsHeroCatalog.Generated.cs   90 entries, sorted by name
+  UI/Images/Heroes/{id}.jpg              91 portraits, 160x160, JPEG
+  Backend/Entity/HotsHeroCatalog.Generated.cs   91 entries, sorted by name
 
 With --catalog-only the portraits are left untouched and only the table is rewritten.
-Meant for changes that affect only the table - a full run re-encodes 90 JPEGs and
-turns them into 90 changed files with no visible difference.
+Meant for changes that affect only the table - a full run re-encodes 91 JPEGs and
+turns them into 91 changed files with no visible difference.
+
+With --missing-only only the portraits whose file does not exist yet are fetched and
+written; the table is rewritten as always. That is the call for a new hero: one new
+file instead of 91 changed ones.
 
 The GERMAN names come from tools/hero-names-de.json and not from the network. That
 is intentional: Blizzard's hero page loads them via an internal endpoint
 (unified-gamesite-api-...k8s.apps.blz.dev) that is not a committed interface and can
 disappear at any time. The list only ever changes when a hero is added - the last
-time was 2020. If one is added, it shows up here immediately: if an entry is
+time was 2026. If one is added, it shows up here immediately: if an entry is
 missing, the run aborts instead of writing an empty name. The German names are
 needed when reading the collection, where the game client writes them under each
 card.
@@ -37,7 +41,9 @@ source that is too small only becomes visible on a scaled-up screen.
 
 Sources (not in the repo, fetched via the MediaWiki API at run time):
   Hero list    https://heroesofthestorm.fandom.com/wiki/Portrait
-               section "Hero Portraits", template call {{HeroPortraits|...}}
+               section "Hero Portraits", template call {{HeroPortraits|...}} -
+               90 names. The one hero the template does not carry is named in
+               NOT_IN_TEMPLATE.
   Role         https://heroesofthestorm.fandom.com/wiki/Data:{Hero}
                field "role" - structured, so no parsing of running text.
                The template knows Melee/Ranged; ingame they are spelled out as
@@ -45,12 +51,16 @@ Sources (not in the repo, fetched via the MediaWiki API at run time):
   Portrait     File:{Hero} Hero Portrait.png, 152x152 (six heroes 256x256,
                The Butcher 76x76, Deckard 139x140) - which is why it is cropped
                square and centered instead of being scaled outright.
+               A hero without such a file on the wiki gets its portrait from the
+               URL in PORTRAIT_ELSEWHERE: Xal'atath from hotsgg.com, 180x210 with a
+               hexagonal alpha shape. The corners that come out dark lie outside the
+               circle the app draws.
 
 The id strips special characters: Lucio -> lucio, Anub'arak -> anubarak,
 Lt. Morales -> lt-morales, D.Va -> dva. It is at the same time the file name and the
 YAML value in data.yaml, so it has to do without accents, apostrophes, and dots.
 
-Dependency: Pillow.  Call:  python tools/build-hero-assets.py
+Dependency: Pillow.  Call:  python tools/build-hero-assets.py [--catalog-only | --missing-only]
 """
 import io
 import json
@@ -85,6 +95,14 @@ ROLES = {
     'Support': 'Support',
 }
 
+# Heroes the HeroPortraits template does not list although their Data: page exists.
+NOT_IN_TEMPLATE = ["Xal'atath"]
+
+# Heroes without a "Hero Portrait" file on the wiki, and where theirs comes from instead.
+PORTRAIT_ELSEWHERE = {
+    "Xal'atath": 'https://www.hotsgg.com/heroes/Xal%27atath.png',
+}
+
 
 def api(**params):
     params.setdefault('format', 'json')
@@ -107,12 +125,13 @@ def hero_id(name):
 
 
 def hero_names():
-    """The 90 names from the template call {{HeroPortraits|...}} on the Portrait page."""
+    """The names from the template call {{HeroPortraits|...}} on the Portrait page, plus NOT_IN_TEMPLATE."""
     wikitext = api(action='parse', page='Portrait', prop='wikitext')['parse']['wikitext']
     match = re.search(r'\{\{HeroPortraits\|(.*?)\}\}', wikitext, re.S)
     if not match:
         raise SystemExit('Template HeroPortraits not found - has the page layout changed?')
-    return [n.strip() for n in match.group(1).split('|') if n.strip()]
+    listed = [n.strip() for n in match.group(1).split('|') if n.strip()]
+    return listed + [n for n in NOT_IN_TEMPLATE if n not in listed]
 
 
 def pages(titles, **extra):
@@ -146,10 +165,11 @@ def roles_by_hero(names):
 
 def portrait_urls(names):
     """Download URLs of the portrait files. If one is missing, the run aborts instead of leaving a gap."""
-    got = pages([f'File:{n} Hero Portrait.png' for n in names],
+    urls = {n: PORTRAIT_ELSEWHERE[n] for n in names if n in PORTRAIT_ELSEWHERE}
+    on_wiki = [n for n in names if n not in urls]
+    got = pages([f'File:{n} Hero Portrait.png' for n in on_wiki],
                 prop='imageinfo', iiprop='url')
-    urls = {}
-    for name in names:
+    for name in on_wiki:
         page = got[f'File:{name} Hero Portrait.png']
         info = page.get('imageinfo')
         if not info:
@@ -223,10 +243,11 @@ def write_catalog(heroes):
 
 def main():
     catalog_only = '--catalog-only' in sys.argv
+    missing_only = '--missing-only' in sys.argv
     os.makedirs(IMAGES, exist_ok=True)
 
     names = hero_names()
-    print(f'{len(names)} heroes in the template')
+    print(f'{len(names)} heroes')
 
     roles = roles_by_hero(names)
 
@@ -240,13 +261,19 @@ def main():
     german = german_names(list(ids))
 
     total = 0
+    written = []
     if catalog_only:
         print('--catalog-only: portraits stay unchanged')
     else:
-        urls = portrait_urls(names)
-        for name in sorted(names, key=str.lower):
-            path = os.path.join(IMAGES, hero_id(name) + '.jpg')
-            total += write_portrait(fetch(urls[name]), path)
+        paths = {n: os.path.join(IMAGES, hero_id(n) + '.jpg') for n in names}
+        written = sorted(
+            (n for n in names if not (missing_only and os.path.exists(paths[n]))),
+            key=str.lower)
+        if missing_only:
+            print(f'--missing-only: {len(names) - len(written)} existing portraits stay unchanged')
+        urls = portrait_urls(written) if written else {}
+        for name in written:
+            total += write_portrait(fetch(urls[name]), paths[name])
 
     heroes = [(hero_id(n), n, german[hero_id(n)], roles[n]) for n in sorted(names, key=str.lower)]
     write_catalog(heroes)
@@ -255,7 +282,7 @@ def main():
     for _, _, _, role in heroes:
         per_role[role] = per_role.get(role, 0) + 1
     if not catalog_only:
-        print(f'{len(heroes)} portraits, {total / 1024:.0f} KiB total -> {IMAGES}')
+        print(f'{len(written)} portraits written, {total / 1024:.0f} KiB total -> {IMAGES}')
     print('Roles: ' + ', '.join(f'{r} {n}' for r, n in sorted(per_role.items())))
     print(f'Table -> {CATALOG}')
 

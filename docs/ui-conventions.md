@@ -130,7 +130,7 @@ fields — and a list you hang four game blocks onto grows arbitrarily long.
 | OW2 · WOW · DIA | one dashed box each, "Nothing to configure yet." |
 
 - **The fixed size was the actual lever.** Two workarounds hung off `SizeToContent="Height"`: the
-  rank picker had to be an overlay, and the hero picker its own window — 90 circles would otherwise
+  rank picker had to be an overlay, and the hero picker its own window — 91 circles would otherwise
   blow the dialog open. Both reasons are gone; what does not fit scrolls inside the tab.
 - **The games carry short names here** (`GameVisuals.ShortLabelFor`), and that is not taste: five
   tabs sit side by side, and "HEROES OF THE STORM" alone would need more room than the other four
@@ -287,7 +287,7 @@ overlap:
 
 ```
 +- row -----------------------------------------------------------------+
-| PUPSI#22733 |  medal   | OOOOOOOO  32/90 | gold  shards |   >     ... |
+| PUPSI#22733 |  medal   | OOOOOOOO  32/91 | gold  shards |   >     ... |
 | EU . 22.08. |          |                 | gems  chests |             |
 +-------------+----------+-----------------+--------------+-------------+
        ^            ^             ^                              ^

@@ -164,7 +164,7 @@ instead of the correct 16.
 
 ## Hero portraits (`build-hero-assets.py`)
 
-The 90 hero portraits are JPEG at 160 px, one file per hero id, and the id doubles as the file
+The 91 hero portraits are JPEG at 160 px, one file per hero id, and the id doubles as the file
 name (`UI/Images/Heroes/{id}.jpg`) — no accents, apostrophes, or dots in an id, for exactly that
 reason.
 
@@ -179,7 +179,7 @@ visible on a scaled-up screen, never at 100 %.
 
 In the picker, the circle itself comes from an `Ellipse` with an `ImageBrush`
 (`Stretch="UniformToFill"`) — the roundness lives in the UI, not in the asset. That is also why
-the portraits are plain square JPEG without an alpha channel: about 819 KiB for all 90 combined,
+the portraits are plain square JPEG without an alpha channel: about 829 KiB for all 91 combined,
 against several MB had they been PNG.
 
 ## The app icon (`build-logo.py`)

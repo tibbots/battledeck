@@ -395,7 +395,7 @@ name here:
   below it `Silber 3` stand as running text — tier and division in one line. The former image
   comparison failed on a shimmering medal disc, could not read a rank that was not already in
   `data.yaml`, and never checked whether the screen it photographed was the rank screen at all.
-- **Heroes come from the collection, not from hero select.** Hero select shows all 90 on one
+- **Heroes come from the collection, not from hero select.** Hero select shows all 91 on one
   screen, which looks like the shorter path and is not: there a hero is only a tile, and "owned"
   means "brighter". The collection writes the name as **text** under every card.
 - **Loot chests are opened with the space bar**, three presses per chest. The five calibrated

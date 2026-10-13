@@ -272,7 +272,7 @@ next chest — the carousel advances on its own
 
 ## Heroes via the collection, not via hero select
 
-Hero select shows all 90 heroes on **one** screen — looks like the shorter path and isn't. There
+Hero select shows all 91 heroes on **one** screen — looks like the shorter path and isn't. There
 a hero is just a tile, and "owned" means "brighter". Reading that requires knowing which tile
 belongs to whom, and that ordering couldn't be reliably derived: a cross-check against an account
 with 24 entered heroes hit 12. Four further tile-recognition approaches failed too (row/column
@@ -322,7 +322,7 @@ contributed something — the toast then reads `Heroes merged instead of replace
 - **What's compared are CARDS, not heroes.** The expected count counts cards, and `Cho'gall` is
   **one** card with **two** catalog entries (`cho` and `gall` — separate ID, separate portrait,
   separate role: Cho is a tank, Gall a ranged assassin). An account owning every hero therefore
-  reports **`89`** acquired cards against **`90`** catalog entries. Comparing heroes against the
+  reports **`90`** acquired cards against **`91`** catalog entries. Comparing heroes against the
   expected count never reaches "complete" that way — measured across three consecutive runs.
 - **Compound cards are listed in `HeroNameMatcher.Compound`**, and `Match` therefore returns a
   *list*. Without that entry, Cho'gall is fundamentally unreadable: `chogall` has a relative
@@ -373,13 +373,13 @@ is a hypothesis with image evidence, not proof — Rehgar failed the same way an
 
 ### Missed cells
 
-- **The empty tail at the end of the list doesn't count as missed.** 89 heroes at 5 columns fill
-  row 18 only four-fifths full, and the last paging step leaves half a page empty regardless. A
+- **The empty tail at the end of the list doesn't count as missed.** Only a card
+  count divisible by the 5 columns fills the last row, and the last paging step leaves half a page empty regardless. A
   slot only counts as missed once a read slot follows it further along in reading order.
 - **Overlap catches most, but not all.** In one measured run, **12** slots were missed, **10** of
   them recovered on the neighboring page.
 - **Read errors are expected.** Recognition returns `Arth"` instead of `Arthas` and
-  `Funke/chen` instead of `Funkelchen`. Against 90 known candidates, the nearest neighbor still
+  `Funke/chen` instead of `Funkelchen`. Against 91 known candidates, the nearest neighbor still
   matches (`HeroNameMatcher`, Levenshtein, threshold one-third of the name length). Checked on
   one complete page: **10 of 10**.
 - **Compared against the German name.** The client runs on `deDE`. On a client set to any other

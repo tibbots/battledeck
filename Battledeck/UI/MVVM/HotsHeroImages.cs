@@ -25,7 +25,7 @@ static class HotsHeroImages
 
 /// <summary>
 ///     Color per hero role. In-game heroes carry no role color - the coding is our own
-///     addition, so that 90 circles get an order. It therefore sits in the ring around the portrait
+///     addition, so that 91 circles get an order. It therefore sits in the ring around the portrait
 ///     and not in the image: the portrait stays untouched, the ring disappears with the selection.
 ///     <para>Six shades of similar brightness, legible on the app's dark background.</para>
 /// </summary>

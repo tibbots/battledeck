@@ -182,7 +182,7 @@ profile:
   close: { anchor: topCenter, x: 845, y: 186 }
 
 # The heroes come from the COLLECTION, not from the hero select. The reason stands briefly
-# here, because the other way looks more obvious: the hero select shows all 90 on one screen,
+# here, because the other way looks more obvious: the hero select shows all 91 on one screen,
 # but only as tiles - owned means "brighter" there. Whoever reads the tiles has to know
 # which tile is which hero, and this order couldn't be reliably derived
 # (cross-check on an account with 24 heroes: 12 hits). The collection writes the name

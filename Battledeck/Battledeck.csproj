@@ -103,7 +103,7 @@
       <!-- 28 rank medals as a wildcard instead of 28 individual lines -->
       <None Remove="UI\Images\Ranks\*.png" />
       <Resource Include="UI\Images\Ranks\*.png" />
-      <!-- 90 hero portraits, likewise as a wildcard. JPEG rather than PNG: photographs
+      <!-- 91 hero portraits, likewise as a wildcard. JPEG rather than PNG: photographs
            without transparency, the circle only arises in WPF - PNG cost five times as much
            here. -->
       <None Remove="UI\Images\Heroes\*.jpg" />

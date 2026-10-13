@@ -334,7 +334,7 @@ namespace Battledeck.UI.MVVM.ViewModel
                 HeroOverflowVisibility =
                     heroes.Count > HeroChipLimit ? Visibility.Visible : Visibility.Collapsed;
                 // A dash and no 0, when it was never read AND nothing is entered:
-                // "0 of 90" claims the account owns not a single hero - a
+                // "0 of 91" claims the account owns not a single hero - a
                 // statement that does not exist without reading. Same rule as for the four
                 // stats. If heroes are entered, the number is valid even without a read timestamp:
                 // then they are hand-maintained.
@@ -638,7 +638,7 @@ namespace Battledeck.UI.MVVM.ViewModel
             private set { SetProperty(ref _heroOverflowVisibility, value); }
         }
 
-        /// <summary>"29 / 90" - the statement, for which the strip is only the sample.</summary>
+        /// <summary>"29 / 91" - the statement, for which the strip is only the sample.</summary>
         public string HeroCountText
         {
             get { return _heroCountText; }
@@ -773,7 +773,7 @@ namespace Battledeck.UI.MVVM.ViewModel
                 _row?.Hots?.Division ?? 0, PickRankCommand);
 
         /// <summary>
-        ///     "42 of 90 heroes" plus one line per role that is represented. Roles without heroes
+        ///     "42 of 91 heroes" plus one line per role that is represented. Roles without heroes
         ///     stay off - a list with six zeros says less than three real lines.
         /// </summary>
         /// <summary>

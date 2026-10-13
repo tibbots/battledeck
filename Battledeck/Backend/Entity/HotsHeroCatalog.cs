@@ -22,7 +22,7 @@ namespace Battledeck.Backend.Entity
             _byRole ??= All.GroupBy(h => h.Role)
                 .ToDictionary(g => g.Key, g => (IReadOnlyList<HotsHero>)g.ToList());
 
-        /// <summary>Count of all heroes - the reference size for every "x / 90" display.</summary>
+        /// <summary>Count of all heroes - the reference size for every "x / 91" display.</summary>
         public static int Count => All.Count;
 
         /// <summary>

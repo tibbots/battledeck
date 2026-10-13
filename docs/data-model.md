@@ -266,7 +266,7 @@ heroes:              # empty in old files - the key is simply absent there
   accents, apostrophes and dots: `lucio`, `anubarak`, `lt-morales`, `dva`, `etc`. One key for both
   instead of two that drift apart.
 - **Catalogue and portraits come from one run.** `tools/build-hero-assets.py` generates both: the
-  90 JPEGs *and* `Backend/Entity/HotsHeroCatalog.Generated.cs`. Do not edit the generated file by
+  91 JPEGs *and* `Backend/Entity/HotsHeroCatalog.Generated.cs`. Do not edit the generated file by
   hand — adjust the script and re-run. The hand-written half (`HotsHeroCatalog.cs`, lookup and
   resolve) sits beside it as `partial`.
 - **Why the indices in `HotsHeroCatalog` are lazy**: `All` is in the generated file, `ById` and
@@ -278,7 +278,7 @@ heroes:              # empty in old files - the key is simply absent there
   precisely that would be a deletion when merging a partial reading.
 - **Roles** come from `Data:{Hero}` in the wiki (field `role`) and sit in the enum `HotsHeroRole`.
   The enum order *is* the display order: Tank, Bruiser, Melee Assassin, Ranged Assassin, Healer,
-  Support. Distribution: 13 / 17 / 10 / 30 / 16 / 4.
+  Support. Distribution: 13 / 17 / 10 / 31 / 16 / 4.
 - **Role colours are our addition** — no hero carries one in-game. They live in `HotsRoleColors`
   and are shown in the **ring** around the portrait, not in the image: the portrait stays
   untouched, the ring disappears with the selection.
@@ -401,7 +401,7 @@ them as exceptions, and whoever misses one silently marks the wrong heroes as fr
   *is* the "free" state.
 - **Free means playable, not bought.** In the account dialog the free heroes stay fully opaque even
   if the account does not own them — bright means "playable" there. The counter beside it still
-  counts ownership (`73 / 90 owned`). In the filter bar the exception does **not** apply: there
+  counts ownership (`73 / 91 owned`). In the filter bar the exception does **not** apply: there
   bright means "selected by me". The mode condition sits in `HeroChoiceViewModel.PortraitOpacity`.
 - **No forced check for exactly 14.** The counter shows `n / 14`, no more. The level-bound slots
   11–14 do not interest everyone, and the game stays the truth — not our constant.

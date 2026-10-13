@@ -28,7 +28,7 @@ namespace Battledeck.Backend.Automation
     ///         <b>One assumption was wrong</b>, and it shows why measuring was necessary: under
     ///         every collection card stands <c>OWNED</c>, not <c>Collected</c>. The latter was
     ///         guessed. The error would not have been noticed - the word only serves to save,
-    ///         per card, one comparison against 90 names.
+    ///         per card, one comparison against 91 names.
     ///     </para>
     ///     <para>
     ///         <b>Two values remain unmeasured</b> and are marked as such: the tiers
@@ -89,7 +89,7 @@ namespace Battledeck.Backend.Automation
             // measured. "new" is NOT measured - a freshly acquired card would have had to
             // be on screen for that.
             //
-            // All three are harmless: recalculated, not a single one of the 90
+            // All three are harmless: recalculated, not a single one of the 91
             // English hero names contains any of them as a substring.
             ["owned", "hero", "new"],
             new Dictionary<string, HotsRankTier>
@@ -448,7 +448,7 @@ namespace Battledeck.Backend.Automation
         /// <summary>
         ///     Words that can appear in the name strip of a collection card but are not one.
         ///     They would have failed the matching distance threshold anyway - naming them here
-        ///     saves one comparison against 90 names per card and keeps the log
+        ///     saves one comparison against 91 names per card and keeps the log
         ///     readable. The comparison is via <c>Contains</c>, so a too-general word would take
         ///     real names down with it.
         /// </summary>
@@ -480,7 +480,7 @@ namespace Battledeck.Backend.Automation
         ///     The heroes whose name in this language <b>differs</b> from the English one -
         ///     id to display name. Whoever is missing here carries <see cref="HotsHero.Name" />.
         ///     <para>
-        ///         <b>Only the deviations</b>, and that is the core of it: of 90 heroes, the
+        ///         <b>Only the deviations</b>, and that is the core of it: of 91 heroes, the
         ///         vast majority are proper names (Arthas, Diablo, Illidan) and stand the
         ///         same in every version. What gets translated is what means something - "The Butcher",
         ///         "Stitches", "Brightwing". A complete name list per language would be nine tenths

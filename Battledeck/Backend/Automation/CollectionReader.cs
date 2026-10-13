@@ -19,7 +19,7 @@ namespace Battledeck.Backend.Automation
     /// <summary>
     ///     Reads the acquired heroes from the collection.
     ///     <para>
-    ///         <b>Why the collection and not the hero select:</b> the hero select shows all 90
+    ///         <b>Why the collection and not the hero select:</b> the hero select shows all 91
     ///         heroes on a single screen, which is tempting - but only as a tile, and
     ///         "owned" there just means "brighter". Whoever reads it must know which tile
     ///         belongs to which hero, and this order could not be reliably derived:
@@ -46,7 +46,7 @@ namespace Battledeck.Backend.Automation
         private const int DryRounds = 2;
 
         /// <summary>
-        ///     Upper limit for the paging loop. 90 heroes at 5 columns are 18 rows, and
+        ///     Upper limit for the paging loop. 90 cards at 5 columns are 18 rows, and
         ///     paging happens row by row - so 17 steps, plus the two empty rounds at
         ///     the end and some reserve.
         /// </summary>
@@ -84,7 +84,7 @@ namespace Battledeck.Backend.Automation
         /// <summary>
         ///     Words that can appear in the name strip but are not one. They would have
         ///     failed the matching distance threshold anyway - naming them here just saves
-        ///     one comparison against 90 names per card and keeps the log readable.
+        ///     one comparison against 91 names per card and keeps the log readable.
         ///     <para>
         ///         Language-dependent, hence from <see cref="GameVocabulary" /> and no longer a
         ///         fixed list.
@@ -151,7 +151,7 @@ namespace Battledeck.Backend.Automation
 
             // Counted by CARDS and not by heroes, because the expected count from the sidebar
             // counts cards. Cho'gall is ONE card and TWO catalog entries - an account with
-            // all heroes therefore reports 89 acquired cards out of 90 entries, and a
+            // all heroes therefore reports 90 acquired cards out of 91 entries, and a
             // comparison of "heroes read against expected count" would never add up there. The key
             // is the card's id, joined with a plus sign for double cards.
             var cards = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -345,8 +345,8 @@ namespace Battledeck.Backend.Automation
         /// <summary>
         ///     Empty cells without the rest at the end of the list.
         ///     <para>
-        ///         The last row is almost never full - 89 heroes at 5 columns fill
-        ///         row 18 only four fifths of the way, and the last paging step leaves
+        ///         The last row is rarely full - only a card count divisible by the 5
+        ///         columns fills it, and the last paging step leaves
         ///         half a page empty anyway. These cells are not missed, but empty. A
         ///         cell therefore only counts as missed once behind it - in reading order, i.e.
         ///         row by row from the left - there is still a read one.

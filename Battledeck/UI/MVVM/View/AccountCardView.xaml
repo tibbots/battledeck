@@ -543,7 +543,7 @@
 
                         <!-- A CLICK ON THE STRIP OPENS THE EDIT DIALOG ON THE HOTS TAB, where
                              the hero picker already sits embedded. Deliberately not a quick
-                             pick of its own: ninety heroes are not a popup, and the list is the
+                             pick of its own: ninety-one heroes are not a popup, and the list is the
                              value this application MEASURES out of the collection - a
                              comfortable way to type it by hand would invite it to drift away
                              from what the game actually holds.
@@ -636,7 +636,7 @@
                                            VerticalAlignment="Center" />
 
                                 <!-- The number is the statement, the strip before it only the sample.
-                                     "– / 90" means never read; "0 / 90" would claim the account
+                                     "– / 91" means never read; "0 / 91" would claim the account
                                      owned not a single hero. -->
                                 <TextBlock Text="{Binding HeroCountText}" FontSize="10.5"
                                            Foreground="#7E93AE" VerticalAlignment="Center"

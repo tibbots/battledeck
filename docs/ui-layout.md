@@ -309,11 +309,11 @@ Up to **11** portraits at **47 px** (`HeroChipLimit`), each a circle built from 
   deliberately **weak** (`#23252B`, two shades): it shifts the ground under the ring, and the
   ring doesn't follow.
 - **Which eleven show is not sorted** — it's read order, i.e. alphabetical. The strip is a
-  **sample**; the statement is the `29 / 90` beside it. Sorted by role, an account with eleven
+  **sample**; the statement is the `29 / 91` beside it. Sorted by role, an account with eleven
   tanks would never show a healer.
 - **Without any heroes there's a sentence**, not an empty strip: an empty strip would be a hole
   in the layout, leaving it open whether nothing was ever read or nothing is owned.
-- **The counter shows `– / 90` when nothing was ever read and nothing is entered.** `0 / 90`
+- **The counter shows `– / 91` when nothing was ever read and nothing is entered.** `0 / 91`
   would claim the account owns not a single hero — a statement that doesn't exist without
   reading. Same rule as the four stat columns. If heroes are entered, the number stands even
   without a read timestamp — then they were entered by hand.
@@ -446,7 +446,7 @@ measures button width, not text width. 92 rather than the main window's 100, bec
 sit side by side here instead of two.
 
 - **The fixed size was the actual lever.** Under `SizeToContent="Height"`, two workarounds were
-  forced: the rank picker had to be an overlay, and the hero picker its own window — 90 circles
+  forced: the rank picker had to be an overlay, and the hero picker its own window — 91 circles
   would otherwise tear the dialog open on load. Both reasons are gone; whatever doesn't fit now
   scrolls inside its tab.
 - **Every tab scrolls as a whole**, HotS included. The content budget is
