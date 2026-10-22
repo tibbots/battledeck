@@ -21,6 +21,8 @@ nothing else on the line.
 
 ## [Upcoming]
 
+## [1.12.0] - 2026-10-22
+
 - **Xal'atath, the 91st hero, is in the hero list.** She can be ticked in the hero picker and
   chosen in the hero filter, and reading the collection recognises her card. Every counter now
   runs to 91.
@@ -397,7 +399,8 @@ First public release.
   Run anyway* — the checksum shipped with each release proves that the file matches the release,
   not who built it.
 
-[Upcoming]: https://github.com/tibbots/battledeck/compare/1.11.0...HEAD
+[Upcoming]: https://github.com/tibbots/battledeck/compare/1.12.0...HEAD
+[1.12.0]: https://github.com/tibbots/battledeck/releases/tag/1.12.0
 [1.11.0]: https://github.com/tibbots/battledeck/releases/tag/1.11.0
 [1.10.0]: https://github.com/tibbots/battledeck/releases/tag/1.10.0
 [1.9.0]: https://github.com/tibbots/battledeck/releases/tag/1.9.0
