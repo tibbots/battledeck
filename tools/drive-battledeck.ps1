@@ -7,9 +7,9 @@
     clicking that by hand is the same eleven-step routine eleven times, with eleven
     chances to forget one.
 
-    BOUNDARY THIS SCRIPT DOES NOT CROSS: it does not start Battledeck. That stays with
-    the user (CLAUDE.md, "Branch Strategy & Lifecycle") - a second instance would
-    collide with his. If none is running, the script aborts instead of starting one.
+    BOUNDARY THIS SCRIPT DOES NOT CROSS: it does not start Battledeck. Starting is a
+    separate step via tools/test-home.ps1, after asking (CLAUDE.md, "Testen"). If
+    none is running, the script aborts instead of starting one.
 
     All coordinates are WINDOW-RELATIVE, i.e. exactly as they can be read off a
     capture from capture-window.ps1: the main window is borderless

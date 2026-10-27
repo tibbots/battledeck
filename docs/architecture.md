@@ -110,7 +110,7 @@ Battledeck.Tests/         xUnit, same target framework and UseWPF - it loads com
   TextsTests.cs          the four language files against the code and each other
   BattlenetAccountGatewayTests.cs   write, read back, compare - and two folders at once
 Setup/Setup.vdproj       MSI definition
-Battledeck.cer            UNUSED - remnant of a signing that was never enabled
+Smurftown.cer            UNUSED - remnant of a signing that was never enabled
 dev                      entry point for build and release (Bash, Windows-only)
 dev.cmd                  the same entry point from PowerShell and cmd
 .github/workflows/

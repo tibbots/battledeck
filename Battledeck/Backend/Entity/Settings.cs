@@ -76,7 +76,7 @@
         ///     Sprache der Texte" is labeled.
         ///     <para>
         ///         This is the one justified deviation from "everything a human sees is
-        ///         English" (CLAUDE.md): the value of this setting is only useful if it can
+        ///         English" (docs/ui-conventions.md): the value of this setting is only useful if it can
         ///         be held word for word against what stands in the game. A translated
         ///         "Spanish (Spain)" would force the human to map it themselves -
         ///         and that is exactly where the error this setting is meant to prevent arises.

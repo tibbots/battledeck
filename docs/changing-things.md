@@ -7,9 +7,9 @@ no log line.
 Its counterpart stands at the bottom: [Known issues](#known-issues), the things deliberately left
 alone.
 
-Two rules that used to open this list are not change steps but working practice, and stand in
-[`../CLAUDE.md`](../CLAUDE.md): plan before the edit, and start the app once after every XAML
-change — the build is no substitute there.
+One rule that used to open this list is not a change step but working practice, and stands in
+[`../CLAUDE.md`](../CLAUDE.md): after every XAML change run `./dev test` and start the app once —
+the build is no substitute there.
 
 - **New text for humans: a key in all four language files** — `Backend/Texts/*.yaml`, English wording
   into `en.yaml`, then `./dev test`. In XAML `{loc:Str key}` fetches it, in C#

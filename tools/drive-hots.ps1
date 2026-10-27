@@ -4,9 +4,8 @@
 
 .DESCRIPTION
     Counterpart to drive-battledeck.ps1, but for the GAME. The difference is the
-    approval: the user starts Battledeck (a second instance would collide with his),
-    the AI is allowed to start Heroes of the Storm itself - CLAUDE.md, "Branch
-    Strategy & Lifecycle", named exception from 21.08.2026. The reason is that every
+    approval: this script starts the game itself, Battledeck is started separately via
+    tools/test-home.ps1 - both only after asking, CLAUDE.md, "Testen". The reason is that every
     calibration here is measured against the running game, and a second-hand
     screenshot is only half the measurement.
 
@@ -275,7 +274,7 @@ function Send-Text([string] $text) {
 # WHY THIS LIVES HERE and is not passed as a parameter: a password that travels through
 # a command line as an argument ends up in the shell history, in the process tree, and
 # in every log that records it. The application itself left exactly this path behind
-# with the psexec removal (CLAUDE.md, "Security model") - it does not belong back in
+# with the psexec removal (docs/security.md) - it does not belong back in
 # via a helper script. The script reads the file the application reads anyway, and
 # types from it.
 function Get-Account([string] $battletag) {
