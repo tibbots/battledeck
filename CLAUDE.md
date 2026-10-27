@@ -15,6 +15,7 @@
 
 - Abweichend vom Provider: kein Devcontainer moeglich. `./dev` baut nativ, nur unter Windows (PowerShell/cmd: `.\dev.cmd`). Befehle: `./dev help`.
 - Kein `./dev run`.
+- Abweichend vom Provider: Branch, `commit`, `tag`, `push` und PR macht der User, nicht die KI. Die KI editiert, baut, testet und berichtet.
 - Test, der etwas braucht, das der GitHub-Runner nicht hat → Trait, Beispiel `[Trait("needs", "ocr")]`. CI filtert `needs!=ocr`, lokal laeuft alles.
 - Tests nie gegen das echte `~/.smurftown`. `SMURFTOWN_HOME` setzt der Modul-Initialisierer in `Battledeck.Tests` → nicht entfernen.
 - Ziel `net8.0-windows10.0.19041.0` geaendert → auch `Battledeck.Tests/Battledeck.Tests.csproj`, `.run/Publish Battledeck x64.run.xml`, `Setup/Setup.vdproj` (`SourcePath` auf `apphost.exe`) und die Mindestversion in allen vier READMEs.
@@ -39,4 +40,4 @@
 - Gestartetes schliessen. `test-home.ps1` gibt die PID aus.
 - Nie die echte Liste fotografieren. Test-Aufnahmen ins Scratchpad, nie nach `docs/images/` → `docs/security.md#readme-and-screenshots`.
 - Doch die echte Instanz bedient → gegen `~/.smurftown/backups/{version}.zip` vergleichen, Werte woertlich zurueckschreiben. Archive nur ins Scratchpad entpacken, nie neben das Repo: sie enthalten die Passwoerter.
-- Bericht nennt das Ergebnis des Tests, nicht die Schritte.
+- Bericht nennt das Ergebnis des Tests, nicht die Schritte. Danach fragen.
