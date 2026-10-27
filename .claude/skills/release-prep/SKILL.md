@@ -130,10 +130,18 @@ The ZIP's file name is *not* part of the contract: it is searched, not construct
 RID or dropping the version from the name is safe.
 
 **Nothing is signed.** Both configurations stand on `"SignOutput" = "11:FALSE"` with an empty
-`"CertificateFile"`. Do not tell users to install `Battledeck.cer` into their root store: for an
+`"CertificateFile"`. Do not tell users to install `Smurftown.cer` into their root store: for an
 unsigned MSI it vouches for nothing, and a root CA can vouch for anything on the machine — real
 risk, zero benefit. The honest line is the one in the README: SmartScreen warns, "More info → Run
 anyway".
+
+`Smurftown.cer` and the `signcert.pfx` line in `.gitignore` are remnants: the certificate is
+referenced by nothing, the `.pfx` never existed. Deleting them is a decision for the user, not a
+drive-by cleanup.
+
+**Signing is its own task, not a switch.** It needs `SignOutput` turned on, a `.pfx` **and** a
+`TimeStampServer` — that one is empty too, and without it the signature becomes invalid as soon as
+the certificate expires.
 
 ## Checklist
 

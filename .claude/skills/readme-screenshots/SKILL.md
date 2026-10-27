@@ -25,7 +25,7 @@ safeguard which does not depend on somebody remembering. Do not disable it.
 ## The boundary: an instance that is already running
 
 **Claude starts Battledeck itself and closes it again — after asking.** The go-ahead is per run, not
-per session; see `CLAUDE.md` → Working practice.
+per session; see `CLAUDE.md` → "Testen".
 
 What changed underneath is which danger is left. `data.yaml` is still rewritten whole on every
 mutation, and the lock around that covers one process and not two — but the capture run no longer

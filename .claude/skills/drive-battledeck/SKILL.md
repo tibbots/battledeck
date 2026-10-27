@@ -19,7 +19,7 @@ which of them failed.
 
 Starting is the AI's own step — **but never an unasked one**. The go-ahead comes first and it is
 per run: a window that comes up and starts taking clicks seizes the machine the user is sitting at.
-See `CLAUDE.md` → Working practice.
+See `CLAUDE.md` → "Testen".
 
 Two conditions survive from the older rule that reserved starting for the user entirely.
 

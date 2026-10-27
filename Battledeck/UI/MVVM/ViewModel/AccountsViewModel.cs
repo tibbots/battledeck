@@ -260,7 +260,7 @@ namespace Battledeck.UI.MVVM.ViewModel
         ///     <para>
         ///         <b>The price is the same as with the game filter</b>: whoever only
         ///         plays in America is invisible under EU. They remain reachable via their own
-        ///         abbreviation - the same solution as there, and the same sentence in the CLAUDE.md.
+        ///         abbreviation - the same solution as there, and the same sentence in docs/ui-conventions.md.
         ///     </para>
         /// </summary>
         public bool EuropeFiltered

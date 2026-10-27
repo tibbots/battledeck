@@ -24,7 +24,7 @@
 
          The WIDTH stays at 1200 - it sits 92 points of slack below the maximum of 1292.
          With 64-size circles at 10 spacing, that's 15 per row; whoever touches the width
-         recalculates the row occupancy (see CLAUDE.md, section "Heroes").
+         recalculates the row occupancy (see docs/ui-layout.md).
 
          Only the frame remains. The selection surface itself lives in HeroPickerView.xaml, because
          since 21.08.2026 it has a second host: the HotS tab of the account dialog.

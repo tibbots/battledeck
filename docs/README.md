@@ -1,8 +1,8 @@
 # docs/
 
 Everything about this application that is not needed **before** touching it. What is needed before
-— stack, build and delivery, working practice — stays in [`../CLAUDE.md`](../CLAUDE.md), and that
-file is deliberately short enough to read whole.
+— the rules for building, releasing and testing here — stays in [`../CLAUDE.md`](../CLAUDE.md), and
+that file is deliberately short enough to read whole.
 
 The documents fall into two groups, and the difference is not their subject but their reach.
 

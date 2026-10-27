@@ -22,7 +22,7 @@ for as long as they are.
 
 **What is specific to the game is what the question has to say.** Battledeck is a window among
 windows and needs the go-ahead too — just not the warning about the screen. See `CLAUDE.md` →
-Working practice for the rule both applications share, and the `drive-battledeck` skill for the app.
+"Testen" for the rule both applications share, and the `drive-battledeck` skill for the app.
 
 ## Usage
 
