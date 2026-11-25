@@ -46,12 +46,12 @@
 
   <ItemGroup>
       <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-      <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0-preview.5.24306.7"/>
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="11.0.0"/>
       <PackageReference Include="MvvmDialogs" Version="9.1.2" />
-      <PackageReference Include="Serilog" Version="4.0.0"/>
-      <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.1-dev-10391"/>
+      <PackageReference Include="Serilog" Version="4.4.0"/>
+      <PackageReference Include="Serilog.Extensions.Logging" Version="11.0.0"/>
       <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
-      <PackageReference Include="Serilog.Sinks.File" Version="5.0.1-dev-00972"/>
+      <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
     <!-- NU1701: both packages are .NET-Framework-only (net461-net481) and restore with a
          compatibility warning under net8.0-windows - a known, accepted mismatch, not
          something to fix by swapping the package. Suppressed
